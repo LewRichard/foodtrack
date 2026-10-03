@@ -61,16 +61,20 @@ Optional, shown in the app when set: `EXPO_PUBLIC_PRIVACY_URL`, `EXPO_PUBLIC_TER
 
 ## 2. Run it on your phone
 
-The app uses native modules (camera, notifications), so use a **development build** rather than Expo Go:
+**Quickest way (free, no Apple account):** install **Expo Go** from the App Store / Play Store, then:
 
 ```bash
 npm install
-npx eas-cli@latest login
-npx eas-cli@latest build --profile development --platform ios   # installs on your registered iPhone
-npx expo start                                                  # then open the dev build
+npx expo start --go          # add --tunnel if your phone isn't on the same Wi-Fi
 ```
 
-On a Mac with Xcode you can instead run `npx expo run:ios`.
+Scan the QR code with your iPhone camera (Android: from inside Expo Go). Everything works in Expo Go;
+for push-style polish and before release, use a **development build**:
+
+```bash
+npx eas-cli@latest build --profile development --platform ios   # needs an Apple Developer account
+npx expo start
+```
 
 ## 3. Checks
 

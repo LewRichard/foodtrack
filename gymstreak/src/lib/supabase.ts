@@ -3,8 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, processLock } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Values pasted into .env often pick up invisible characters (zero-width spaces, non-breaking spaces,
+// stray quotes). iOS silently drops a request header whose value contains them, so Supabase answers
+// "No API key found in request". Keep only the characters a key or URL can legitimately contain.
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/[^\x21-\x7E]|["']/g, '').replace(/\/+$/, '');
+const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY?.replace(/[^A-Za-z0-9._-]/g, '');
 
 export const isConfigured = Boolean(url && anonKey);
 

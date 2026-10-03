@@ -1,5 +1,8 @@
 # FoodTrack — AI calorie scanner & nutrition tracker
 
+> This repo also contains **[GymStreak](./gymstreak/)**, a Locket-style iOS/Android app for keeping gym
+> streaks with friends (Expo + Supabase). See [`gymstreak/README.md`](./gymstreak/README.md).
+
 Take a photo of your meal, and FoodTrack identifies each food, estimates the portion size, and
 returns calories, protein, carbs, fat, fiber, sugar and sodium. Review and adjust the estimate,
 then log it to your daily diary and track progress against your goals.

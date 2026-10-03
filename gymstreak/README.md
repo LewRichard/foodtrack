@@ -68,8 +68,8 @@ npm install
 npx expo start --go          # add --tunnel if your phone isn't on the same Wi-Fi
 ```
 
-Scan the QR code with your iPhone camera (Android: from inside Expo Go). Everything works in Expo Go;
-for push-style polish and before release, use a **development build**:
+Scan the QR code with your iPhone camera (Android: from inside Expo Go). Everything in this app works in Expo Go.
+Later, to test the real app build (and before release), use a **development build**:
 
 ```bash
 npx eas-cli@latest build --profile development --platform ios   # needs an Apple Developer account

@@ -9,8 +9,25 @@ import { attachAccount, hasPending, type DayRow, type EntryRow, type Pulled, typ
 
 // Values pasted into settings often pick up invisible characters (zero-width or non-breaking
 // spaces, quotes) that make requests fail with "No API key found". Keep only valid characters.
-const url = (import.meta.env.VITE_SUPABASE_URL ?? "").replace(/[^\x21-\x7E]|["']/g, "").replace(/\/+$/, "");
+const url = projectUrl(import.meta.env.VITE_SUPABASE_URL ?? "");
 const key = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").replace(/[^A-Za-z0-9._-]/g, "");
+
+/**
+ * The project's base address. Copied values often include an API path (".../rest/v1/") or are the
+ * dashboard link (".../dashboard/project/<ref>"); both make every request fail with "Invalid path".
+ */
+export function projectUrl(raw: string): string {
+  const cleaned = raw.replace(/[^\x21-\x7E]|["']/g, "");
+  if (!cleaned) return "";
+  try {
+    const u = new URL(cleaned.includes("://") ? cleaned : `https://${cleaned}`);
+    const dashboard = u.pathname.match(/\/project\/([a-z0-9]+)/i);
+    if (u.hostname.endsWith("supabase.com") && dashboard) return `https://${dashboard[1]}.supabase.co`;
+    return u.origin;
+  } catch {
+    return cleaned.replace(/\/+$/, "");
+  }
+}
 
 /** True when this build has Supabase settings, so accounts and backup are available. */
 export const cloudEnabled = Boolean(url && key);

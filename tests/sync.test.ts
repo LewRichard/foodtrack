@@ -284,3 +284,18 @@ describe("signing in", () => {
     expect(phone.get().sync.userId).toBe(USER);
   });
 });
+
+describe("Supabase project address", async () => {
+  const { projectUrl } = await import("../src/lib/cloud.ts");
+  it("keeps only the base address however it was copied", () => {
+    const base = "https://abcdefgh.supabase.co";
+    expect(projectUrl(base)).toBe(base);
+    expect(projectUrl(`${base}/`)).toBe(base);
+    expect(projectUrl(`${base}/rest/v1/`)).toBe(base);
+    expect(projectUrl(` "${base}/rest/v1" `)).toBe(base);
+    expect(projectUrl("abcdefgh.supabase.co")).toBe(base);
+    expect(projectUrl(`${base}​`)).toBe(base); // invisible character from copy-paste
+    expect(projectUrl("https://supabase.com/dashboard/project/abcdefgh/settings/api")).toBe(base);
+    expect(projectUrl("")).toBe("");
+  });
+});

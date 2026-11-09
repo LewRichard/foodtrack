@@ -20,7 +20,9 @@ export const cloudEnabled = Boolean(url && key);
 let supabase: SupabaseClient | null = null;
 const ready: Promise<SupabaseClient> | null = cloudEnabled
   ? import("@supabase/supabase-js").then(({ createClient }) => {
-      supabase = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
+      // PKCE: after signing in with Google/Apple/Facebook the provider sends people back with a
+      // one-time ?code=, which the library swaps for a session on load.
+      supabase = createClient(url, key, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" } });
       return supabase;
     })
   : null;
@@ -33,11 +35,31 @@ async function client(): Promise<SupabaseClient> {
 // ---- Session ------------------------------------------------------------------------------------
 
 let session: Session | null = null;
+// "checking" until Supabase has looked for a saved session, so the login screen doesn't flash up.
+let authState: "checking" | "signedOut" | "signedIn" = cloudEnabled ? "checking" : "signedOut";
+let recovering = false; // opened from a "reset password" email
 const sessionListeners = new Set<() => void>();
 
 function setSession(next: Session | null) {
   session = next;
+  authState = next ? "signedIn" : "signedOut";
   sessionListeners.forEach((l) => l());
+}
+
+function subscribe(l: () => void) {
+  sessionListeners.add(l);
+  return () => {
+    sessionListeners.delete(l);
+  };
+}
+
+export function useAuthState(): "checking" | "signedOut" | "signedIn" {
+  return useSyncExternalStore(subscribe, () => authState);
+}
+
+/** True after someone follows a password-reset link, until they choose a new password. */
+export function usePasswordRecovery(): boolean {
+  return useSyncExternalStore(subscribe, () => recovering);
 }
 
 export function useSession(): Session | null {
@@ -167,7 +189,12 @@ export async function startCloud() {
   const db = await ready;
 
   db.auth.onAuthStateChange((event, next) => {
+    if (event === "PASSWORD_RECOVERY") recovering = true;
     setSession(next);
+    // Remove the one-time sign-in code from the address bar after returning from Google & co.
+    if (next && /[?&]code=/.test(window.location.search)) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     if (next && (event === "INITIAL_SESSION" || event === "SIGNED_IN")) {
       actions.replace(attachAccount(getState(), next.user.id, { ...INITIAL_STATE, ...devicePrefs() }));
       // Run outside the auth callback (Supabase recommends not awaiting calls inside it).
@@ -241,10 +268,51 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 }
 
 export async function signUp(email: string, password: string): Promise<AuthResult> {
-  const { data, error } = await (await client()).auth.signUp({ email: email.trim(), password });
+  const { data, error } = await (await client()).auth.signUp({
+    email: email.trim(),
+    password,
+    options: { emailRedirectTo: `${window.location.origin}/` },
+  });
   if (error) throw new Error(friendlyAuthError(error.message));
   // With "Confirm email" switched on in Supabase, there's no session until the link is clicked.
   return { needsConfirmation: !data.session };
+}
+
+export type OAuthProvider = "google" | "apple" | "facebook";
+
+/** Sends the person to Google / Apple / Facebook to sign in; they come back to this page signed in. */
+export async function signInWithProvider(provider: OAuthProvider): Promise<void> {
+  const { error } = await (await client()).auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: `${window.location.origin}/` },
+  });
+  if (error) throw new Error(friendlyAuthError(error.message));
+}
+
+/** Which sign-in providers are switched on in the Supabase project (Authentication → Providers). */
+export async function enabledProviders(): Promise<OAuthProvider[]> {
+  if (!cloudEnabled) return [];
+  try {
+    const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } });
+    const body = (await res.json()) as { external?: Record<string, boolean> };
+    return (["apple", "google", "facebook"] as const).filter((p) => body.external?.[p]);
+  } catch {
+    return [];
+  }
+}
+
+/** Emails a link for choosing a new password. */
+export async function sendPasswordReset(email: string): Promise<void> {
+  const { error } = await (await client()).auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/` });
+  if (error) throw new Error(friendlyAuthError(error.message));
+}
+
+/** Saves a new password (after following a reset link). */
+export async function updatePassword(password: string): Promise<void> {
+  const { error } = await (await client()).auth.updateUser({ password });
+  if (error) throw new Error(friendlyAuthError(error.message));
+  recovering = false;
+  sessionListeners.forEach((l) => l());
 }
 
 /** Signs out and clears this device. Returns false (without signing out) if changes would be lost and `force` isn't set. */

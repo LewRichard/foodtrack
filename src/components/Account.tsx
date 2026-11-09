@@ -8,7 +8,7 @@ import { hasPending } from "../lib/syncState.ts";
 
 const LAST_EMAIL_KEY = "foodtrack:lastEmail";
 
-function rememberedEmail(): string {
+export function rememberedEmail(): string {
   try {
     return localStorage.getItem(LAST_EMAIL_KEY) ?? "";
   } catch {
@@ -16,7 +16,7 @@ function rememberedEmail(): string {
   }
 }
 
-function rememberEmail(email: string | null) {
+export function rememberEmail(email: string | null) {
   try {
     if (email) localStorage.setItem(LAST_EMAIL_KEY, email);
     else localStorage.removeItem(LAST_EMAIL_KEY);
@@ -39,7 +39,7 @@ export default function Account() {
 }
 
 // Name of a hidden frame that receives the login form after a successful sign-in.
-const SAVE_FRAME = "ft-password-save";
+export const SAVE_FRAME = "ft-password-save";
 
 /**
  * Browsers only offer "Save password?" when they see a login form actually submitted, which an app
@@ -49,7 +49,7 @@ const SAVE_FRAME = "ft-password-save";
  *    form submission for the browser's password manager, but nothing is sent anywhere: about:blank
  *    makes no network request.
  */
-async function offerToSavePassword(form: HTMLFormElement, email: string, password: string) {
+export async function offerToSavePassword(form: HTMLFormElement, email: string, password: string) {
   const w = window as Window & { PasswordCredential?: new (data: { id: string; password: string; name?: string }) => Credential };
   if (w.PasswordCredential && navigator.credentials?.store) {
     try {

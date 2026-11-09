@@ -35,6 +35,7 @@ export interface AppState {
   theme: ThemePref; // light/dark look; "system" follows the device
   communityPush: boolean; // this device gets Community notifications (reset on sign-out)
   reports: Record<string, SavedReport>; // AI weekly check-ins on this device, by the week's last day
+  onboardingSkipped: boolean; // chose "skip" on the welcome questions (this device)
 }
 
 export interface SavedReport {
@@ -64,6 +65,7 @@ export const INITIAL_STATE: AppState = {
   theme: "system",
   communityPush: false,
   reports: {},
+  onboardingSkipped: false,
 };
 
 function load(): AppState {
@@ -189,6 +191,23 @@ export const actions = {
   },
   setCommunityPush(communityPush: boolean) {
     setState({ ...state, communityPush });
+  },
+  skipOnboarding() {
+    setState({ ...state, onboardingSkipped: true });
+  },
+  /** Saves the welcome questions: name, body details, goals they imply, goal weight and today's weight. */
+  completeOnboarding(answers: { name: string; profile: Profile; goals: Goals; targetWeight: number | null; today: string }) {
+    const now = Date.now();
+    let next: AppState = {
+      ...state,
+      name: answers.name.trim() || state.name,
+      profile: answers.profile,
+      goals: answers.goals,
+      targetWeight: answers.targetWeight,
+      weights: { ...state.weights, [answers.today]: answers.profile.weightKg },
+    };
+    next = markDayChanged(next, answers.today, now);
+    setState(markSettingsChanged(next, now));
   },
   saveReport(weekEnd: string, report: WeeklyReport) {
     // Keep the last 8 weeks.

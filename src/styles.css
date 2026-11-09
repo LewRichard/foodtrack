@@ -2435,3 +2435,290 @@ img.avatar {
   height: 20px;
   border-width: 3px;
 }
+
+/* ---- Sign-in screen ---- */
+.splash {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 20px;
+}
+
+.auth-screen {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: calc(32px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+}
+
+.auth-inner {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth-brand {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.auth-brand h1 {
+  font-size: 32px;
+}
+
+.auth-brand p {
+  margin: 0;
+}
+
+.auth-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-float);
+}
+
+.social-buttons {
+  gap: 10px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.social-btn svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.social-apple {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+:root[data-theme="dark"] .social-apple {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.social-facebook {
+  background: #1877f2;
+  color: #fff;
+  border-color: #1877f2;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.auth-form {
+  gap: 12px;
+}
+
+.auth-form .link.center {
+  align-self: center;
+}
+
+.auth-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.auth-language {
+  width: auto;
+  background: none;
+  border: 0;
+  color: var(--text-2);
+  font-size: 14px;
+  padding: 6px;
+}
+
+/* ---- Welcome questions ---- */
+.onboarding {
+  min-height: 100dvh;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: calc(14px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+  gap: 18px;
+}
+
+.onb-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-btn-spacer {
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.onb-progress {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.onb-progress div {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.25s ease;
+}
+
+.onb-body {
+  flex: 1;
+}
+
+.onb-question h1 {
+  font-size: 26px;
+}
+
+.onb-question > p {
+  margin: 8px 0 0;
+}
+
+.onb-fields {
+  margin-top: 22px;
+  gap: 14px;
+}
+
+.onb-big-input {
+  font-size: 22px;
+  padding: 16px;
+}
+
+.onb-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.onb-choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.onb-choice > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.onb-choice.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.onb-choice-icon {
+  font-size: 26px;
+  width: 36px;
+  text-align: center;
+}
+
+.onb-number {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.onb-number input {
+  font-size: 30px;
+  font-weight: 800;
+  padding: 12px 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.onb-number span {
+  font-size: 18px;
+  color: var(--text-2);
+  font-weight: 650;
+  min-width: 36px;
+}
+
+.onb-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--accent-soft);
+  border-radius: 24px;
+  padding: 22px;
+}
+
+.onb-kcal {
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.onb-macros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.onb-macros > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 6px;
+}
+
+.onb-macros strong {
+  font-size: 20px;
+}
+
+.onb-next {
+  width: 100%;
+  padding: 16px;
+  font-size: 17px;
+}

@@ -5,7 +5,10 @@ import Profile from "./components/Profile.tsx";
 import Scan from "./components/Scan.tsx";
 import Today, { ScanIcon } from "./components/Today.tsx";
 import { useI18n, type MessageKey } from "./i18n/index.ts";
-import { useSession } from "./lib/cloud.ts";
+import { cloudEnabled, useAuthState, usePasswordRecovery, useSession } from "./lib/cloud.ts";
+import { useSyncStatus } from "./lib/sync.ts";
+import AuthScreen from "./components/AuthScreen.tsx";
+import Onboarding from "./components/Onboarding.tsx";
 import { refreshAlerts, useCommunityAlerts } from "./lib/community.ts";
 import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
@@ -54,7 +57,11 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(tabFromUrl);
   const { t, lang } = useI18n();
 
-  const { theme } = useAppState();
+  const appState = useAppState();
+  const { theme } = appState;
+  const auth = useAuthState();
+  const recovering = usePasswordRecovery();
+  const syncStatus = useSyncStatus();
   const session = useSession();
   const alerts = useCommunityAlerts(session?.user.id ?? null);
   const badge = alerts.messages + alerts.requests;
@@ -99,6 +106,17 @@ export default function App() {
       {item.id === "community" && badge > 0 && <span className="tab-badge">{badge > 99 ? "99+" : badge}</span>}
     </button>
   );
+
+  // Accounts are set up: sign in first, then (for new accounts) a few welcome questions.
+  if (cloudEnabled) {
+    if (auth === "checking") return <Splash />;
+    if (auth === "signedOut" || recovering) return <AuthScreen />;
+    if (!appState.profile && !appState.onboardingSkipped) {
+      // Wait for the first sync, so people who already answered on another device skip the questions.
+      const synced = appState.sync.lastSyncedAt !== null || syncStatus.kind === "error" || syncStatus.kind === "offline";
+      return synced ? <Onboarding /> : <Splash />;
+    }
+  }
 
   return (
     <div className="app">
@@ -148,6 +166,15 @@ export default function App() {
         </button>
         {TABS.slice(2).map(navButton)}
       </nav>
+    </div>
+  );
+}
+
+function Splash() {
+  return (
+    <div className="splash" aria-busy="true">
+      <img src="/icon.svg" alt="FoodTrack" className="auth-logo" />
+      <div className="spinner dark small-spinner" />
     </div>
   );
 }

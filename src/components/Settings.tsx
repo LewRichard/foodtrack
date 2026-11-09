@@ -8,6 +8,7 @@ import {
   type Goals,
   type Profile,
 } from "../../shared/nutrition.ts";
+import { getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
 
 const ACTIVITY_LABELS: Record<Activity, string> = {
@@ -33,7 +34,9 @@ const GOAL_FIELDS: { key: keyof Goals; label: string; unit: string }[] = [
 const DEFAULT_PROFILE: Profile = { sex: "female", age: 30, heightCm: 168, weightKg: 68, activity: "light", goal: "maintain" };
 
 export default function Settings() {
-  const { goals, profile: savedProfile } = useAppState();
+  const { goals, profile: savedProfile, aiConsent } = useAppState();
+  const [code, setCode] = useState(getAccessCode());
+  const [codeStatus, setCodeStatus] = useState("");
   const [profile, setProfile] = useState<Profile>(savedProfile ?? DEFAULT_PROFILE);
   const [goalDraft, setGoalDraft] = useState<Goals>(goals);
   const [saved, setSaved] = useState(false);
@@ -54,6 +57,21 @@ export default function Settings() {
     actions.setGoals(suggested);
     setGoalDraft(suggested);
     flash();
+  }
+
+  async function saveCode() {
+    if (!code.trim()) {
+      setAccessCode("");
+      setCodeStatus("Access code removed.");
+      return;
+    }
+    setCodeStatus("Checking…");
+    try {
+      await unlock(code);
+      setCodeStatus("Saved ✓");
+    } catch (err) {
+      setCodeStatus(err instanceof Error ? err.message : String(err));
+    }
   }
 
   function exportData() {
@@ -169,6 +187,30 @@ export default function Settings() {
       </section>
 
       <section className="card">
+        <h2 className="title">Photo scanning</h2>
+        <label className="stack">
+          <span className="muted small">Access code (only if the server owner gave you one)</span>
+          <div className="row gap">
+            <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" autoCapitalize="off" />
+            <button className="btn" onClick={saveCode}>
+              Save
+            </button>
+          </div>
+        </label>
+        {codeStatus && <p className="muted small">{codeStatus}</p>}
+        <div className="row between">
+          <span className="small">
+            {aiConsent ? "You've agreed to send meal photos for AI analysis." : "You'll be asked before your first photo is analysed."}
+          </span>
+          {aiConsent && (
+            <button className="btn" onClick={() => actions.setAiConsent(false)}>
+              Withdraw
+            </button>
+          )}
+        </div>
+      </section>
+
+      <section className="card">
         <h2 className="title">Your data</h2>
         <p className="muted small">Your diary is stored on this device only. Export a backup to move it to another device.</p>
         <div className="row gap wrap">
@@ -195,7 +237,7 @@ export default function Settings() {
 
       <p className="muted small center disclaimer">
         Photo estimates are approximate and not medical advice. Check with a healthcare professional before making major
-        dietary changes.
+        dietary changes. <a href="/privacy.html">Privacy policy</a>
       </p>
     </div>
   );

@@ -21,6 +21,8 @@ calls Claude's vision model, so your API key never reaches the browser.
   lose / maintain / gain) or set them manually.
 - **Trends** – 7- and 30-day calorie chart vs. goal, average macro split, daily log table.
 - **Private by default** – your diary is stored in the browser's local storage. Export/import a JSON backup.
+- **Safe to put online** – optional access code, per-visitor hourly scan limit and a daily cap protect your
+  API key and bill; users consent before their first photo is sent to the AI; a privacy policy page is included.
 
 ## Getting started
 
@@ -36,15 +38,53 @@ To try it on your phone, open the dev server's network URL (`vite` prints it). B
 allow the live camera on `https://` or `localhost`. On plain `http` over the LAN, the app falls
 back to the phone's native camera through the "Take photo" button.
 
-### Production
+### Production (on your own computer)
 
 ```bash
 npm run build
 npm start                   # serves the built app + API on http://localhost:8787
 ```
 
-Deploy anywhere that runs Node (Render, Fly.io, Railway, a VPS…) behind HTTPS and set
-`ANTHROPIC_API_KEY` in the environment.
+## Put it online
+
+The app and API run as one Node server, so any Node host works. It needs HTTPS for the live camera,
+which every host below provides.
+
+### Render (free tier, simplest)
+
+1. Push this repository to GitHub (already done if you're reading this there).
+2. At [render.com](https://render.com), choose **New → Blueprint** and pick the repository.
+   It reads `render.yaml` and fills in the build and start commands.
+3. When asked, enter:
+   - `ANTHROPIC_API_KEY` – your key
+   - `APP_ACCESS_CODE` – a code you'll share with the people allowed to scan (e.g. a few random words)
+4. Open the `https://….onrender.com` URL it gives you. On a phone, use **Share → Add to Home Screen**
+   (iPhone) or **Install app** (Android).
+
+The free tier sleeps after 15 minutes without traffic, so the first visit after that takes about a minute.
+
+### Other hosts (Railway, Fly.io, a VPS…)
+
+Build command `npm ci && npm run build`, start command `npm start`, and set the environment variables below.
+
+### Settings
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | – | Required. Your Anthropic API key. |
+| `APP_ACCESS_CODE` | empty | If set, the app asks for this code before scanning. **Set it before going public.** |
+| `SCANS_PER_IP_PER_HOUR` | 30 | Scans one visitor can make per hour (`0` = unlimited). |
+| `DAILY_SCAN_LIMIT` | 300 | Scans the whole server allows per day, UTC (`0` = unlimited). |
+| `PORT` | 8787 | Port to listen on (hosts usually set this for you). |
+| `TRUST_PROXY` | 1 | Proxies in front of the server, so the rate limit sees real visitor IPs. |
+
+Also set a monthly spend limit in the [Anthropic Console](https://console.anthropic.com) as a final safety net.
+The scan limits are kept in memory, so they reset when the server restarts. Run a single instance.
+
+### Before publishing publicly
+
+Edit `public/privacy.html` and replace `[DATE]`, `[YOUR NAME OR COMPANY]` and `[CONTACT EMAIL]`.
+App stores require a privacy policy URL; yours will be `https://<your-domain>/privacy.html`.
 
 ## How it works
 
@@ -56,6 +96,7 @@ review & edit items  ◄──────────────────�
 log to localStorage diary
 ```
 
+- `server/guard.ts` holds the access code check and scan limits.
 - `server/analyze.ts` sends the image to Claude with a dietitian-style system prompt and uses
   **structured outputs** (`betaZodOutputFormat`) so the response is always valid JSON matching the
   schema. Server-side refusal fallbacks are enabled (`fallbacks: "default"`).

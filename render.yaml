@@ -1,0 +1,21 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# In Render: New → Blueprint → pick this repository. You'll be asked for the secret values below.
+services:
+  - type: web
+    name: foodtrack
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: APP_ACCESS_CODE
+        sync: false
+      - key: SCANS_PER_IP_PER_HOUR
+        value: "30"
+      - key: DAILY_SCAN_LIMIT
+        value: "300"

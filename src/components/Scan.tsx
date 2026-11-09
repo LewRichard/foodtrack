@@ -1,28 +1,34 @@
 import { useEffect, useRef, useState } from "react";
 import { sumNutrients, type AnalysisResult } from "../../shared/nutrition.ts";
-import { analyzeImage } from "../lib/api.ts";
+import { analyzeImage, isAccessError, unlock } from "../lib/api.ts";
 import { todayKey } from "../lib/dates.ts";
 import { prepareFromFile, prepareFromSource, type PreparedImage } from "../lib/image.ts";
-import { actions, newId } from "../lib/store.ts";
+import { actions, getState, newId } from "../lib/store.ts";
 import { MEAL_LABELS, MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
+import Consent from "./Consent.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 
 type Phase =
   | { kind: "capture" }
   | { kind: "analyzing"; image: PreparedImage }
   | { kind: "review"; image: PreparedImage; result: AnalysisResult }
-  | { kind: "error"; image: PreparedImage; message: string };
+  | { kind: "error"; image: PreparedImage; message: string; needsCode: boolean };
 
 export default function Scan({ date, onLogged, onCancel }: { date: string; onLogged: () => void; onCancel: () => void }) {
   const [phase, setPhase] = useState<Phase>({ kind: "capture" });
   const [note, setNote] = useState("");
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [meal, setMeal] = useState<MealType>(mealForTime());
+  const [awaitingConsent, setAwaitingConsent] = useState<PreparedImage | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
   async function analyze(image: PreparedImage) {
+    if (!getState().aiConsent) {
+      setAwaitingConsent(image);
+      return;
+    }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -33,7 +39,12 @@ export default function Scan({ date, onLogged, onCancel }: { date: string; onLog
       setPhase({ kind: "review", image, result });
     } catch (e) {
       if (controller.signal.aborted) return;
-      setPhase({ kind: "error", image, message: e instanceof Error ? e.message : String(e) });
+      setPhase({
+        kind: "error",
+        image,
+        message: e instanceof Error ? e.message : String(e),
+        needsCode: isAccessError(e),
+      });
     }
   }
 
@@ -55,12 +66,20 @@ export default function Scan({ date, onLogged, onCancel }: { date: string; onLog
 
   if (phase.kind === "capture") {
     return (
-      <Capture
-        note={note}
-        onNoteChange={setNote}
-        onImage={analyze}
-        onCancel={onCancel}
-      />
+      <>
+        <Capture note={note} onNoteChange={setNote} onImage={analyze} onCancel={onCancel} />
+        {awaitingConsent && (
+          <Consent
+            onClose={() => setAwaitingConsent(null)}
+            onAccept={() => {
+              actions.setAiConsent(true);
+              const image = awaitingConsent;
+              setAwaitingConsent(null);
+              analyze(image);
+            }}
+          />
+        )}
+      </>
     );
   }
 
@@ -79,7 +98,11 @@ export default function Scan({ date, onLogged, onCancel }: { date: string; onLog
         )}
       </div>
 
-      {phase.kind === "error" && (
+      {phase.kind === "error" && phase.needsCode && (
+        <AccessCodeCard onUnlocked={() => analyze(image)} onCancel={() => setPhase({ kind: "capture" })} />
+      )}
+
+      {phase.kind === "error" && !phase.needsCode && (
         <div className="card">
           <p className="error">{phase.message}</p>
           <div className="row gap">
@@ -284,5 +307,49 @@ function Capture({
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
       <input ref={galleryInput} type="file" accept="image/*" hidden onChange={onFile} />
     </div>
+  );
+}
+
+function AccessCodeCard({ onUnlocked, onCancel }: { onUnlocked: () => void; onCancel: () => void }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await unlock(code);
+      onUnlocked();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="card" onSubmit={submit}>
+      <h2 className="title">Enter access code</h2>
+      <p className="muted small">This FoodTrack server is private. Ask the person who runs it for the access code.</p>
+      <input
+        value={code}
+        onChange={(e) => setCode(e.target.value)}
+        placeholder="Access code"
+        autoComplete="off"
+        autoCapitalize="off"
+        autoFocus
+      />
+      {error && <p className="error small">{error}</p>}
+      <div className="row gap">
+        <button type="button" className="btn" onClick={onCancel}>
+          Cancel
+        </button>
+        <button className="btn primary grow" disabled={!code.trim() || busy}>
+          {busy ? "Checking…" : "Unlock and scan"}
+        </button>
+      </div>
+    </form>
   );
 }

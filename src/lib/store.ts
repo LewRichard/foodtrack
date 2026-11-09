@@ -8,12 +8,20 @@ export interface AppState {
   profile: Profile | null;
   water: Record<string, number>; // date -> glasses (250 ml)
   recents: Omit<LogEntry, "id" | "date" | "meal" | "loggedAt" | "photo">[]; // most recent first, de-duplicated by name
+  aiConsent: boolean; // agreed to send meal photos to the AI service
 }
 
 const STORAGE_KEY = "foodtrack:v1";
 const MAX_RECENTS = 30;
 
-export const INITIAL_STATE: AppState = { entries: [], goals: DEFAULT_GOALS, profile: null, water: {}, recents: [] };
+export const INITIAL_STATE: AppState = {
+  entries: [],
+  goals: DEFAULT_GOALS,
+  profile: null,
+  water: {},
+  recents: [],
+  aiConsent: false,
+};
 
 function load(): AppState {
   try {
@@ -92,6 +100,9 @@ export const actions = {
   },
   setProfile(profile: Profile | null) {
     setState({ ...state, profile });
+  },
+  setAiConsent(aiConsent: boolean) {
+    setState({ ...state, aiConsent });
   },
   setWater(date: string, glasses: number) {
     setState({ ...state, water: { ...state.water, [date]: Math.max(0, glasses) } });

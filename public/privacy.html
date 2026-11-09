@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FoodTrack Privacy Policy</title>
+    <style>
+      :root { color-scheme: light dark; --bg: #f4f5f2; --text: #121412; --muted: #52554f; --accent: #15803d; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #111311; --text: #f3f4f1; --muted: #b4b8b0; --accent: #22c55e; } }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      main { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+      h1 { font-size: 26px; margin-bottom: 4px; }
+      h2 { font-size: 18px; margin-top: 28px; }
+      .muted { color: var(--muted); }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">← Back to FoodTrack</a></p>
+      <h1>Privacy Policy</h1>
+      <!-- Before publishing: replace the bracketed placeholders and the date. -->
+      <p class="muted">Last updated: [DATE] · Operated by [YOUR NAME OR COMPANY]</p>
+
+      <h2>Summary</h2>
+      <p>
+        FoodTrack keeps your food diary on your device. When you scan a meal, the photo is sent to our server and on to
+        an AI service to estimate its nutrition. We don't sell your data, show ads, or require an account.
+      </p>
+
+      <h2>Data stored on your device</h2>
+      <p>
+        Your diary entries, small meal thumbnails, goals, profile (age, sex, height, weight, activity level), water log
+        and access code are stored in your browser's or app's local storage. They never leave your device unless you
+        export a backup. Deleting the app, clearing site data, or using "Reset all" in the Goals tab removes them.
+      </p>
+
+      <h2>Meal photos</h2>
+      <p>
+        When you choose to scan, the app sends the photo (resized) and any note you type to our server. The server
+        forwards them to Anthropic's Claude API, which returns the estimated foods and nutrients. Our server does not
+        store photos or results after replying. Anthropic processes the request under its
+        <a href="https://www.anthropic.com/legal/commercial-terms" target="_blank" rel="noreferrer">commercial terms</a>
+        and <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noreferrer">privacy policy</a>.
+        You're asked for consent before the first photo is sent, and you can withdraw it in the Goals tab.
+      </p>
+
+      <h2>Technical data</h2>
+      <p>
+        Like any website, our server and hosting provider receive your IP address with each request. We use it in memory
+        only to limit how many scans one visitor can make per hour, and do not keep it. Our hosting provider may keep
+        standard access logs.
+      </p>
+
+      <h2>Children</h2>
+      <p>FoodTrack is not directed to children under 13 and we don't knowingly collect their information.</p>
+
+      <h2>Health disclaimer</h2>
+      <p>
+        Nutrition estimates are approximate and are not medical advice. Talk to a healthcare professional before making
+        major changes to your diet.
+      </p>
+
+      <h2>Changes and contact</h2>
+      <p>
+        We'll update this page if our practices change. Questions or requests:
+        <a href="mailto:[CONTACT EMAIL]">[CONTACT EMAIL]</a>.
+      </p>
+    </main>
+  </body>
+</html>

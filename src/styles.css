@@ -954,6 +954,27 @@ select:focus {
 }
 
 /* ---- Profile ---- */
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 64px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 650;
+  padding: 8px;
+}
+
 .account-who {
   display: flex;
   flex-direction: column;

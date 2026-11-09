@@ -4,6 +4,25 @@ import { useAppState } from "../lib/store.ts";
 import { useSyncStatus } from "../lib/sync.ts";
 import { hasPending } from "../lib/syncState.ts";
 
+const LAST_EMAIL_KEY = "foodtrack:lastEmail";
+
+function rememberedEmail(): string {
+  try {
+    return localStorage.getItem(LAST_EMAIL_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function rememberEmail(email: string | null) {
+  try {
+    if (email) localStorage.setItem(LAST_EMAIL_KEY, email);
+    else localStorage.removeItem(LAST_EMAIL_KEY);
+  } catch {
+    // Storage unavailable: the email just won't be pre-filled next time.
+  }
+}
+
 /** Sign in / account card for the Profile tab. Only rendered when cloud backup is configured. */
 export default function Account() {
   const session = useSession();
@@ -11,9 +30,12 @@ export default function Account() {
 }
 
 function SignInForm() {
+  // Pre-fill the email used last time on this device, so signing back in is just the password
+  // (which the phone's password manager can fill with Face ID / fingerprint).
+  const [email, setEmail] = useState(rememberedEmail);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
 
@@ -23,6 +45,7 @@ function SignInForm() {
     setMessage(null);
     try {
       const result = mode === "signin" ? await signIn(email, password) : await signUp(email, password);
+      rememberEmail(email.trim());
       if (result.needsConfirmation) {
         setMessage({ error: false, text: "Check your email and tap the confirmation link, then sign in here." });
         setMode("signin");
@@ -34,8 +57,9 @@ function SignInForm() {
     }
   }
 
+  // method/name/autocomplete let Safari, Chrome and iCloud Keychain offer to save and fill the login.
   return (
-    <form className="card" onSubmit={submit}>
+    <form className="card" onSubmit={submit} method="post" action="#" autoComplete="on">
       <div>
         <h2 className="title">Back up &amp; sync</h2>
         <p className="muted small">
@@ -53,22 +77,44 @@ function SignInForm() {
       </div>
       <input
         type="email"
+        id="ft-email"
+        name="email"
+        inputMode="email"
         placeholder="Email"
-        autoComplete="email"
+        autoComplete="username"
         autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
       />
-      <input
-        type="password"
-        placeholder={mode === "signup" ? "Choose a password (6+ characters)" : "Password"}
-        autoComplete={mode === "signup" ? "new-password" : "current-password"}
-        minLength={6}
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
+      <div className="password-field">
+        <input
+          type={showPassword ? "text" : "password"}
+          id="ft-password"
+          name="password"
+          placeholder={mode === "signup" ? "Choose a password (6+ characters)" : "Password"}
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          minLength={6}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoFocus={Boolean(email) && mode === "signin"}
+          required
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={() => setShowPassword(!showPassword)}
+          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-pressed={showPassword}
+        >
+          {showPassword ? "Hide" : "Show"}
+        </button>
+      </div>
       {message && <p className={message.error ? "error small" : "small"}>{message.text}</p>}
       <button className="btn primary" disabled={busy}>
         {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
@@ -123,6 +169,7 @@ function SignedIn({ email }: { email: string }) {
     setError("");
     try {
       await deleteAccount();
+      rememberEmail(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

@@ -2,8 +2,10 @@
 -- Run this once in Supabase: Dashboard → SQL Editor → New query → paste → edit the two values → Run.
 --
 -- Before running, replace:
---   https://YOUR-APP.onrender.com   with your Render address (no trailing slash)
---   YOUR-CRON-SECRET                with the same value as CRON_SECRET on Render
+--   YOUR-APP          with your Render app's name, keeping the rest of the address, e.g.
+--                     'https://foodtrack-abcd.onrender.com/api/cron/reminders'
+--                     (the "/api/cron/reminders" part is required; without it you'll get 404)
+--   YOUR-CRON-SECRET  with the same value as CRON_SECRET on Render
 --
 -- Side effect: the regular calls also keep Render's free server from going to sleep, so the app
 -- opens quickly. (One always-on free service stays within Render's monthly free hours.)
@@ -29,5 +31,6 @@ select cron.schedule(
 
 -- To check it's working (after 10–20 minutes):
 --   select status_code, content, created from net._http_response order by created desc limit 5;
--- 200 with {"people":…} means it worked; 401 means the secret doesn't match CRON_SECRET on Render.
+-- 200 with {"people":…} means it worked; 401 means the secret doesn't match CRON_SECRET on Render;
+-- 404 means the address is missing "/api/cron/reminders" at the end.
 -- To stop it:  select cron.unschedule('foodtrack-reminders');

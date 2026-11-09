@@ -55,6 +55,7 @@ select status_code, content, created from net._http_response order by created de
 ```
 
 `200` with `{"people":…}` means it works. `401` means the secret doesn't match `CRON_SECRET` on Render.
+`404` means the address in the job is missing `/api/cron/reminders` at the end.
 
 ## 5. Try it
 

@@ -44,6 +44,34 @@ export interface AnalysisResult {
   mealName: string;
   items: FoodItem[];
   notes: string;
+  healthScore: number; // 1–10 for the whole meal (10 = very healthy)
+  healthReason: string; // one short sentence explaining the score
+}
+
+/** Keeps a health score a whole number from 1 to 10 (or undefined when there isn't a valid one). */
+export function clampHealthScore(value: unknown): number | undefined {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.min(10, Math.max(1, Math.round(n))) : undefined;
+}
+
+export type HealthTier = "great" | "good" | "fair" | "poor";
+
+/** 9–10 great, 7–8 good, 5–6 fair, 1–4 poor. */
+export function healthTier(score: number): HealthTier {
+  return score >= 9 ? "great" : score >= 7 ? "good" : score >= 5 ? "fair" : "poor";
+}
+
+/** Calorie-weighted average score of the scored foods (a big fried dish counts more than a side salad). */
+export function averageHealthScore(items: readonly { calories: number; healthScore?: number }[]): number | null {
+  let weight = 0;
+  let total = 0;
+  for (const item of items) {
+    if (!item.healthScore) continue;
+    const w = Math.max(item.calories, 50);
+    weight += w;
+    total += item.healthScore * w;
+  }
+  return weight ? Math.round((total / weight) * 10) / 10 : null;
 }
 
 export function sumNutrients(items: readonly Nutrients[]): Nutrients {

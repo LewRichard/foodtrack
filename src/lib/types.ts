@@ -32,6 +32,7 @@ export interface LogEntry extends FoodItem {
   updatedAt?: number; // epoch ms of the last change (for cloud sync); missing on older entries
   source: "scan" | "manual" | "quick";
   photo?: string; // small JPEG data URL thumbnail
+  healthScore?: number; // 1–10 from the photo analysis (the whole meal's score), if scanned
 }
 
 /** Suggest a meal slot from the time of day. */

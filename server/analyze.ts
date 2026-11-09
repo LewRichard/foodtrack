@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import * as z from "zod/v4";
 import { AI_LANGUAGE_NAMES, type Lang } from "../shared/languages.ts";
-import type { AnalysisResult } from "../shared/nutrition.ts";
+import { clampHealthScore, type AnalysisResult } from "../shared/nutrition.ts";
 
 export const MODEL = "claude-opus-5-5";
 
@@ -25,6 +25,8 @@ export const AnalysisSchema = z.object({
   mealName: z.string().describe("A short title for the whole plate/meal"),
   items: z.array(FoodItemSchema),
   notes: z.string().describe("One or two sentences on assumptions (hidden oils, sauces, portion uncertainty)"),
+  healthScore: z.number().describe("Whole number from 1 to 10 rating how healthy the whole meal is (see rubric); 0 if isFood is false"),
+  healthReason: z.string().describe("One short, friendly sentence explaining the score, naming what helped or hurt it"),
 });
 
 const SYSTEM_PROMPT = `You are a registered dietitian estimating the nutrition of food from photos for a calorie-tracking app.
@@ -38,7 +40,15 @@ For each photo:
 - Set confidence to "low" when the food is ambiguous or largely hidden.
 - If the image shows no food or drink, set isFood to false and return an empty items list.
 
-Numbers must be for the whole visible portion, not per 100 g. Round calories and sodium to whole numbers and macros to one decimal.`;
+Numbers must be for the whole visible portion, not per 100 g. Round calories and sodium to whole numbers and macros to one decimal.
+
+Also give the whole meal a health score from 1 to 10:
+- 9–10: mostly whole foods, plenty of vegetables or fruit, lean protein or legumes, whole grains; steamed, boiled, grilled or raw; little added fat, sugar or salt (e.g. grilled fish with vegetables and brown rice, a fresh salad with eggs, fruit with plain yoghurt).
+- 7–8: balanced with some refined carbs or a moderate amount of oil, sauce or salt (e.g. phở with herbs, chicken rice with vegetables, a turkey sandwich on wholemeal).
+- 5–6: average: large refined-carb portions, few vegetables, noticeable oil or sugar (e.g. fried rice, a white-bread sandwich with processed meat, sweetened milk tea).
+- 3–4: fried or oily, heavily processed, very salty or sugary (e.g. fried chicken with fries, instant noodles, pastries, a large bubble tea).
+- 1–2: mostly deep-fried or ultra-processed food together with sugary drinks or desserts, little nutritional value.
+Judge what you see: cooking method, visible oil, vegetables, portion size and drinks. Be fair and encouraging in healthReason, and mention one easy improvement when the score is below 8.`;
 
 const client = new Anthropic();
 
@@ -64,7 +74,7 @@ export async function analyzeFoodImage(
   const languageNote =
     language === "en"
       ? ""
-      : ` Write mealName, each item's name and portion, and notes in ${AI_LANGUAGE_NAMES[language]}, using the names people there usually call these foods.`;
+      : ` Write mealName, each item's name and portion, notes and healthReason in ${AI_LANGUAGE_NAMES[language]}, using the names people there usually call these foods.`;
   const response = await client.beta.messages.parse({
     model: MODEL,
     max_tokens: 16000,
@@ -95,5 +105,6 @@ export async function analyzeFoodImage(
   if (response.stop_reason === "max_tokens" || !response.parsed_output) {
     throw new AnalysisError("Could not read a nutrition estimate from the model response.", 502, "ai_unreadable");
   }
-  return response.parsed_output;
+  const result = response.parsed_output;
+  return { ...result, healthScore: result.isFood ? (clampHealthScore(result.healthScore) ?? 5) : 0 };
 }

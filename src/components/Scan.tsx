@@ -9,6 +9,7 @@ import { actions, getState, newId } from "../lib/store.ts";
 import { MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
 import AddFood from "./AddFood.tsx";
 import Consent from "./Consent.tsx";
+import { HealthScoreCard } from "./HealthScore.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 
 type Phase =
@@ -64,7 +65,7 @@ export default function Scan({
     }
   }
 
-  function logMeal(image: PreparedImage) {
+  function logMeal(image: PreparedImage, healthScore?: number) {
     const now = Date.now();
     const entries: LogEntry[] = drafts.map((d, i) => ({
       ...draftItem(d),
@@ -73,6 +74,7 @@ export default function Scan({
       meal,
       loggedAt: now + i,
       source: "scan",
+      healthScore,
       // Keep the thumbnail on the first item only so storage stays small.
       photo: i === 0 ? image.thumbnail : undefined,
     }));
@@ -180,6 +182,8 @@ export default function Scan({
             {phase.result.notes && <p className="muted small note">{phase.result.notes}</p>}
           </div>
 
+          {phase.result.healthScore > 0 && <HealthScoreCard score={phase.result.healthScore} reason={phase.result.healthReason} />}
+
           <div className="card">
             <p className="label">{t("scan.addTo")}</p>
             <div className="segmented">
@@ -234,7 +238,7 @@ export default function Scan({
             <button className="btn" onClick={() => setPhase({ kind: "capture" })}>
               {t("scan.retake")}
             </button>
-            <button className="btn primary grow" disabled={drafts.length === 0} onClick={() => logMeal(image)}>
+            <button className="btn primary grow" disabled={drafts.length === 0} onClick={() => logMeal(image, phase.result.healthScore || undefined)}>
               {t("scan.log", { kcal: num(total.calories) })}
             </button>
           </div>

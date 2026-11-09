@@ -4,6 +4,7 @@ import { useI18n } from "../i18n/index.ts";
 import { addDays, formatDateLabel, parseDateKey, todayKey } from "../lib/dates.ts";
 import { useAppState } from "../lib/store.ts";
 import { WeightProgress } from "./Weight.tsx";
+import WeeklyReportCard from "./WeeklyReport.tsx";
 
 interface Day {
   date: string;
@@ -60,6 +61,8 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
         <h1>{t("trends.title")}</h1>
         <p className="muted">{t("trends.subtitle")}</p>
       </header>
+
+      <WeeklyReportCard />
 
       <WeightProgress />
 

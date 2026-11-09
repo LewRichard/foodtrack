@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sumNutrients } from "../../shared/nutrition.ts";
+import { averageHealthScore, sumNutrients } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
 import { formatLongDate, greetingKey, todayKey } from "../lib/dates.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
@@ -15,6 +15,7 @@ import AddFood from "./AddFood.tsx";
 import EditEntry from "./EditEntry.tsx";
 import { CalorieRing, MacroCard, NutrientBar } from "./Progress.tsx";
 import Sheet from "./Sheet.tsx";
+import { HealthChip, ScoreRing, tierLabel } from "./HealthScore.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
@@ -43,6 +44,7 @@ export default function Today({
   const { goals, name } = state;
   const entries = entriesForDate(state, date);
   const total = sumNutrients(entries);
+  const dayScore = averageHealthScore(entries);
   const burned = state.burned[date] ?? 0;
   const water = state.water[date] ?? 0;
   const [adding, setAdding] = useState<MealType | null>(null);
@@ -127,6 +129,15 @@ export default function Today({
           {t("today.seeAll")}
         </button>
       </div>
+      {dayScore !== null && (
+        <div className="day-score">
+          <ScoreRing score={dayScore} size={40} />
+          <span>
+            <strong>{t("health.dayScore", { score: num(dayScore, 1) })}</strong>
+            <span className="muted small"> · {t(tierLabel(dayScore))}</span>
+          </span>
+        </div>
+      )}
 
       {MEAL_TYPES.map((meal) => {
         const items = entries.filter((e) => e.meal === meal);
@@ -154,7 +165,11 @@ export default function Today({
               <button key={e.id} className="entry" onClick={() => setEditing(e)}>
                 {e.photo && <img src={e.photo} alt="" className="thumb" />}
                 <span className="entry-main">
-                  <span className="entry-name">{e.name}</span>
+                  <span className="entry-name">
+                    {e.name}
+                    {/* A scan's score belongs to the whole meal: show it once, on the item with the photo. */}
+                    {e.healthScore && (e.photo || e.source !== "scan") ? <HealthChip score={e.healthScore} /> : null}
+                  </span>
                   <span className="muted small">
                     {e.portion}
                     {e.grams ? ` · ${Math.round(e.grams)}g` : ""}

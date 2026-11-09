@@ -39,6 +39,10 @@ create table if not exists public.food_entries (
 
 create index if not exists food_entries_user_synced on public.food_entries (user_id, synced_at);
 
+-- Health score (1–10) the photo analysis gave the meal. Added later; running this file again adds it.
+alter table public.food_entries add column if not exists health_score smallint
+  check (health_score is null or health_score between 1 and 10);
+
 -- Water and exercise for one day.
 create table if not exists public.day_logs (
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,

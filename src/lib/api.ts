@@ -1,5 +1,6 @@
 import type { Lang } from "../../shared/languages.ts";
 import type { AnalysisResult } from "../../shared/nutrition.ts";
+import type { WeeklyReport } from "../../shared/report.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
 import type { PreparedImage } from "./image.ts";
@@ -68,6 +69,11 @@ export function analyzeImage(image: PreparedImage, note: string, language: Lang,
   });
 }
 
+/** Asks the AI for a check-in on the past week (see src/lib/report.ts for what's sent). */
+export function fetchWeeklyReport(week: unknown, language: Lang, signal?: AbortSignal): Promise<WeeklyReport> {
+  return request<WeeklyReport>("/api/report/weekly", { method: "POST", body: JSON.stringify({ week, language }), signal });
+}
+
 // Server error codes → messages in the app's language. Anything else shows the server's own text.
 const ERROR_MESSAGES: Record<string, MessageKey> = {
   access_code_required: "err.accessCodeWrong",
@@ -84,6 +90,8 @@ const ERROR_MESSAGES: Record<string, MessageKey> = {
   network: "err.network",
   barcode_unavailable: "err.barcodeUnavailable",
   bad_barcode: "barcode.invalid",
+  sign_in_required: "report.signIn",
+  bad_report: "err.server",
 };
 
 /** A message for any error, translated when the server sent a known code. */

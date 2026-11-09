@@ -63,6 +63,7 @@ export interface EntryRow {
   confidence: LogEntry["confidence"];
   source: LogEntry["source"];
   photo: string | null;
+  health_score?: number | null; // missing on databases set up before health scores existed
   logged_at: number;
   updated_at: number;
   deleted: boolean;
@@ -143,6 +144,7 @@ export function toEntryRow(e: LogEntry, deleted = false): EntryRow {
     confidence: e.confidence,
     source: e.source,
     photo: e.photo ?? null,
+    health_score: e.healthScore ?? null,
     logged_at: e.loggedAt,
     updated_at: entryVersion(e),
     deleted,
@@ -167,6 +169,7 @@ export function fromEntryRow(r: EntryRow): LogEntry {
     confidence: r.confidence,
     source: r.source,
     photo: r.photo ?? undefined,
+    healthScore: r.health_score ? Number(r.health_score) : undefined,
     loggedAt: Number(r.logged_at),
     updatedAt: Number(r.updated_at),
   };

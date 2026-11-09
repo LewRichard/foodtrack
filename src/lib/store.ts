@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
 import { isLang, type Lang } from "../../shared/languages.ts";
+import type { WeeklyReport } from "../../shared/report.ts";
 import { isThemePref, type ThemePref } from "./theme.ts";
 import { DEFAULT_REMINDER_TIMES, type ReminderTimes } from "../../shared/reminders.ts";
 import {
@@ -33,6 +34,12 @@ export interface AppState {
   language: "auto" | Lang; // app language; "auto" follows the device
   theme: ThemePref; // light/dark look; "system" follows the device
   communityPush: boolean; // this device gets Community notifications (reset on sign-out)
+  reports: Record<string, SavedReport>; // AI weekly check-ins on this device, by the week's last day
+}
+
+export interface SavedReport {
+  createdAt: number;
+  report: WeeklyReport;
 }
 
 const STORAGE_KEY = "foodtrack:v1";
@@ -56,6 +63,7 @@ export const INITIAL_STATE: AppState = {
   language: "auto",
   theme: "system",
   communityPush: false,
+  reports: {},
 };
 
 function load(): AppState {
@@ -181,6 +189,13 @@ export const actions = {
   },
   setCommunityPush(communityPush: boolean) {
     setState({ ...state, communityPush });
+  },
+  saveReport(weekEnd: string, report: WeeklyReport) {
+    // Keep the last 8 weeks.
+    const kept = Object.entries({ ...state.reports, [weekEnd]: { createdAt: Date.now(), report } })
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 8);
+    setState({ ...state, reports: Object.fromEntries(kept) });
   },
   setReminders(reminders: AppState["reminders"]) {
     setState({ ...state, reminders });

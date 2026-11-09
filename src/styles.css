@@ -2300,3 +2300,138 @@ img.avatar {
 .weight-history tr {
   cursor: pointer;
 }
+
+/* ---- Health score ---- */
+.score-ring .score-track {
+  fill: none;
+  stroke: var(--ring-track);
+  stroke-width: 6;
+}
+
+.score-ring .score-fill {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.score-ring .score-text {
+  fill: var(--text);
+  font-weight: 800;
+}
+
+/* Score colours: green → amber → red; the label in words always sits next to them. */
+.tier-great .score-fill,
+.tier-good .score-fill {
+  stroke: var(--accent);
+}
+
+.tier-fair .score-fill {
+  stroke: var(--fat);
+}
+
+.tier-poor .score-fill {
+  stroke: var(--danger);
+}
+
+.health-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.health-card p {
+  margin: 2px 0 0;
+}
+
+.health-card .label {
+  margin: 0;
+}
+
+.health-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: 1px;
+  background: var(--surface-2);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.health-chip.tier-great,
+.health-chip.tier-good {
+  background: var(--accent-soft);
+}
+
+.health-chip.tier-fair {
+  background: var(--warn-soft);
+}
+
+.health-chip.tier-poor {
+  background: color-mix(in srgb, var(--danger) 16%, var(--surface));
+}
+
+.day-score {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px 0 0;
+}
+
+/* ---- Weekly report ---- */
+.report-card {
+  gap: 12px;
+}
+
+.report-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.report-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-headline {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.report-summary {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.report-list .label,
+.report-idea .label {
+  margin: 0 0 4px;
+}
+
+.report-list ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+  line-height: 1.45;
+}
+
+.report-idea {
+  background: var(--accent-soft);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+.report-idea p {
+  margin: 0;
+}
+
+.small-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 3px;
+}

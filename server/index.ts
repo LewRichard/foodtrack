@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import express, { type RequestHandler } from "express";
+import express, { type RequestHandler, type Response } from "express";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +11,7 @@ import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
 import { testReminderText } from "../shared/reminders.ts";
 import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from "./communityPush.ts";
+import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -168,6 +169,24 @@ const validateUpload: RequestHandler = (req, res, next) => {
   }
 };
 
+/** Turns an error from a Claude request into the API's JSON error with a code the app understands. */
+function sendAiError(res: Response, error: unknown) {
+  if (error instanceof AnalysisError) {
+    res.status(error.status).json({ error: error.message, code: error.code });
+  } else if (error instanceof Anthropic.AuthenticationError) {
+    res.status(500).json({ error: "Server API key is missing or invalid. Set ANTHROPIC_API_KEY.", code: "server_key" });
+  } else if (error instanceof Anthropic.RateLimitError) {
+    res.status(429).json({ error: "Too many requests — please try again in a moment.", code: "busy" });
+  } else if (error instanceof Anthropic.BadRequestError) {
+    res.status(400).json({ error: `Request rejected: ${error.message}`, code: "bad_image" });
+  } else if (error instanceof Anthropic.APIError) {
+    res.status(502).json({ error: `AI service error (${error.status ?? "network"}).`, code: "ai_error" });
+  } else {
+    console.error(error);
+    res.status(500).json({ error: "Unexpected server error.", code: "server_error" });
+  }
+}
+
 app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, limitScans(limiter), async (req, res) => {
   const { image, mediaType, note, language } = req.body;
   try {
@@ -179,20 +198,22 @@ app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, l
     );
     res.json(result);
   } catch (error) {
-    if (error instanceof AnalysisError) {
-      res.status(error.status).json({ error: error.message, code: error.code });
-    } else if (error instanceof Anthropic.AuthenticationError) {
-      res.status(500).json({ error: "Server API key is missing or invalid. Set ANTHROPIC_API_KEY.", code: "server_key" });
-    } else if (error instanceof Anthropic.RateLimitError) {
-      res.status(429).json({ error: "Too many requests — please try again in a moment.", code: "busy" });
-    } else if (error instanceof Anthropic.BadRequestError) {
-      res.status(400).json({ error: `Request rejected: ${error.message}`, code: "bad_image" });
-    } else if (error instanceof Anthropic.APIError) {
-      res.status(502).json({ error: `AI service error (${error.status ?? "network"}).`, code: "ai_error" });
-    } else {
-      console.error(error);
-      res.status(500).json({ error: "Unexpected server error.", code: "server_error" });
-    }
+    sendAiError(res, error);
+  }
+});
+
+// The AI weekly check-in. Costs about as much as a scan, so it shares the scan limits.
+app.post("/api/report/weekly", requireScanAccess(guard, verifyUser), limitScans(limiter), async (req, res) => {
+  const parsed = ReportInputSchema.safeParse(req.body?.week);
+  if (!parsed.success) {
+    res.status(400).json({ error: "The week's data isn't in the expected format.", code: "bad_report" });
+    return;
+  }
+  const language = isLang(req.body?.language) ? req.body.language : "en";
+  try {
+    res.json(await writeWeeklyReport(parsed.data, language));
+  } catch (error) {
+    sendAiError(res, error);
   }
 });
 

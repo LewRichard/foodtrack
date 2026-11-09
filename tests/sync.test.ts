@@ -345,3 +345,19 @@ describe("weight sync", () => {
     expect(phone.get().weights).toEqual({ "2026-11-09": 70 });
   });
 });
+
+describe("health score sync", () => {
+  it("carries a scanned meal's health score to other devices", async () => {
+    const cloud = new FakeCloud();
+    const phone = device();
+    const laptop = device();
+    phone.signIn("u1");
+    laptop.signIn("u1");
+    phone.add({ ...food("Grilled fish"), healthScore: 9 }, 100);
+    phone.add(food("Cookie"), 101);
+    await phone.sync(cloud);
+    await laptop.sync(cloud);
+    const byName = Object.fromEntries(laptop.get().entries.map((e) => [e.name, e.healthScore]));
+    expect(byName).toEqual({ "Grilled fish": 9, Cookie: undefined });
+  });
+});

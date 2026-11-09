@@ -75,7 +75,12 @@ function supabaseRemote(userId: string): Remote {
       if (batch.entries.length) {
         const rows = batch.entries.map((r) => ({ ...r, user_id: userId }));
         for (let i = 0; i < rows.length; i += 500) {
-          const { error } = await db.from("food_entries").upsert(rows.slice(i, i + 500), { onConflict: "id" });
+          const chunk = rows.slice(i, i + 500);
+          let { error } = await db.from("food_entries").upsert(chunk, { onConflict: "id" });
+          // A database set up before health scores existed has no health_score column: save the rest.
+          if (error && /health_score/.test(error.message)) {
+            ({ error } = await db.from("food_entries").upsert(chunk.map(({ health_score: _h, ...rest }) => rest), { onConflict: "id" }));
+          }
           if (error) throw error;
         }
       }

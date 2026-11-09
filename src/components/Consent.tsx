@@ -9,7 +9,7 @@ export default function Consent({ onAccept, onClose }: { onAccept: () => void; o
       <ul className="consent-list">
         <li>Photos are used only to estimate nutrition. They're not stored on our server.</li>
         <li>Anthropic processes the photo under its API terms to return the estimate.</li>
-        <li>Your food diary stays on this device.</li>
+        <li>Your food diary stays on this device, unless you sign in to back it up to your account.</li>
         <li>Estimates are approximate and aren't medical advice.</li>
       </ul>
       <p className="muted small">

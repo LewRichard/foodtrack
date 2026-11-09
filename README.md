@@ -20,7 +20,9 @@ calls Claude's vision model, so your API key never reaches the browser.
 - **Goals** – calculate targets from your profile (Mifflin-St Jeor BMR × activity, adjusted for
   lose / maintain / gain) or set them manually.
 - **Trends** – 7- and 30-day calorie chart vs. goal, average macro split, daily log table.
-- **Private by default** – your diary is stored in the browser's local storage. Export/import a JSON backup.
+- **Private by default** – your diary is stored on the device. Export/import a JSON backup.
+- **Optional accounts & cloud backup** – sign in to save the diary online and sync it between phone,
+  computer and the iPhone app (Supabase). Works offline and catches up later. Setup: [docs/DATABASE.md](docs/DATABASE.md).
 - **Safe to put online** – optional access code, per-visitor hourly scan limit and a daily cap protect your
   API key and bill; users consent before their first photo is sent to the AI; a privacy policy page is included.
 
@@ -78,6 +80,7 @@ Build command `npm ci && npm run build`, start command `npm start`, and set the 
 | `PORT` | 8787 | Port to listen on (hosts usually set this for you). |
 | `TRUST_PROXY` | 1 | Proxies in front of the server, so the rate limit sees real visitor IPs. |
 | `ALLOWED_ORIGINS` | `capacitor://localhost` | Other origins allowed to call the API (the iPhone app). |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | empty | Turn on accounts & cloud backup ([docs/DATABASE.md](docs/DATABASE.md)). Built into the app, so rebuild after changing. |
 
 Also set a monthly spend limit in the [Anthropic Console](https://console.anthropic.com) as a final safety net.
 The scan limits are kept in memory, so they reset when the server restarts. Run a single instance.
@@ -103,6 +106,9 @@ review & edit items  ◄──────────────────�
 log to localStorage diary
 ```
 
+- `src/lib/cloud.ts` handles accounts and syncing with Supabase; the sync rules (newest change wins,
+  offline queue) are in `src/lib/syncState.ts`. The database schema and its security rules are in
+  `supabase/schema.sql`.
 - `server/guard.ts` holds the access code check and scan limits.
 - `server/analyze.ts` sends the image to Claude with a dietitian-style system prompt and uses
   **structured outputs** (`betaZodOutputFormat`) so the response is always valid JSON matching the

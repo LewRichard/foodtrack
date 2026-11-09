@@ -1,10 +1,19 @@
 import { useRef, useState } from "react";
 import { getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
+import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
+import Account from "./Account.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
   const { name, profile, goals, entries, aiConsent } = useAppState();
+  const session = useSession();
   const [nameDraft, setNameDraft] = useState(name);
+  const [lastName, setLastName] = useState(name);
+  if (name !== lastName) {
+    // Name changed elsewhere (e.g. downloaded from your account): show the new one.
+    setLastName(name);
+    setNameDraft(name);
+  }
   const [code, setCode] = useState(getAccessCode());
   const [codeStatus, setCodeStatus] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -42,7 +51,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
     try {
       const data = JSON.parse(await file.text()) as AppState;
       if (!Array.isArray(data.entries)) throw new Error("Not a FoodTrack backup");
-      if (confirm(`Replace your data with ${data.entries.length} entries from this backup?`)) {
+      const where = session ? "your account" : "this device";
+      if (confirm(`Load ${data.entries.length} entries from this backup into ${where}? Your current goals and name will be replaced.`)) {
         actions.importData(data);
         setNameDraft(getState().name);
       }
@@ -62,6 +72,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
           {daysLogged} day{daysLogged === 1 ? "" : "s"} logged · {goals.calories.toLocaleString("en-US")} kcal goal
         </p>
       </section>
+
+      {cloudEnabled && <Account />}
 
       <section className="card">
         <h2 className="title">Your name</h2>
@@ -121,7 +133,11 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
 
       <section className="card">
         <h2 className="title">Your data</h2>
-        <p className="muted small">Your diary is stored on this device only. Export a backup to move it to another device.</p>
+        <p className="muted small">
+          {session
+            ? "Your diary is saved in your account. You can also export a copy as a file."
+            : "Your diary is stored on this device only. Export a backup to move it to another device."}
+        </p>
         <div className="row gap wrap">
           <button className="btn" onClick={exportData}>
             Export backup
@@ -129,17 +145,19 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
           <button className="btn" onClick={() => fileRef.current?.click()}>
             Import backup
           </button>
-          <button
-            className="btn danger"
-            onClick={() => {
-              if (confirm("Delete all logged food, goals and settings?")) {
-                actions.reset();
-                setNameDraft("");
-              }
-            }}
-          >
-            Reset all
-          </button>
+          {!session && (
+            <button
+              className="btn danger"
+              onClick={() => {
+                if (confirm("Delete all logged food, goals and settings?")) {
+                  actions.reset();
+                  setNameDraft("");
+                }
+              }}
+            >
+              Reset all
+            </button>
+          )}
         </div>
         <input ref={fileRef} type="file" accept="application/json" hidden onChange={importData} />
       </section>

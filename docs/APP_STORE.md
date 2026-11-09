@@ -93,10 +93,17 @@ In App Store Connect → your app → the **1.0 Prepare for Submission** page:
 | Build | Pick the build Codemagic uploaded. |
 | Review notes | Explain that photos are sent to an AI service to estimate nutrition, after an in-app consent screen. If you kept an access code, give it here. |
 
-**App Privacy** (the "nutrition label"): by Apple's definition, data is "collected" only if it leaves the
-device and is kept longer than needed to answer the request. FoodTrack's diary stays on the device and
-photos aren't stored by the server, so **Data Not Collected** is likely accurate. Read Apple's definitions
-and answer for how *you* run the server (for example, if you add analytics or keep logs, that changes).
+**App Privacy** (the "nutrition label"): if accounts are turned on (docs/DATABASE.md), declare data
+that's linked to the user and used for app functionality only (no tracking):
+- **Contact Info → Email Address**
+- **Health & Fitness → Health** (food, nutrition, water and exercise entries)
+- **User Content → Photos** (the small meal thumbnails saved with entries)
+- **Identifiers → User ID**
+
+Meal photos sent for analysis aren't stored by the server. Without accounts, the diary stays on the device
+and **Data Not Collected** is likely accurate. Either way, read Apple's definitions and answer for how *you*
+run the server (analytics or kept logs change the answers). Because the app has accounts, Apple also
+requires in-app account deletion: that's the **Delete account** button in Profile.
 
 Then **Add for Review** → **Submit**. Review usually takes 1–3 days.
 

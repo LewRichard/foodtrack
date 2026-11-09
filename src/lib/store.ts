@@ -1,5 +1,15 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
+import {
+  EMPTY_SYNC,
+  isUuid,
+  markDayChanged,
+  markEntriesChanged,
+  markEntryDeleted,
+  markSettingsChanged,
+  uuid,
+  type SyncMeta,
+} from "./syncState.ts";
 import type { LogEntry } from "./types.ts";
 
 export interface AppState {
@@ -11,6 +21,9 @@ export interface AppState {
   name: string; // shown in the greeting
   recents: Omit<LogEntry, "id" | "date" | "meal" | "loggedAt" | "photo">[]; // most recent first, de-duplicated by name
   aiConsent: boolean; // agreed to send meal photos to the AI service
+  dayUpdatedAt: Record<string, number>; // date -> when water/burned last changed (for sync)
+  settingsUpdatedAt: number; // when name/goals/profile last changed (for sync); 0 = never
+  sync: SyncMeta; // cloud backup bookkeeping (see syncState.ts)
 }
 
 const STORAGE_KEY = "foodtrack:v1";
@@ -25,6 +38,9 @@ export const INITIAL_STATE: AppState = {
   name: "",
   recents: [],
   aiConsent: false,
+  dayUpdatedAt: {},
+  settingsUpdatedAt: 0,
+  sync: EMPTY_SYNC,
 };
 
 function load(): AppState {
@@ -32,7 +48,17 @@ function load(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return INITIAL_STATE;
     const parsed = JSON.parse(raw) as Partial<AppState>;
-    return { ...INITIAL_STATE, ...parsed, goals: { ...DEFAULT_GOALS, ...parsed.goals } };
+    const loaded: AppState = {
+      ...INITIAL_STATE,
+      ...parsed,
+      goals: { ...DEFAULT_GOALS, ...parsed.goals },
+      sync: { ...EMPTY_SYNC, ...parsed.sync },
+    };
+    // Diaries saved before cloud backup existed have no settings timestamp; if the person had
+    // customised anything, give it the oldest possible one so it's uploaded but never beats a real edit.
+    const customised = loaded.name !== "" || loaded.profile !== null || JSON.stringify(loaded.goals) !== JSON.stringify(DEFAULT_GOALS);
+    if (!parsed.settingsUpdatedAt && customised) loaded.settingsUpdatedAt = 1;
+    return loaded;
   } catch {
     return INITIAL_STATE;
   }
@@ -103,44 +129,77 @@ export function entriesForDate(s: AppState, date: string): LogEntry[] {
 
 // ---- Actions ---------------------------------------------------------------
 
+/** Ids are UUIDs so entries can be stored in the cloud database as they are. */
 export function newId(): string {
-  return typeof crypto !== "undefined" && "randomUUID" in crypto
-    ? crypto.randomUUID()
-    : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  return uuid();
 }
 
 export const actions = {
   addEntries(added: LogEntry[]) {
-    setState(withEntries(state, added));
+    const now = Date.now();
+    const stamped = added.map((e) => ({ ...e, updatedAt: now }));
+    setState(markEntriesChanged(withEntries(state, stamped), stamped.map((e) => e.id)));
   },
   updateEntry(id: string, patch: Partial<LogEntry>) {
-    setState({ ...state, entries: state.entries.map((e) => (e.id === id ? { ...e, ...patch } : e)) });
+    const now = Date.now();
+    const entries = state.entries.map((e) => (e.id === id ? { ...e, ...patch, id, updatedAt: now } : e));
+    setState(markEntriesChanged({ ...state, entries }, [id]));
   },
   removeEntry(id: string) {
-    setState({ ...state, entries: state.entries.filter((e) => e.id !== id) });
+    const entry = state.entries.find((e) => e.id === id);
+    if (!entry) return;
+    setState(markEntryDeleted({ ...state, entries: state.entries.filter((e) => e.id !== id) }, entry, Date.now()));
   },
   setGoals(goals: Goals) {
-    setState({ ...state, goals });
+    setState(markSettingsChanged({ ...state, goals }, Date.now()));
   },
   setProfile(profile: Profile | null) {
-    setState({ ...state, profile });
+    setState(markSettingsChanged({ ...state, profile }, Date.now()));
   },
   setAiConsent(aiConsent: boolean) {
     setState({ ...state, aiConsent });
   },
   setName(name: string) {
-    setState({ ...state, name });
+    setState(markSettingsChanged({ ...state, name }, Date.now()));
   },
   setBurned(date: string, kcal: number) {
-    setState({ ...state, burned: { ...state.burned, [date]: Math.max(0, Math.round(kcal) || 0) } });
+    const burned = { ...state.burned, [date]: Math.max(0, Math.round(kcal) || 0) };
+    setState(markDayChanged({ ...state, burned }, date, Date.now()));
   },
   setWater(date: string, glasses: number) {
-    setState({ ...state, water: { ...state.water, [date]: Math.max(0, glasses) } });
+    const water = { ...state.water, [date]: Math.max(0, glasses) };
+    setState(markDayChanged({ ...state, water }, date, Date.now()));
   },
-  importData(data: AppState) {
-    setState({ ...INITIAL_STATE, ...data });
+  /** Replaces the diary with a backup. When signed in, everything in it is queued for upload. */
+  importData(data: Partial<AppState>) {
+    const now = Date.now();
+    const imported: AppState = {
+      ...INITIAL_STATE,
+      ...data,
+      goals: { ...DEFAULT_GOALS, ...data.goals },
+      aiConsent: state.aiConsent,
+      sync: { ...state.sync, pendingEntries: [], pendingDeletes: [], pendingDays: [], pendingSettings: false },
+    };
+    // Keep ids, so re-importing a backup updates the same entries in the cloud instead of duplicating them.
+    const entries = imported.entries.map((e) => ({ ...e, id: isUuid(e.id) ? e.id : newId(), updatedAt: now }));
+    const dates = [...new Set([...Object.keys(imported.water), ...Object.keys(imported.burned)])];
+    let next = markEntriesChanged({ ...imported, entries }, entries.map((e) => e.id));
+    for (const d of dates) next = markDayChanged(next, d, now);
+    setState(markSettingsChanged(next, now));
   },
   reset() {
-    setState(INITIAL_STATE);
+    setState({ ...INITIAL_STATE, aiConsent: state.aiConsent });
+  },
+  /** Used by cloud sync to apply uploads and downloads. */
+  replace(next: AppState) {
+    setState(next);
   },
 };
+
+/** Runs `listener` whenever the state changes (used to trigger uploads). */
+export function onStateChange(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}

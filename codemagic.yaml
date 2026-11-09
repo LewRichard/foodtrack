@@ -17,6 +17,9 @@ workflows:
         VITE_API_URL: https://YOUR-SERVER.onrender.com # FILL IN
         # The app's Apple ID: App Store Connect → your app → App Information → Apple ID (a number).
         APP_STORE_APPLE_ID: 0000000000 # FILL IN
+        # Accounts & cloud backup: the same two values you set on Render (leave empty to build without accounts).
+        VITE_SUPABASE_URL: ""
+        VITE_SUPABASE_ANON_KEY: ""
       node: 22
       xcode: latest
     scripts:

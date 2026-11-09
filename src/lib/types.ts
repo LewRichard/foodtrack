@@ -36,6 +36,7 @@ export interface LogEntry extends FoodItem {
   date: string; // local YYYY-MM-DD
   meal: MealType;
   loggedAt: number; // epoch ms
+  updatedAt?: number; // epoch ms of the last change (for cloud sync); missing on older entries
   source: "scan" | "manual" | "quick";
   photo?: string; // small JPEG data URL thumbnail
 }

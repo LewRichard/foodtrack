@@ -15,6 +15,11 @@ services:
         sync: false
       - key: APP_ACCESS_CODE
         sync: false
+      # Accounts & cloud backup (optional). From Supabase: Project Settings → API / API Keys.
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
       - key: SCANS_PER_IP_PER_HOUR
         value: "30"
       - key: DAILY_SCAN_LIMIT

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { actions } from "../lib/store.ts";
-import { MEAL_LABELS, MEAL_TYPES, type LogEntry } from "../lib/types.ts";
+import { useI18n } from "../i18n/index.ts";
+import { MEAL_TYPES, type LogEntry } from "../lib/types.ts";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 import Sheet from "./Sheet.tsx";
 
 export default function EditEntry({ entry, onClose }: { entry: LogEntry; onClose: () => void }) {
   const [draft, setDraft] = useState<Draft>({ key: entry.id, base: entry, factor: 1 });
   const [meal, setMeal] = useState(entry.meal);
+  const { t } = useI18n();
 
   function save() {
     actions.updateEntry(entry.id, { ...draftItem(draft), meal });
@@ -14,13 +16,13 @@ export default function EditEntry({ entry, onClose }: { entry: LogEntry; onClose
   }
 
   return (
-    <Sheet title="Edit food" onClose={onClose}>
+    <Sheet title={t("edit.title")} onClose={onClose}>
       {entry.photo && <img src={entry.photo} alt="" className="sheet-photo" />}
       <ItemEditor draft={draft} onChange={setDraft} defaultOpen />
       <div className="segmented">
         {MEAL_TYPES.map((m) => (
           <button key={m} className={m === meal ? "active" : ""} onClick={() => setMeal(m)}>
-            {MEAL_LABELS[m]}
+            {t(`meal.${m}`)}
           </button>
         ))}
       </div>
@@ -32,10 +34,10 @@ export default function EditEntry({ entry, onClose }: { entry: LogEntry; onClose
             onClose();
           }}
         >
-          Delete
+          {t("common.delete")}
         </button>
         <button className="btn primary grow" onClick={save}>
-          Save
+          {t("common.save")}
         </button>
       </div>
     </Sheet>

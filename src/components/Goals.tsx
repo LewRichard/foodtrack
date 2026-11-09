@@ -8,39 +8,34 @@ import {
   type Goals,
   type Profile,
 } from "../../shared/nutrition.ts";
+import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { actions, useAppState } from "../lib/store.ts";
 
-const ACTIVITY_LABELS: Record<Activity, string> = {
-  sedentary: "Sedentary (little exercise)",
-  light: "Light (1–3 days/week)",
-  moderate: "Moderate (3–5 days/week)",
-  active: "Active (6–7 days/week)",
-  very_active: "Very active (physical job)",
-};
+const ACTIVITIES: Activity[] = ["sedentary", "light", "moderate", "active", "very_active"];
+const GOAL_TYPES: GoalType[] = ["lose", "maintain", "gain"];
 
-const GOAL_LABELS: Record<GoalType, string> = { lose: "Lose weight", maintain: "Maintain", gain: "Gain muscle" };
-
-const GOAL_FIELDS: { key: keyof Goals; label: string; unit: string }[] = [
-  { key: "calories", label: "Calories", unit: "kcal" },
-  { key: "protein", label: "Protein", unit: "g" },
-  { key: "carbs", label: "Carbs", unit: "g" },
-  { key: "fat", label: "Fat", unit: "g" },
-  { key: "fiber", label: "Fiber (min)", unit: "g" },
-  { key: "sugar", label: "Sugar (max)", unit: "g" },
-  { key: "sodium", label: "Sodium (max)", unit: "mg" },
+const GOAL_FIELDS: { key: keyof Goals; label: MessageKey; unit: string }[] = [
+  { key: "calories", label: "nutrient.calories", unit: "kcal" },
+  { key: "protein", label: "nutrient.protein", unit: "g" },
+  { key: "carbs", label: "nutrient.carbs", unit: "g" },
+  { key: "fat", label: "nutrient.fat", unit: "g" },
+  { key: "fiber", label: "nutrient.fiberMin", unit: "g" },
+  { key: "sugar", label: "nutrient.sugarMax", unit: "g" },
+  { key: "sodium", label: "nutrient.sodiumMax", unit: "mg" },
 ];
 
 const DEFAULT_PROFILE: Profile = { sex: "female", age: 30, heightCm: 168, weightKg: 68, activity: "light", goal: "maintain" };
 
 export default function Goals() {
   const { goals, profile: savedProfile } = useAppState();
+  const { t, num } = useI18n();
   const [profile, setProfile] = useState<Profile>(savedProfile ?? DEFAULT_PROFILE);
   const [goalDraft, setGoalDraft] = useState<Goals>(goals);
   const [saved, setSaved] = useState(false);
   const valid = profile.age > 0 && profile.heightCm > 0 && profile.weightKg > 0;
   const suggested = valid ? goalsFromProfile(profile) : null;
 
-  const num = (v: string) => (v === "" ? 0 : Number(v));
+  const parse = (v: string) => (v === "" ? 0 : Number(v));
 
   function flash() {
     setSaved(true);
@@ -58,76 +53,81 @@ export default function Goals() {
   return (
     <div className="page">
       <header className="page-head">
-        <h1>Goals</h1>
-        <p className="muted">Your daily targets for calories and nutrients.</p>
+        <h1>{t("goals.title")}</h1>
+        <p className="muted">{t("goals.subtitle")}</p>
       </header>
 
       <section className="card">
-        <h2 className="title">Calculate from your profile</h2>
+        <h2 className="title">{t("goals.calcTitle")}</h2>
         <div className="field-grid">
           <label>
-            <span>Sex</span>
+            <span>{t("goals.sex")}</span>
             <select value={profile.sex} onChange={(e) => setProfile({ ...profile, sex: e.target.value as Profile["sex"] })}>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
+              <option value="female">{t("goals.female")}</option>
+              <option value="male">{t("goals.male")}</option>
             </select>
           </label>
           <label>
-            <span>Age</span>
-            <input type="number" inputMode="numeric" value={profile.age || ""} onChange={(e) => setProfile({ ...profile, age: num(e.target.value) })} />
+            <span>{t("goals.age")}</span>
+            <input type="number" inputMode="numeric" value={profile.age || ""} onChange={(e) => setProfile({ ...profile, age: parse(e.target.value) })} />
           </label>
           <label>
-            <span>Height (cm)</span>
-            <input type="number" inputMode="decimal" value={profile.heightCm || ""} onChange={(e) => setProfile({ ...profile, heightCm: num(e.target.value) })} />
+            <span>{t("goals.height")}</span>
+            <input type="number" inputMode="decimal" value={profile.heightCm || ""} onChange={(e) => setProfile({ ...profile, heightCm: parse(e.target.value) })} />
           </label>
           <label>
-            <span>Weight (kg)</span>
-            <input type="number" inputMode="decimal" value={profile.weightKg || ""} onChange={(e) => setProfile({ ...profile, weightKg: num(e.target.value) })} />
+            <span>{t("goals.weight")}</span>
+            <input type="number" inputMode="decimal" value={profile.weightKg || ""} onChange={(e) => setProfile({ ...profile, weightKg: parse(e.target.value) })} />
           </label>
           <label className="span-2">
-            <span>Activity</span>
+            <span>{t("goals.activity")}</span>
             <select value={profile.activity} onChange={(e) => setProfile({ ...profile, activity: e.target.value as Activity })}>
-              {Object.entries(ACTIVITY_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
+              {ACTIVITIES.map((a) => (
+                <option key={a} value={a}>
+                  {t(`activity.${a}`)}
                 </option>
               ))}
             </select>
           </label>
         </div>
         <div className="segmented">
-          {(Object.keys(GOAL_LABELS) as GoalType[]).map((g) => (
+          {GOAL_TYPES.map((g) => (
             <button key={g} className={g === profile.goal ? "active" : ""} onClick={() => setProfile({ ...profile, goal: g })}>
-              {GOAL_LABELS[g]}
+              {t(`goal.${g}`)}
             </button>
           ))}
         </div>
         {suggested && (
           <p className="muted small">
-            BMR {Math.round(bmr(profile)).toLocaleString("en-US")} kcal · TDEE {Math.round(tdee(profile)).toLocaleString("en-US")} kcal →{" "}
-            <b>{suggested.calories.toLocaleString("en-US")} kcal</b>, {suggested.protein} g protein, {suggested.carbs} g carbs,{" "}
-            {suggested.fat} g fat
+            {t("goals.suggestion", {
+              bmr: num(bmr(profile)),
+              tdee: num(tdee(profile)),
+              kcal: num(suggested.calories),
+              protein: suggested.protein,
+              carbs: suggested.carbs,
+              fat: suggested.fat,
+            })}
           </p>
         )}
         <button className="btn primary" disabled={!suggested} onClick={applySuggested}>
-          Use these goals
+          {t("goals.use")}
         </button>
       </section>
 
       <section className="card">
-        <h2 className="title">Daily targets</h2>
+        <h2 className="title">{t("goals.targets")}</h2>
         <div className="field-grid">
           {GOAL_FIELDS.map((f) => (
             <label key={f.key}>
               <span>
-                {f.label} ({f.unit})
+                {t(f.label)} ({f.unit})
               </span>
               <input
                 type="number"
                 inputMode="numeric"
                 min={0}
                 value={goalDraft[f.key] || ""}
-                onChange={(e) => setGoalDraft({ ...goalDraft, [f.key]: num(e.target.value) })}
+                onChange={(e) => setGoalDraft({ ...goalDraft, [f.key]: parse(e.target.value) })}
               />
             </label>
           ))}
@@ -139,7 +139,7 @@ export default function Goals() {
             flash();
           }}
         >
-          {saved ? "Saved ✓" : "Save targets"}
+          {saved ? t("common.saved") : t("goals.saveTargets")}
         </button>
       </section>
 

@@ -1,4 +1,6 @@
+import type { Lang } from "../../shared/languages.ts";
 import type { AnalysisResult } from "../../shared/nutrition.ts";
+import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
 import type { PreparedImage } from "./image.ts";
 
@@ -39,25 +41,53 @@ export function setAccessCode(code: string) {
 async function request<T>(path: string, init: RequestInit, code = getAccessCode()): Promise<T> {
   // Signed-in users prove it with their account token, so they never need an access code.
   const token = await accessToken().catch(() => null);
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(code ? { "x-access-code": code } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(code ? { "x-access-code": code } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  } catch (e) {
+    if (init.signal?.aborted) throw e;
+    throw new ApiError(t("err.network"), 0, "network");
+  }
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiError(body?.error ?? `Request failed (${res.status})`, res.status, body?.code);
+  if (!res.ok) throw new ApiError(body?.error ?? t("common.requestFailed", { status: res.status }), res.status, body?.code);
   return body as T;
 }
 
-export function analyzeImage(image: PreparedImage, note: string, signal?: AbortSignal): Promise<AnalysisResult> {
+export function analyzeImage(image: PreparedImage, note: string, language: Lang, signal?: AbortSignal): Promise<AnalysisResult> {
   return request<AnalysisResult>("/api/analyze", {
     method: "POST",
-    body: JSON.stringify({ image: image.base64, mediaType: image.mediaType, note }),
+    body: JSON.stringify({ image: image.base64, mediaType: image.mediaType, note, language }),
     signal,
   });
+}
+
+// Server error codes → messages in the app's language. Anything else shows the server's own text.
+const ERROR_MESSAGES: Record<string, MessageKey> = {
+  access_code_required: "err.accessCodeWrong",
+  rate_limited: "err.rateLimited",
+  daily_limit: "err.dailyLimit",
+  ai_refused: "err.aiRefused",
+  ai_unreadable: "err.aiUnreadable",
+  busy: "err.busy",
+  server_key: "err.serverKey",
+  ai_error: "err.aiService",
+  image_too_large: "err.imageTooLarge",
+  bad_image: "err.badImage",
+  server_error: "err.server",
+  network: "err.network",
+};
+
+/** A message for any error, translated when the server sent a known code. */
+export function errorMessage(e: unknown): string {
+  if (e instanceof ApiError && e.code && ERROR_MESSAGES[e.code]) return t(ERROR_MESSAGES[e.code]);
+  return e instanceof Error ? e.message : String(e);
 }
 
 /** Checks an access code with the server (doesn't use up a scan) and remembers it if it's right. */

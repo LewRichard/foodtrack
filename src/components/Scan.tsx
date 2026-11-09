@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { sumNutrients, type AnalysisResult } from "../../shared/nutrition.ts";
-import { analyzeImage, isAccessError, isSignInError, unlock } from "../lib/api.ts";
-import { todayKey } from "../lib/dates.ts";
+import { useI18n } from "../i18n/index.ts";
+import { analyzeImage, errorMessage, isAccessError, isSignInError, unlock } from "../lib/api.ts";
+import { formatLongDate, todayKey } from "../lib/dates.ts";
 import { prepareFromFile, prepareFromSource, type PreparedImage } from "../lib/image.ts";
 import { isNative, pickNativePhoto } from "../lib/native.ts";
 import { actions, getState, newId } from "../lib/store.ts";
-import { MEAL_LABELS, MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
+import { MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
 import Consent from "./Consent.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 
@@ -32,6 +33,8 @@ export default function Scan({
   const [meal, setMeal] = useState<MealType>(mealForTime());
   const [awaitingConsent, setAwaitingConsent] = useState<PreparedImage | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const i18n = useI18n();
+  const { t, tp, num } = i18n;
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -45,7 +48,7 @@ export default function Scan({
     abortRef.current = controller;
     setPhase({ kind: "analyzing", image });
     try {
-      const result = await analyzeImage(image, note, controller.signal);
+      const result = await analyzeImage(image, note, i18n.lang, controller.signal);
       setDrafts(result.items.map((base, i) => ({ key: `${i}-${base.name}`, base, factor: 1 })));
       setPhase({ kind: "review", image, result });
     } catch (e) {
@@ -53,7 +56,7 @@ export default function Scan({
       setPhase({
         kind: "error",
         image,
-        message: e instanceof Error ? e.message : String(e),
+        message: errorMessage(e),
         needs: isSignInError(e) ? "signin" : isAccessError(e) ? "code" : null,
       });
     }
@@ -100,11 +103,11 @@ export default function Scan({
   return (
     <div className="page scan-result">
       <div className="photo-wrap">
-        <img src={image.dataUrl} alt="Your meal" className="photo" />
+        <img src={image.dataUrl} alt={t("scan.yourMeal")} className="photo" />
         {phase.kind === "analyzing" && (
           <div className="photo-overlay">
             <div className="spinner" />
-            <p>Analyzing your food…</p>
+            <p>{t("scan.analyzing")}</p>
           </div>
         )}
       </div>
@@ -115,17 +118,14 @@ export default function Scan({
 
       {phase.kind === "error" && phase.needs === "signin" && (
         <div className="card">
-          <h2 className="title">Sign in to scan</h2>
-          <p className="muted small">
-            Photo scanning is for signed-in users. It's free to create an account, and it also backs up your diary. You can
-            still log food by hand without one.
-          </p>
+          <h2 className="title">{t("scan.signInTitle")}</h2>
+          <p className="muted small">{t("scan.signInBody")}</p>
           <div className="row gap">
             <button className="btn" onClick={() => setPhase({ kind: "capture" })}>
-              Cancel
+              {t("common.cancel")}
             </button>
             <button className="btn primary grow" onClick={onSignIn}>
-              Sign in or create account
+              {t("scan.signInAction")}
             </button>
           </div>
         </div>
@@ -136,10 +136,10 @@ export default function Scan({
           <p className="error">{phase.message}</p>
           <div className="row gap">
             <button className="btn primary" onClick={() => analyze(image)}>
-              Try again
+              {t("scan.tryAgain")}
             </button>
             <button className="btn" onClick={() => setPhase({ kind: "capture" })}>
-              New photo
+              {t("scan.newPhoto")}
             </button>
           </div>
         </div>
@@ -147,9 +147,9 @@ export default function Scan({
 
       {phase.kind === "review" && !phase.result.isFood && (
         <div className="card">
-          <p>No food was recognized in this photo. Try again with the food centered and well lit.</p>
+          <p>{t("scan.noFood")}</p>
           <button className="btn primary" onClick={() => setPhase({ kind: "capture" })}>
-            Retake photo
+            {t("scan.retakePhoto")}
           </button>
         </div>
       )}
@@ -161,12 +161,12 @@ export default function Scan({
               <div>
                 <h2 className="title">{phase.result.mealName}</h2>
                 <p className="muted small">
-                  {drafts.length} item{drafts.length === 1 ? "" : "s"} · P {Math.round(total.protein)}g · C{" "}
-                  {Math.round(total.carbs)}g · F {Math.round(total.fat)}g
+                  {tp("scan.items", drafts.length)} · {t("abbr.protein")} {Math.round(total.protein)}g · {t("abbr.carbs")}{" "}
+                  {Math.round(total.carbs)}g · {t("abbr.fat")} {Math.round(total.fat)}g
                 </p>
               </div>
               <div className="big-kcal">
-                <strong>{Math.round(total.calories)}</strong>
+                <strong>{num(total.calories)}</strong>
                 <span className="muted small">kcal</span>
               </div>
             </div>
@@ -174,15 +174,15 @@ export default function Scan({
           </div>
 
           <div className="card">
-            <p className="label">Add to</p>
+            <p className="label">{t("scan.addTo")}</p>
             <div className="segmented">
               {MEAL_TYPES.map((m) => (
                 <button key={m} className={m === meal ? "active" : ""} onClick={() => setMeal(m)}>
-                  {MEAL_LABELS[m]}
+                  {t(`meal.${m}`)}
                 </button>
               ))}
             </div>
-            {date !== todayKey() && <p className="muted small">Logging to {date}</p>}
+            {date !== todayKey() && <p className="muted small">{t("scan.loggingTo", { date: formatLongDate(date, i18n) })}</p>}
           </div>
 
           <div className="card list">
@@ -203,8 +203,8 @@ export default function Scan({
                     key: newId(),
                     factor: 1,
                     base: {
-                      name: "Extra item",
-                      portion: "1 serving",
+                      name: t("scan.extraItem"),
+                      portion: t("common.oneServing"),
                       grams: 0,
                       calories: 0,
                       protein: 0,
@@ -219,16 +219,16 @@ export default function Scan({
                 ])
               }
             >
-              + Add missing item
+              {t("scan.addMissing")}
             </button>
           </div>
 
           <div className="sticky-actions">
             <button className="btn" onClick={() => setPhase({ kind: "capture" })}>
-              Retake
+              {t("scan.retake")}
             </button>
             <button className="btn primary grow" disabled={drafts.length === 0} onClick={() => logMeal(image)}>
-              Log {Math.round(total.calories)} kcal
+              {t("scan.log", { kcal: num(total.calories) })}
             </button>
           </div>
         </>
@@ -254,6 +254,7 @@ function Capture({
   // In the iPhone app the native camera screen is used instead of a live preview.
   const [camera, setCamera] = useState<"starting" | "live" | "unavailable">(isNative ? "unavailable" : "starting");
   const [pickError, setPickError] = useState("");
+  const { t } = useI18n();
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -299,11 +300,7 @@ function Capture({
       const image = await pickNativePhoto(source);
       if (image) onImage(image);
     } catch (e) {
-      setPickError(
-        source === "camera"
-          ? "Couldn't open the camera. Check that FoodTrack has camera access in Settings."
-          : `Couldn't open your photos: ${e instanceof Error ? e.message : e}`,
-      );
+      setPickError(source === "camera" ? t("scan.cameraError") : t("scan.photosError", { error: e instanceof Error ? e.message : String(e) }));
     }
   }
 
@@ -322,26 +319,26 @@ function Capture({
           <div className="viewfinder-empty">
             {isNative ? (
               <>
-                <p>Snap your meal</p>
-                <p className="muted small">Tap Take photo to open the camera, or choose one from your library.</p>
+                <p>{t("scan.nativeTitle")}</p>
+                <p className="muted small">{t("scan.nativeHelp")}</p>
               </>
             ) : (
               <>
-                <p>Live camera isn't available here.</p>
-                <p className="muted small">Use the buttons below to take or choose a photo.</p>
+                <p>{t("scan.noLiveTitle")}</p>
+                <p className="muted small">{t("scan.noLiveHelp")}</p>
               </>
             )}
           </div>
         )}
         {camera === "live" && <div className="frame" aria-hidden="true" />}
-        <button className="close-btn" onClick={onCancel} aria-label="Close camera">
+        <button className="close-btn" onClick={onCancel} aria-label={t("scan.closeCamera")}>
           ✕
         </button>
       </div>
 
       <input
         className="note-input"
-        placeholder='Optional note, e.g. "large portion", "cooked in butter"'
+        placeholder={t("scan.notePlaceholder")}
         value={note}
         onChange={(e) => onNoteChange(e.target.value)}
         maxLength={200}
@@ -349,19 +346,19 @@ function Capture({
 
       <div className="capture-actions">
         <button className="btn" onClick={() => pick("library")}>
-          Gallery
+          {t("scan.gallery")}
         </button>
         {camera === "live" ? (
-          <button className="shutter" onClick={snap} aria-label="Take photo" />
+          <button className="shutter" onClick={snap} aria-label={t("scan.takePhoto")} />
         ) : (
           <button className="btn primary" onClick={() => pick("camera")}>
-            Take photo
+            {t("scan.takePhoto")}
           </button>
         )}
         <span className="spacer" />
       </div>
       {pickError && <p className="error small center">{pickError}</p>}
-      <p className="muted small center">Fit the whole plate in the frame. Good light gives better estimates.</p>
+      <p className="muted small center">{t("scan.tip")}</p>
 
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
       <input ref={galleryInput} type="file" accept="image/*" hidden onChange={onFile} />
@@ -373,6 +370,7 @@ function AccessCodeCard({ onUnlocked, onCancel }: { onUnlocked: () => void; onCa
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { t } = useI18n();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -382,7 +380,7 @@ function AccessCodeCard({ onUnlocked, onCancel }: { onUnlocked: () => void; onCa
       await unlock(code);
       onUnlocked();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -390,12 +388,12 @@ function AccessCodeCard({ onUnlocked, onCancel }: { onUnlocked: () => void; onCa
 
   return (
     <form className="card" onSubmit={submit}>
-      <h2 className="title">Enter access code</h2>
-      <p className="muted small">This FoodTrack server is private. Ask the person who runs it for the access code.</p>
+      <h2 className="title">{t("scan.codeTitle")}</h2>
+      <p className="muted small">{t("scan.codeHelp")}</p>
       <input
         value={code}
         onChange={(e) => setCode(e.target.value)}
-        placeholder="Access code"
+        placeholder={t("scan.codePlaceholder")}
         autoComplete="off"
         autoCapitalize="off"
         autoFocus
@@ -403,10 +401,10 @@ function AccessCodeCard({ onUnlocked, onCancel }: { onUnlocked: () => void; onCa
       {error && <p className="error small">{error}</p>}
       <div className="row gap">
         <button type="button" className="btn" onClick={onCancel}>
-          Cancel
+          {t("common.cancel")}
         </button>
         <button className="btn primary grow" disabled={!code.trim() || busy}>
-          {busy ? "Checking…" : "Unlock and scan"}
+          {busy ? t("common.checking") : t("scan.unlock")}
         </button>
       </div>
     </form>

@@ -1,3 +1,4 @@
+import { useI18n } from "../i18n/index.ts";
 import { addDays, parseDateKey, todayKey } from "../lib/dates.ts";
 
 const DAYS_BEFORE = 4;
@@ -16,6 +17,7 @@ export default function WeekStrip({
   onChange: (d: string) => void;
   hasEntries: (d: string) => boolean;
 }) {
+  const { date: fmt } = useI18n();
   const today = todayKey();
   // Keep today in view; if an older day is picked (e.g. from Trends or the date picker), show the week around it.
   const anchor = date >= addDays(today, -DAYS_BEFORE) ? today : date;
@@ -35,9 +37,9 @@ export default function WeekStrip({
             className={`week-day ${selected ? "selected" : ""} ${d === today ? "today" : ""}`}
             disabled={future}
             onClick={() => onChange(d)}
-            aria-label={day.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            aria-label={fmt(day, { weekday: "long", month: "long", day: "numeric" })}
           >
-            <span className="week-dow">{day.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3)}</span>
+            <span className="week-dow">{fmt(day, { weekday: "short" })}</span>
             <span className="week-num">{day.getDate()}</span>
             <span className={`week-dot ${hasEntries(d) ? "on" : ""}`} aria-hidden="true" />
           </button>

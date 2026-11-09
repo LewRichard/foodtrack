@@ -6,7 +6,7 @@
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { sendNotification, setVapidDetails } from "web-push";
-import { dueReminders, REMINDER_TEXT, type ReminderSlot } from "../shared/reminders.ts";
+import { dueReminders, reminderText, type ReminderSlot } from "../shared/reminders.ts";
 import { projectUrl, supabaseKey } from "../shared/supabase.ts";
 
 export interface PushSubscriptionRow {
@@ -22,6 +22,7 @@ export interface ReminderRow {
   lunch: string | null;
   dinner: string | null;
   last_sent: Partial<Record<ReminderSlot, string>> | null;
+  language?: string | null; // added later; older databases may not have it
 }
 
 export interface PushMessage {
@@ -71,7 +72,7 @@ export async function runReminders(deps: ReminderDeps, now = new Date()): Promis
     if (await deps.hasLoggedMeal(row.user_id, date, slot)) {
       result.alreadyLogged++;
     } else {
-      const text = REMINDER_TEXT[slot];
+      const text = reminderText(row.language, slot);
       const message = { ...text, url: `/?tab=scan&meal=${slot}`, tag: `meal-${slot}` };
       for (const sub of await deps.subscriptionsFor(row.user_id)) {
         try {
@@ -146,7 +147,8 @@ export function supabaseReminderDeps(db: SupabaseClient): ReminderDeps {
   return {
     async listReminders() {
       return check(
-        await db.from("reminder_settings").select("user_id, timezone, breakfast, lunch, dinner, last_sent").eq("enabled", true),
+        // "*" rather than a column list, so a database set up before `language` existed keeps working.
+        await db.from("reminder_settings").select("*").eq("enabled", true),
       ) as ReminderRow[];
     },
     async hasLoggedMeal(userId, date, meal) {

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
+import { isLang, type Lang } from "../../shared/languages.ts";
 import { DEFAULT_REMINDER_TIMES, type ReminderTimes } from "../../shared/reminders.ts";
 import {
   EMPTY_SYNC,
@@ -26,6 +27,7 @@ export interface AppState {
   settingsUpdatedAt: number; // when name/goals/profile last changed (for sync); 0 = never
   sync: SyncMeta; // cloud backup bookkeeping (see syncState.ts)
   reminders: { enabled: boolean; times: ReminderTimes }; // meal reminders on this device
+  language: "auto" | Lang; // app language; "auto" follows the device
 }
 
 const STORAGE_KEY = "foodtrack:v1";
@@ -44,6 +46,7 @@ export const INITIAL_STATE: AppState = {
   settingsUpdatedAt: 0,
   sync: EMPTY_SYNC,
   reminders: { enabled: false, times: DEFAULT_REMINDER_TIMES },
+  language: "auto",
 };
 
 function load(): AppState {
@@ -56,6 +59,7 @@ function load(): AppState {
       ...parsed,
       goals: { ...DEFAULT_GOALS, ...parsed.goals },
       sync: { ...EMPTY_SYNC, ...parsed.sync },
+      language: isLang(parsed.language) ? parsed.language : "auto",
     };
     // Diaries saved before cloud backup existed have no settings timestamp; if the person had
     // customised anything, give it the oldest possible one so it's uploaded but never beats a real edit.
@@ -159,6 +163,9 @@ export const actions = {
   setProfile(profile: Profile | null) {
     setState(markSettingsChanged({ ...state, profile }, Date.now()));
   },
+  setLanguage(language: AppState["language"]) {
+    setState({ ...state, language });
+  },
   setReminders(reminders: AppState["reminders"]) {
     setState({ ...state, reminders });
   },
@@ -184,6 +191,7 @@ export const actions = {
       ...data,
       goals: { ...DEFAULT_GOALS, ...data.goals },
       aiConsent: state.aiConsent,
+      language: state.language,
       sync: { ...state.sync, pendingEntries: [], pendingDeletes: [], pendingDays: [], pendingSettings: false },
     };
     // Keep ids, so re-importing a backup updates the same entries in the cloud instead of duplicating them.

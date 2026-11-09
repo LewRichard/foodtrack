@@ -1,12 +1,16 @@
 import { useRef, useState } from "react";
-import { getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
+import { deviceLanguage, LANGUAGES, useI18n, type LanguagePref } from "../i18n/index.ts";
+import { errorMessage, getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
+import { enableReminders } from "../lib/reminders.ts";
 import Account from "./Account.tsx";
 import Reminders from "./Reminders.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
-  const { name, profile, goals, entries, aiConsent } = useAppState();
+  const { name, profile, goals, entries, aiConsent, language } = useAppState();
+  const { t, tp, num } = useI18n();
+  const deviceLang = LANGUAGES.find((l) => l.code === deviceLanguage())!;
   const session = useSession();
   const [nameDraft, setNameDraft] = useState(name);
   const [lastName, setLastName] = useState(name);
@@ -24,15 +28,15 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
   async function saveCode() {
     if (!code.trim()) {
       setAccessCode("");
-      setCodeStatus("Access code removed.");
+      setCodeStatus(t("profile.codeRemoved"));
       return;
     }
-    setCodeStatus("Checking…");
+    setCodeStatus(t("common.checking"));
     try {
       await unlock(code);
-      setCodeStatus("Saved ✓");
+      setCodeStatus(t("common.saved"));
     } catch (err) {
-      setCodeStatus(err instanceof Error ? err.message : String(err));
+      setCodeStatus(errorMessage(err));
     }
   }
 
@@ -51,14 +55,14 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
     if (!file) return;
     try {
       const data = JSON.parse(await file.text()) as AppState;
-      if (!Array.isArray(data.entries)) throw new Error("Not a FoodTrack backup");
-      const where = session ? "your account" : "this device";
-      if (confirm(`Load ${data.entries.length} entries from this backup into ${where}? Your current goals and name will be replaced.`)) {
+      if (!Array.isArray(data.entries)) throw new Error(t("profile.notBackup"));
+      const where = session ? t("profile.whereAccount") : t("profile.whereDevice");
+      if (confirm(t("profile.importConfirm", { n: data.entries.length, where }))) {
         actions.importData(data);
         setNameDraft(getState().name);
       }
     } catch (err) {
-      alert(`Could not import: ${err instanceof Error ? err.message : err}`);
+      alert(t("profile.importError", { error: err instanceof Error ? err.message : String(err) }));
     }
   }
 
@@ -68,10 +72,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
         <span className="avatar large" aria-hidden="true">
           {initial ?? "🙂"}
         </span>
-        <h1>{name.trim() || "Your profile"}</h1>
-        <p className="muted">
-          {daysLogged} day{daysLogged === 1 ? "" : "s"} logged · {goals.calories.toLocaleString("en-US")} kcal goal
-        </p>
+        <h1>{name.trim() || t("profile.yourProfile")}</h1>
+        <p className="muted">{tp("profile.stats", daysLogged, { kcal: num(goals.calories) })}</p>
       </section>
 
       {cloudEnabled && <Account />}
@@ -79,88 +81,109 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
       <Reminders />
 
       <section className="card">
-        <h2 className="title">Your name</h2>
+        <label className="stack">
+          <h2 className="title">{t("profile.language")}</h2>
+          <select
+            value={language}
+            onChange={(e) => {
+              actions.setLanguage(e.target.value as LanguagePref);
+              // Reminders already on: resend them so notifications come in the new language.
+              const { reminders } = getState();
+              if (reminders.enabled) void enableReminders(reminders.times).catch(() => {});
+            }}
+          >
+            <option value="auto">{t("profile.languageAuto", { name: deviceLang.name })}</option>
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section className="card">
+        <h2 className="title">{t("profile.name")}</h2>
         <div className="row gap">
           <input
             value={nameDraft}
             onChange={(e) => setNameDraft(e.target.value)}
-            placeholder="What should we call you?"
+            placeholder={t("profile.namePlaceholder")}
             maxLength={40}
             autoComplete="given-name"
           />
           <button className="btn primary" disabled={nameDraft.trim() === name} onClick={() => actions.setName(nameDraft.trim())}>
-            Save
+            {t("common.save")}
           </button>
         </div>
       </section>
 
       <section className="card">
         <div className="row between">
-          <h2 className="title">Body &amp; activity</h2>
+          <h2 className="title">{t("profile.body")}</h2>
           <button className="link" onClick={onEditGoals}>
-            Edit
+            {t("common.edit")}
           </button>
         </div>
         {profile ? (
           <p className="muted">
-            {profile.sex === "male" ? "Male" : "Female"} · {profile.age} yrs · {profile.heightCm} cm · {profile.weightKg} kg
+            {t("profile.bodySummary", {
+              sex: profile.sex === "male" ? t("goals.male") : t("goals.female"),
+              age: profile.age,
+              height: profile.heightCm,
+              weight: profile.weightKg,
+            })}
           </p>
         ) : (
-          <p className="muted">Add your details in Goals to get personalised calorie and macro targets.</p>
+          <p className="muted">{t("profile.bodyEmpty")}</p>
         )}
       </section>
 
       <section className="card">
-        <h2 className="title">Photo scanning</h2>
+        <h2 className="title">{t("profile.scanning")}</h2>
         <label className="stack">
-          <span className="muted small">
-            Access code (only if the server owner gave you one{session ? "; not needed while you're signed in" : ""})
-          </span>
+          <span className="muted small">{session ? t("profile.accessCodeSignedIn") : t("profile.accessCode")}</span>
           <div className="row gap">
             <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" autoCapitalize="off" />
             <button className="btn" onClick={saveCode}>
-              Save
+              {t("common.save")}
             </button>
           </div>
         </label>
         {codeStatus && <p className="muted small">{codeStatus}</p>}
         <div className="row between">
           <span className="small">
-            {aiConsent ? "You've agreed to send meal photos for AI analysis." : "You'll be asked before your first photo is analysed."}
+            {aiConsent ? t("profile.consentYes") : t("profile.consentNo")}
           </span>
           {aiConsent && (
             <button className="btn" onClick={() => actions.setAiConsent(false)}>
-              Withdraw
+              {t("profile.withdraw")}
             </button>
           )}
         </div>
       </section>
 
       <section className="card">
-        <h2 className="title">Your data</h2>
-        <p className="muted small">
-          {session
-            ? "Your diary is saved in your account. You can also export a copy as a file."
-            : "Your diary is stored on this device only. Export a backup to move it to another device."}
-        </p>
+        <h2 className="title">{t("profile.data")}</h2>
+        <p className="muted small">{session ? t("profile.dataAccount") : t("profile.dataDevice")}</p>
         <div className="row gap wrap">
           <button className="btn" onClick={exportData}>
-            Export backup
+            {t("profile.export")}
           </button>
           <button className="btn" onClick={() => fileRef.current?.click()}>
-            Import backup
+            {t("profile.import")}
           </button>
           {!session && (
             <button
               className="btn danger"
               onClick={() => {
-                if (confirm("Delete all logged food, goals and settings?")) {
+                if (confirm(t("profile.resetConfirm"))) {
                   actions.reset();
                   setNameDraft("");
                 }
               }}
             >
-              Reset all
+              {t("profile.reset")}
             </button>
           )}
         </div>
@@ -168,8 +191,7 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
       </section>
 
       <p className="muted small center disclaimer">
-        Photo estimates are approximate and not medical advice. Check with a healthcare professional before making major
-        dietary changes. <a href="/privacy.html">Privacy policy</a>
+        {t("profile.disclaimer")} <a href="/privacy.html">{t("profile.privacy")}</a>
       </p>
     </div>
   );

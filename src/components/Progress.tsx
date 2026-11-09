@@ -1,3 +1,5 @@
+import { useI18n } from "../i18n/index.ts";
+
 /** Calorie ring: fills as you eat; turns amber when you go over. */
 export function CalorieRing({ eaten, goal }: { eaten: number; goal: number }) {
   const size = 176;
@@ -7,9 +9,10 @@ export function CalorieRing({ eaten, goal }: { eaten: number; goal: number }) {
   const pct = goal > 0 ? Math.min(eaten / goal, 1) : 0;
   const remaining = Math.round(goal - eaten);
   const over = remaining < 0;
+  const { t, num } = useI18n();
 
   return (
-    <div className="ring" role="img" aria-label={`${Math.round(eaten)} of ${goal} calories eaten`}>
+    <div className="ring" role="img" aria-label={t("ring.aria", { eaten: num(eaten), goal: num(goal) })}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
@@ -33,8 +36,8 @@ export function CalorieRing({ eaten, goal }: { eaten: number; goal: number }) {
         )}
       </svg>
       <div className="ring-label">
-        <strong>{Math.abs(remaining).toLocaleString("en-US")}</strong>
-        <span>{over ? "kcal over" : "kcal left"}</span>
+        <strong>{num(Math.abs(remaining))}</strong>
+        <span>{over ? t("ring.over") : t("ring.left")}</span>
       </div>
     </div>
   );
@@ -76,13 +79,13 @@ export function NutrientBar({
 }) {
   const pct = goal > 0 ? Math.min(value / goal, 1) : 0;
   const over = limit && value > goal;
+  const { num } = useI18n();
   return (
     <div className="nbar">
       <div className="nbar-head">
         <span>{label}</span>
         <span className="muted">
-          <b className={over ? "text-warn" : undefined}>{Math.round(value).toLocaleString("en-US")}</b> /{" "}
-          {goal.toLocaleString("en-US")} {unit}
+          <b className={over ? "text-warn" : undefined}>{num(value)}</b> / {num(goal)} {unit}
           {over && " ⚠"}
         </span>
       </div>

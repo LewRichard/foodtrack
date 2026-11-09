@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import * as z from "zod/v4";
+import { AI_LANGUAGE_NAMES, type Lang } from "../shared/languages.ts";
 import type { AnalysisResult } from "../shared/nutrition.ts";
 
 export const MODEL = "claude-opus-5-5";
@@ -44,7 +45,11 @@ const client = new Anthropic();
 export type ImageMediaType = "image/jpeg" | "image/png" | "image/webp" | "image/gif";
 
 export class AnalysisError extends Error {
-  constructor(message: string, readonly status = 500) {
+  constructor(
+    message: string,
+    readonly status = 500,
+    readonly code = "ai_error",
+  ) {
     super(message);
   }
 }
@@ -53,7 +58,13 @@ export async function analyzeFoodImage(
   imageBase64: string,
   mediaType: ImageMediaType,
   note?: string,
+  language: Lang = "en",
 ): Promise<AnalysisResult> {
+  // Food names, portions, meal name and notes come back in the app's language; JSON keys stay English.
+  const languageNote =
+    language === "en"
+      ? ""
+      : ` Write mealName, each item's name and portion, and notes in ${AI_LANGUAGE_NAMES[language]}, using the names people there usually call these foods.`;
   const response = await client.beta.messages.parse({
     model: MODEL,
     max_tokens: 16000,
@@ -70,8 +81,8 @@ export async function analyzeFoodImage(
           {
             type: "text",
             text: note?.trim()
-              ? `Estimate the nutrition of this meal. User note: ${note.trim()}`
-              : "Estimate the nutrition of this meal.",
+              ? `Estimate the nutrition of this meal.${languageNote} User note: ${note.trim()}`
+              : `Estimate the nutrition of this meal.${languageNote}`,
           },
         ],
       },
@@ -79,10 +90,10 @@ export async function analyzeFoodImage(
   });
 
   if (response.stop_reason === "refusal") {
-    throw new AnalysisError("The model declined to analyze this image.", 422);
+    throw new AnalysisError("The model declined to analyze this image.", 422, "ai_refused");
   }
   if (response.stop_reason === "max_tokens" || !response.parsed_output) {
-    throw new AnalysisError("Could not read a nutrition estimate from the model response.", 502);
+    throw new AnalysisError("Could not read a nutrition estimate from the model response.", 502, "ai_unreadable");
   }
   return response.parsed_output;
 }

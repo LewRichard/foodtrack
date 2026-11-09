@@ -3,7 +3,8 @@ import { DEFAULT_REMINDER_TIMES, REMINDER_SLOTS, type ReminderSlot, type Reminde
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { disableReminders, enableReminders, reminderSupport, sendTestReminder, serverPushKey } from "../lib/reminders.ts";
 import { useAppState } from "../lib/store.ts";
-import { MEAL_ICONS, MEAL_LABELS } from "../lib/types.ts";
+import { useI18n } from "../i18n/index.ts";
+import { MEAL_ICONS } from "../lib/types.ts";
 
 /** Profile card for meal reminders. */
 export default function Reminders() {
@@ -14,6 +15,7 @@ export default function Reminders() {
   const [times, setTimes] = useState<ReminderTimes>(reminders.times);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (support.kind === "web") void serverPushKey().then((key) => setServerReady(Boolean(key)));
@@ -39,24 +41,21 @@ export default function Reminders() {
   // Explain what's missing when reminders can't work here yet.
   let blocker: string | null = null;
   if (support.kind === "ios-needs-home-screen") {
-    blocker =
-      "On iPhone, reminders work from the home-screen app: in Safari tap Share → Add to Home Screen, then open FoodTrack from that icon and come back here.";
+    blocker = t("rem.iosHomeScreen");
   } else if (support.kind === "unsupported") {
-    blocker = "This browser can't show notifications. Try Safari or Chrome (not the browser inside Messenger or Zalo).";
+    blocker = t("rem.unsupported");
   } else if (support.kind === "web" && (!cloudEnabled || !session)) {
-    blocker = "Sign in above to get reminders. They only remind you about meals you haven't logged yet.";
+    blocker = t("rem.needSignIn");
   } else if (support.kind === "web" && serverReady === false) {
-    blocker = "Reminders aren't set up on the server yet.";
+    blocker = t("rem.serverOff");
   }
 
   return (
     <section className="card">
       <div className="row between">
         <div className="account-who">
-          <h2 className="title">Meal reminders</h2>
-          <span className="muted small">
-            {support.kind === "native" ? "A nudge at meal times." : "A nudge at meal times, only if you haven't logged that meal yet."}
-          </span>
+          <h2 className="title">{t("rem.title")}</h2>
+          <span className="muted small">{support.kind === "native" ? t("rem.subtitleNative") : t("rem.subtitleWeb")}</span>
         </div>
         <span className={`sync-dot ${reminders.enabled ? "ok" : ""}`} aria-hidden="true" />
       </div>
@@ -72,17 +71,17 @@ export default function Reminders() {
                   type="checkbox"
                   checked={times[slot] !== null}
                   onChange={(e) => setSlot(slot, e.target.checked ? DEFAULT_REMINDER_TIMES[slot] : null)}
-                  aria-label={`${MEAL_LABELS[slot]} reminder`}
+                  aria-label={t("rem.toggle", { meal: t(`meal.${slot}`) })}
                 />
                 <span className="reminder-name">
-                  <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {MEAL_LABELS[slot]}
+                  <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {t(`meal.${slot}`)}
                 </span>
                 <input
                   type="time"
                   value={times[slot] ?? ""}
                   disabled={times[slot] === null}
                   onChange={(e) => setSlot(slot, e.target.value || null)}
-                  aria-label={`${MEAL_LABELS[slot]} reminder time`}
+                  aria-label={t("rem.time", { meal: t(`meal.${slot}`) })}
                 />
               </label>
             ))}
@@ -95,31 +94,31 @@ export default function Reminders() {
                 disabled={busy || REMINDER_SLOTS.every((s) => times[s] === null)}
                 onClick={() => run(async () => {
                   await enableReminders(times);
-                  return "Reminders are on. 🎉";
+                  return t("rem.on");
                 })}
               >
-                {busy ? "Please wait…" : "Turn on reminders"}
+                {busy ? t("common.pleaseWait") : t("rem.turnOn")}
               </button>
             ) : (
               <>
                 {changed && (
                   <button className="btn primary" disabled={busy} onClick={() => run(async () => {
                     await enableReminders(times);
-                    return "Saved.";
+                    return t("rem.saved");
                   })}>
-                    Save times
+                    {t("rem.saveTimes")}
                   </button>
                 )}
                 <button className="btn" disabled={busy} onClick={() => run(async () => {
                   const sent = await sendTestReminder();
-                  return sent ? "Test sent. It should appear in a few seconds." : "No devices are registered. Turn reminders off and on again.";
+                  return sent ? t("rem.testSent") : t("rem.noDevices");
                 })}>
-                  Send a test
+                  {t("rem.test")}
                 </button>
                 <button className="btn" disabled={busy} onClick={() => run(async () => {
                   await disableReminders();
                 })}>
-                  Turn off
+                  {t("rem.turnOff")}
                 </button>
               </>
             )}

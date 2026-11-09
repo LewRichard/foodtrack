@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useI18n } from "../i18n/index.ts";
 import { deleteAccount, signIn, signOut, signUp, syncNow, useSession } from "../lib/cloud.ts";
 import { useAppState } from "../lib/store.ts";
 import { useSyncStatus } from "../lib/sync.ts";
@@ -72,6 +73,7 @@ function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () =
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ error: boolean; text: string } | null>(null);
 
@@ -84,7 +86,7 @@ function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () =
       const result = mode === "signin" ? await signIn(email, password) : await signUp(email, password);
       rememberEmail(email.trim());
       if (result.needsConfirmation) {
-        setMessage({ error: false, text: "Check your email and tap the confirmation link, then sign in here." });
+        setMessage({ error: false, text: t("account.confirmEmail") });
         setMode("signin");
       } else if (formRef.current) {
         await offerToSavePassword(formRef.current, email.trim(), password);
@@ -112,18 +114,15 @@ function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () =
     >
       <iframe name={SAVE_FRAME} title="" hidden tabIndex={-1} aria-hidden="true" />
       <div>
-        <h2 className="title">Back up &amp; sync</h2>
-        <p className="muted small">
-          Sign in to save your diary online, so it's never lost and you can use it on your phone and computer. Food you've
-          already logged here is moved into your account.
-        </p>
+        <h2 className="title">{t("account.backupTitle")}</h2>
+        <p className="muted small">{t("account.backupBody")}</p>
       </div>
       <div className="segmented">
         <button type="button" className={mode === "signin" ? "active" : ""} onClick={() => setMode("signin")}>
-          Sign in
+          {t("account.signIn")}
         </button>
         <button type="button" className={mode === "signup" ? "active" : ""} onClick={() => setMode("signup")}>
-          Create account
+          {t("account.createAccount")}
         </button>
       </div>
       <input
@@ -131,7 +130,7 @@ function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () =
         id="ft-email"
         name="email"
         inputMode="email"
-        placeholder="Email"
+        placeholder={t("account.email")}
         autoComplete="username"
         autoCapitalize="off"
         autoCorrect="off"
@@ -145,7 +144,7 @@ function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () =
           type={showPassword ? "text" : "password"}
           id="ft-password"
           name="password"
-          placeholder={mode === "signup" ? "Choose a password (6+ characters)" : "Password"}
+          placeholder={mode === "signup" ? t("account.newPassword") : t("account.password")}
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
           autoCapitalize="off"
           autoCorrect="off"
@@ -160,15 +159,15 @@ function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () =
           type="button"
           className="password-toggle"
           onClick={() => setShowPassword(!showPassword)}
-          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-label={showPassword ? t("account.hidePassword") : t("account.showPassword")}
           aria-pressed={showPassword}
         >
-          {showPassword ? "Hide" : "Show"}
+          {showPassword ? t("account.hide") : t("account.show")}
         </button>
       </div>
       {message && <p className={message.error ? "error small" : "small"}>{message.text}</p>}
       <button className="btn primary" disabled={busy}>
-        {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+        {busy ? t("common.pleaseWait") : mode === "signin" ? t("account.signIn") : t("account.createAccount")}
       </button>
     </form>
   );
@@ -180,20 +179,21 @@ function SignedIn({ email }: { email: string }) {
   const pending = hasPending(state);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const { t, locale } = useI18n();
 
   const last = state.sync.lastSyncedAt;
   const statusText =
     status.kind === "syncing"
-      ? "Syncing…"
+      ? t("account.syncing")
       : status.kind === "offline"
-        ? "Offline. Changes are saved on this device and will sync when you're back online."
+        ? t("account.offline")
         : status.kind === "error"
-          ? `Couldn't sync: ${status.message}`
+          ? t("account.syncError", { error: status.message })
           : pending
-            ? "Changes waiting to sync…"
+            ? t("account.pending")
             : last
-              ? `All changes saved · ${timeAgo(last)}`
-              : "Connected";
+              ? t("account.allSaved", { when: timeAgo(last, locale) })
+              : t("account.connected");
 
   async function doSignOut() {
     setBusy(true);
@@ -201,9 +201,7 @@ function SignedIn({ email }: { email: string }) {
     try {
       let done = await signOut();
       if (!done) {
-        const ok = confirm(
-          "Some changes haven't been uploaded yet (you may be offline). Sign out anyway and lose them on this device?",
-        );
+        const ok = confirm(t("account.signOutConfirm"));
         if (ok) done = await signOut(true);
       }
     } catch (e) {
@@ -214,8 +212,8 @@ function SignedIn({ email }: { email: string }) {
   }
 
   async function doDelete() {
-    if (!confirm("Delete your account and everything in it? This can't be undone.")) return;
-    if (prompt('Type DELETE to confirm.')?.trim().toUpperCase() !== "DELETE") return;
+    if (!confirm(t("account.deleteConfirm"))) return;
+    if (prompt(t("account.deletePrompt"))?.trim().toUpperCase() !== "DELETE") return;
     setBusy(true);
     setError("");
     try {
@@ -232,7 +230,7 @@ function SignedIn({ email }: { email: string }) {
     <section className="card">
       <div className="row between">
         <div className="account-who">
-          <h2 className="title">Account</h2>
+          <h2 className="title">{t("account.title")}</h2>
           <span className="muted small">{email}</span>
         </div>
         <span className={`sync-dot ${status.kind === "error" ? "bad" : status.kind === "idle" && !pending ? "ok" : "wait"}`} aria-hidden="true" />
@@ -243,23 +241,25 @@ function SignedIn({ email }: { email: string }) {
       {error && <p className="error small">{error}</p>}
       <div className="row gap wrap">
         <button className="btn" onClick={() => void syncNow()} disabled={busy || status.kind === "syncing"}>
-          Sync now
+          {t("account.syncNow")}
         </button>
         <button className="btn" onClick={doSignOut} disabled={busy}>
-          Sign out
+          {t("account.signOut")}
         </button>
         <button className="btn danger" onClick={doDelete} disabled={busy}>
-          Delete account
+          {t("account.delete")}
         </button>
       </div>
     </section>
   );
 }
 
-function timeAgo(ms: number): string {
+/** "just now" / "5 minutes ago" / a date, in the app's language. */
+function timeAgo(ms: number, locale: string): string {
   const s = Math.round((Date.now() - ms) / 1000);
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.round(s / 60)} min ago`;
-  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
-  return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (s < 60) return rtf.format(0, "second");
+  if (s < 3600) return rtf.format(-Math.round(s / 60), "minute");
+  if (s < 86400) return rtf.format(-Math.round(s / 3600), "hour");
+  return new Date(ms).toLocaleDateString(locale, { month: "short", day: "numeric" });
 }

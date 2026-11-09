@@ -164,6 +164,8 @@ a {
 }
 
 .tab {
+  min-width: 0;
+  white-space: nowrap;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -313,6 +315,7 @@ h1 {
 }
 
 .btn {
+  white-space: nowrap;
   border: 1px solid var(--border);
   background: var(--surface-2);
   border-radius: 14px;
@@ -1502,4 +1505,9 @@ select:focus {
     width: 40px;
     height: 40px;
   }
+}
+
+/* Korean breaks between words, not inside them. */
+:lang(ko) {
+  word-break: keep-all;
 }

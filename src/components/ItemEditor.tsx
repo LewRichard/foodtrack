@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { scaleItem, type FoodItem, type Nutrients } from "../../shared/nutrition.ts";
+import { useI18n, type MessageKey } from "../i18n/index.ts";
 
 /** An item being reviewed: the original estimate plus a serving multiplier. */
 export interface Draft {
@@ -13,14 +14,14 @@ export function draftItem(d: Draft): FoodItem {
   return { ...scaleItem(d.base, d.factor), portion: `${d.factor} × ${d.base.portion}` };
 }
 
-const FIELDS: { key: keyof Nutrients; label: string; unit: string }[] = [
-  { key: "calories", label: "Calories", unit: "kcal" },
-  { key: "protein", label: "Protein", unit: "g" },
-  { key: "carbs", label: "Carbs", unit: "g" },
-  { key: "fat", label: "Fat", unit: "g" },
-  { key: "fiber", label: "Fiber", unit: "g" },
-  { key: "sugar", label: "Sugar", unit: "g" },
-  { key: "sodium", label: "Sodium", unit: "mg" },
+const FIELDS: { key: keyof Nutrients; label: MessageKey; unit: string }[] = [
+  { key: "calories", label: "nutrient.calories", unit: "kcal" },
+  { key: "protein", label: "nutrient.protein", unit: "g" },
+  { key: "carbs", label: "nutrient.carbs", unit: "g" },
+  { key: "fat", label: "nutrient.fat", unit: "g" },
+  { key: "fiber", label: "nutrient.fiber", unit: "g" },
+  { key: "sugar", label: "nutrient.sugar", unit: "g" },
+  { key: "sodium", label: "nutrient.sodium", unit: "mg" },
 ];
 
 const STEP = 0.25;
@@ -37,6 +38,7 @@ export function ItemEditor({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const { t } = useI18n();
   const item = draftItem(draft);
   const setFactor = (f: number) => onChange({ ...draft, factor: Math.max(STEP, Math.round(f / STEP) * STEP) });
   const setField = (key: keyof Nutrients, value: number) =>
@@ -50,12 +52,12 @@ export function ItemEditor({
             className="item-name"
             value={draft.base.name}
             onChange={(e) => onChange({ ...draft, base: { ...draft.base, name: e.target.value } })}
-            aria-label="Food name"
+            aria-label={t("item.foodName")}
           />
           <div className="muted small">
             {draft.factor !== 1 && `${draft.factor} × `}
             {draft.base.portion} · ~{item.grams} g
-            {draft.base.confidence === "low" && <span className="badge warn">low confidence</span>}
+            {draft.base.confidence === "low" && <span className="badge warn">{t("item.lowConfidence")}</span>}
           </div>
         </div>
         <div className="item-kcal">
@@ -65,21 +67,21 @@ export function ItemEditor({
       </div>
 
       <div className="item-controls">
-        <div className="stepper" aria-label="Servings">
-          <button onClick={() => setFactor(draft.factor - STEP)} aria-label="Less">−</button>
+        <div className="stepper" aria-label={t("item.servings")}>
+          <button onClick={() => setFactor(draft.factor - STEP)} aria-label={t("item.less")}>−</button>
           <span>{draft.factor}×</span>
-          <button onClick={() => setFactor(draft.factor + STEP)} aria-label="More">+</button>
+          <button onClick={() => setFactor(draft.factor + STEP)} aria-label={t("item.more")}>+</button>
         </div>
         <span className="macro-chips small">
-          <span className="chip protein">P {item.protein}g</span>
-          <span className="chip carbs">C {item.carbs}g</span>
-          <span className="chip fat">F {item.fat}g</span>
+          <span className="chip protein">{t("abbr.protein")} {item.protein}g</span>
+          <span className="chip carbs">{t("abbr.carbs")} {item.carbs}g</span>
+          <span className="chip fat">{t("abbr.fat")} {item.fat}g</span>
         </span>
         <button className="link small" onClick={() => setOpen(!open)}>
-          {open ? "Done" : "Edit"}
+          {open ? t("common.done") : t("common.edit")}
         </button>
         {onRemove && (
-          <button className="icon-btn" onClick={onRemove} aria-label={`Remove ${draft.base.name}`}>
+          <button className="icon-btn" onClick={onRemove} aria-label={t("item.remove", { name: draft.base.name })}>
             ✕
           </button>
         )}
@@ -88,7 +90,7 @@ export function ItemEditor({
       {open && (
         <div className="field-grid">
           <label>
-            <span>Portion</span>
+            <span>{t("item.portion")}</span>
             <input
               value={draft.base.portion}
               onChange={(e) => onChange({ ...draft, base: { ...draft.base, portion: e.target.value } })}
@@ -97,7 +99,7 @@ export function ItemEditor({
           {FIELDS.map((f) => (
             <label key={f.key}>
               <span>
-                {f.label} ({f.unit})
+                {t(f.label)} ({f.unit})
               </span>
               <input
                 type="number"

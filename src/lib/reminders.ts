@@ -3,7 +3,8 @@
 //    the server sends reminders at the chosen times, skipping meals already logged (needs sign-in).
 //  - iPhone app (Capacitor): local notifications scheduled on the phone itself, no server needed.
 
-import { REMINDER_SLOTS, REMINDER_TEXT, parseTime, type ReminderTimes } from "../../shared/reminders.ts";
+import { REMINDER_SLOTS, parseTime, reminderText, testReminderText, type ReminderTimes } from "../../shared/reminders.ts";
+import { currentLanguage, t } from "../i18n/index.ts";
 import { API_BASE } from "./api.ts";
 import { accessToken, cloudClient, onBeforeSignOut } from "./cloud.ts";
 import { isNative } from "./native.ts";
@@ -62,12 +63,13 @@ async function saveSettings(times: ReminderTimes, enabled: boolean) {
   const db = await cloudClient();
   const { data } = await db.auth.getSession();
   const userId = data.session?.user.id;
-  if (!userId) throw new Error("Sign in to turn on reminders.");
+  if (!userId) throw new Error(t("rem.signInFirst"));
   const { error } = await db.from("reminder_settings").upsert(
     {
       user_id: userId,
       enabled,
       timezone: timeZone(),
+      language: currentLanguage(),
       breakfast: times.breakfast,
       lunch: times.lunch,
       dinner: times.dinner,
@@ -80,7 +82,7 @@ async function saveSettings(times: ReminderTimes, enabled: boolean) {
 
 function friendly(message: string): string {
   if (/relation .* does not exist|schema cache|function .* does not exist/i.test(message)) {
-    return "The reminder tables aren't set up yet. Run supabase/schema.sql again in the Supabase SQL editor.";
+    return t("rem.tablesMissing");
   }
   return message;
 }
@@ -89,10 +91,10 @@ function friendly(message: string): string {
 
 async function enableWeb(times: ReminderTimes) {
   const publicKey = await serverPushKey();
-  if (!publicKey) throw new Error("Reminders aren't set up on the server yet.");
+  if (!publicKey) throw new Error(t("rem.serverOff"));
   const permission = await Notification.requestPermission();
   if (permission !== "granted") {
-    throw new Error("Notifications are blocked. Allow them for this site in your browser or phone settings, then try again.");
+    throw new Error(t("rem.blocked"));
   }
   const reg = await serviceWorker();
   const sub =
@@ -130,12 +132,12 @@ async function scheduleNative(times: ReminderTimes | null) {
   if (!times) return;
   const perm = await LocalNotifications.requestPermissions();
   if (perm.display !== "granted") {
-    throw new Error("Notifications are off for FoodTrack. Turn them on in Settings → Notifications → FoodTrack.");
+    throw new Error(t("rem.nativeBlocked"));
   }
   const notifications = REMINDER_SLOTS.flatMap((slot) => {
     const at = parseTime(times[slot]);
     if (at === null) return [];
-    const text = REMINDER_TEXT[slot];
+    const text = reminderText(currentLanguage(), slot);
     return [
       {
         id: NATIVE_IDS[slot],
@@ -174,14 +176,18 @@ export async function sendTestReminder(): Promise<number> {
   if (isNative) {
     const { LocalNotifications } = await import("@capacitor/local-notifications");
     await LocalNotifications.schedule({
-      notifications: [{ id: 199, title: "✅ Reminders are on", body: "This is how FoodTrack will remind you to log meals.", schedule: { at: new Date(Date.now() + 3000) } }],
+      notifications: [{ id: 199, ...testReminderText(currentLanguage()), schedule: { at: new Date(Date.now() + 3000) } }],
     });
     return 1;
   }
   const token = await accessToken();
-  const res = await fetch(`${API_BASE}/api/push/test`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  const res = await fetch(`${API_BASE}/api/push/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ language: currentLanguage() }),
+  });
   const body = (await res.json().catch(() => ({}))) as { sent?: number; error?: string };
-  if (!res.ok) throw new Error(body.error ?? `Request failed (${res.status})`);
+  if (!res.ok) throw new Error(body.error ?? t("common.requestFailed", { status: res.status }));
   return body.sent ?? 0;
 }
 

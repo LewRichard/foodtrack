@@ -3,9 +3,11 @@ import express, { type RequestHandler } from "express";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isLang } from "../shared/languages.ts";
 import { AnalysisError, analyzeFoodImage, MODEL, type ImageMediaType } from "./analyze.ts";
 import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
+import { testReminderText } from "../shared/reminders.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -78,7 +80,7 @@ app.post("/api/push/test", async (req, res) => {
   let sent = 0;
   for (const sub of subs) {
     try {
-      await sendPush(sub, { title: "✅ Reminders are on", body: "This is how FoodTrack will remind you to log meals.", url: "/", tag: "test" });
+      await sendPush(sub, { ...testReminderText(req.body?.language), url: "/", tag: "test" });
       sent++;
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
@@ -98,35 +100,40 @@ app.post("/api/access", (req, res) => {
 const validateUpload: RequestHandler = (req, res, next) => {
   const { image, mediaType } = req.body ?? {};
   if (typeof image !== "string" || !image) {
-    res.status(400).json({ error: "Missing image (base64 string)." });
+    res.status(400).json({ error: "Missing image (base64 string).", code: "bad_image" });
   } else if (!MEDIA_TYPES.includes(mediaType)) {
-    res.status(400).json({ error: `Unsupported image type. Use one of: ${MEDIA_TYPES.join(", ")}.` });
+    res.status(400).json({ error: `Unsupported image type. Use one of: ${MEDIA_TYPES.join(", ")}.`, code: "bad_image" });
   } else if (Buffer.byteLength(image, "base64") > MAX_IMAGE_BYTES) {
-    res.status(413).json({ error: "Image is larger than 5 MB." });
+    res.status(413).json({ error: "Image is larger than 5 MB.", code: "image_too_large" });
   } else {
     next();
   }
 };
 
 app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, limitScans(limiter), async (req, res) => {
-  const { image, mediaType, note } = req.body;
+  const { image, mediaType, note, language } = req.body;
   try {
-    const result = await analyzeFoodImage(image, mediaType, typeof note === "string" ? note.slice(0, 500) : undefined);
+    const result = await analyzeFoodImage(
+      image,
+      mediaType,
+      typeof note === "string" ? note.slice(0, 500) : undefined,
+      isLang(language) ? language : "en",
+    );
     res.json(result);
   } catch (error) {
     if (error instanceof AnalysisError) {
-      res.status(error.status).json({ error: error.message });
+      res.status(error.status).json({ error: error.message, code: error.code });
     } else if (error instanceof Anthropic.AuthenticationError) {
-      res.status(500).json({ error: "Server API key is missing or invalid. Set ANTHROPIC_API_KEY." });
+      res.status(500).json({ error: "Server API key is missing or invalid. Set ANTHROPIC_API_KEY.", code: "server_key" });
     } else if (error instanceof Anthropic.RateLimitError) {
-      res.status(429).json({ error: "Too many requests — please try again in a moment." });
+      res.status(429).json({ error: "Too many requests — please try again in a moment.", code: "busy" });
     } else if (error instanceof Anthropic.BadRequestError) {
-      res.status(400).json({ error: `Request rejected: ${error.message}` });
+      res.status(400).json({ error: `Request rejected: ${error.message}`, code: "bad_image" });
     } else if (error instanceof Anthropic.APIError) {
-      res.status(502).json({ error: `AI service error (${error.status ?? "network"}).` });
+      res.status(502).json({ error: `AI service error (${error.status ?? "network"}).`, code: "ai_error" });
     } else {
       console.error(error);
-      res.status(500).json({ error: "Unexpected server error." });
+      res.status(500).json({ error: "Unexpected server error.", code: "server_error" });
     }
   }
 });

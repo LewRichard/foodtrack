@@ -1,4 +1,6 @@
+import type { Lang } from "../../shared/languages.ts";
 import type { FoodItem } from "../../shared/nutrition.ts";
+import { FOOD_NAMES, PORTIONS } from "../i18n/foods.ts";
 
 // A small offline database of common foods (approximate USDA values per serving)
 // for quick manual logging without a photo.
@@ -70,9 +72,28 @@ export const FOODS: FoodItem[] = ROWS.map(([name, portion, grams, calories, prot
   confidence: "high",
 }));
 
-export function searchFoods(query: string, limit = 12): FoodItem[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return FOODS.slice(0, limit);
-  const words = q.split(/\s+/);
-  return FOODS.filter((f) => words.every((w) => f.name.toLowerCase().includes(w))).slice(0, limit);
+// Lowercase and strip accents so "trung" finds "Trứng" and "cafe" finds "Café".
+function fold(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d");
+}
+
+/** The food list in the given language: translated names and portions, same numbers. */
+export function localizedFoods(lang: Lang): FoodItem[] {
+  if (lang === "en") return FOODS;
+  const names = FOOD_NAMES[lang];
+  const portions = PORTIONS[lang];
+  return FOODS.map((food, i) => ({ ...food, name: names[i] ?? food.name, portion: portions.get(food.portion) ?? food.portion }));
+}
+
+/** Search by name in the chosen language, falling back to English names too. */
+export function searchFoods(query: string, lang: Lang = "en", limit = 12): FoodItem[] {
+  const foods = localizedFoods(lang);
+  const words = fold(query.trim()).split(/\s+/).filter(Boolean);
+  if (!words.length) return foods.slice(0, limit);
+  return foods
+    .filter((food, i) => {
+      const haystack = fold(`${food.name} ${FOODS[i].name}`);
+      return words.every((w) => haystack.includes(w));
+    })
+    .slice(0, limit);
 }

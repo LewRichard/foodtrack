@@ -2,13 +2,14 @@ import { useState } from "react";
 import type { FoodItem } from "../../shared/nutrition.ts";
 import { searchFoods } from "../lib/foods.ts";
 import { actions, newId, useAppState } from "../lib/store.ts";
-import { MEAL_LABELS, type MealType } from "../lib/types.ts";
+import { useI18n } from "../i18n/index.ts";
+import { type MealType } from "../lib/types.ts";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 import Sheet from "./Sheet.tsx";
 
 const BLANK: FoodItem = {
   name: "",
-  portion: "1 serving",
+  portion: "",
   grams: 0,
   calories: 0,
   protein: 0,
@@ -22,13 +23,14 @@ const BLANK: FoodItem = {
 
 export default function AddFood({ date, meal, onClose }: { date: string; meal: MealType; onClose: () => void }) {
   const { recents } = useAppState();
+  const { t, lang } = useI18n();
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [source, setSource] = useState<"manual" | "quick">("quick");
 
   const q = query.trim().toLowerCase();
   const recentMatches = recents.filter((r) => !q || r.name.toLowerCase().includes(q)).slice(0, 8);
-  const foodMatches = searchFoods(query);
+  const foodMatches = searchFoods(query, lang);
 
   function pick(food: FoodItem, from: "manual" | "quick") {
     setSource(from);
@@ -39,22 +41,22 @@ export default function AddFood({ date, meal, onClose }: { date: string; meal: M
     if (!draft) return;
     const item = draftItem(draft);
     actions.addEntries([
-      { ...item, name: item.name.trim() || "Food", id: newId(), date, meal, loggedAt: Date.now(), source },
+      { ...item, name: item.name.trim() || t("add.defaultName"), id: newId(), date, meal, loggedAt: Date.now(), source },
     ]);
     onClose();
   }
 
   return (
-    <Sheet title={`Add to ${MEAL_LABELS[meal]}`} onClose={onClose}>
+    <Sheet title={t("add.title", { meal: t(`meal.${meal}`) })} onClose={onClose}>
       {draft ? (
         <>
           <ItemEditor draft={draft} onChange={setDraft} defaultOpen={source === "manual"} />
           <div className="row gap">
             <button className="btn" onClick={() => setDraft(null)}>
-              Back
+              {t("common.back")}
             </button>
             <button className="btn primary grow" onClick={add}>
-              Add {draftItem(draft).calories} kcal
+              {t("add.add", { kcal: draftItem(draft).calories })}
             </button>
           </div>
         </>
@@ -63,25 +65,25 @@ export default function AddFood({ date, meal, onClose }: { date: string; meal: M
           <input
             className="search"
             type="search"
-            placeholder="Search foods"
+            placeholder={t("add.search")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
           />
-          <button className="link" onClick={() => pick({ ...BLANK, name: query.trim() }, "manual")}>
-            + Enter custom food{query.trim() ? ` “${query.trim()}”` : ""}
+          <button className="link" onClick={() => pick({ ...BLANK, name: query.trim(), portion: t("common.oneServing") }, "manual")}>
+            {query.trim() ? t("add.customNamed", { name: query.trim() }) : t("add.custom")}
           </button>
           {recentMatches.length > 0 && (
             <>
-              <p className="label">Recent</p>
+              <p className="label">{t("add.recent")}</p>
               <FoodList foods={recentMatches} onPick={(f) => pick(f, "quick")} />
             </>
           )}
-          <p className="label">Common foods</p>
+          <p className="label">{t("add.common")}</p>
           {foodMatches.length ? (
             <FoodList foods={foodMatches} onPick={(f) => pick(f, "quick")} />
           ) : (
-            <p className="muted small">No matches. Try a custom food, or scan it with the camera.</p>
+            <p className="muted small">{t("add.noMatches")}</p>
           )}
         </>
       )}

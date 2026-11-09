@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { sumNutrients } from "../../shared/nutrition.ts";
-import { formatLongDate, greeting, todayKey } from "../lib/dates.ts";
+import { useI18n } from "../i18n/index.ts";
+import { formatLongDate, greetingKey, todayKey } from "../lib/dates.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, entriesForDate, useAppState, useSaveFailed } from "../lib/store.ts";
 import {
   MEAL_ICONS,
-  MEAL_LABELS,
   MEAL_TYPES,
   suggestedMealKcal,
   type LogEntry,
@@ -34,6 +34,8 @@ export default function Today({
   onSeeAll: () => void;
 }) {
   const state = useAppState();
+  const i18n = useI18n();
+  const { t, num } = i18n;
   const saveFailed = useSaveFailed();
   const session = useSession();
   const { goals, name } = state;
@@ -53,29 +55,28 @@ export default function Today({
         <div className="hello-text">
           {/* The date doubles as a date picker for days outside the week strip. */}
           <label className="hello-date">
-            {formatLongDate(date)}
+            {formatLongDate(date, i18n)}
             <input
               type="date"
               value={date}
               max={todayKey()}
               onChange={(e) => e.target.value && onDateChange(e.target.value)}
-              aria-label="Pick a date"
+              aria-label={t("today.pickDate")}
             />
           </label>
           <h1>
-            {greeting()}
-            {firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
+            {firstName ? t("greet.withName", { greeting: t(greetingKey()), name: firstName }) : t(greetingKey())}{" "}
+            <span aria-hidden="true">👋</span>
           </h1>
         </div>
-        <button className="avatar" onClick={onOpenProfile} aria-label="Profile">
+        <button className="avatar" onClick={onOpenProfile} aria-label={t("tab.profile")}>
           {firstName ? firstName[0].toUpperCase() : <PersonIcon />}
         </button>
       </header>
 
       {saveFailed && (
         <p className="save-warning" role="alert">
-          ⚠️ Your diary can't be saved on this device right now (private browsing, or storage is full). Entries will
-          disappear when you close this page. Open the app in a normal browser window, or export a backup in Profile.
+          {t("today.saveFailed")}
         </p>
       )}
 
@@ -83,7 +84,7 @@ export default function Today({
         <button className="backup-banner" onClick={onOpenProfile}>
           <span aria-hidden="true">☁️</span>
           <span>
-            <strong>Your diary is only on this device.</strong> Sign in to back it up →
+            <strong>{t("today.backupTitle")}</strong> {t("today.backupAction")}
           </span>
         </button>
       )}
@@ -93,16 +94,16 @@ export default function Today({
       <section className="card summary">
         <CalorieRing eaten={total.calories - burned} goal={goals.calories} />
         <div className="summary-stats">
-          <Stat icon="🎯" label="Goal" value={goals.calories} />
-          <Stat icon="🍽️" label="Eaten" value={Math.round(total.calories)} />
-          <Stat icon="🔥" label="Burned" value={burned} onClick={() => setEditingBurned(true)} />
+          <Stat icon="🎯" label={t("today.goal")} value={goals.calories} />
+          <Stat icon="🍽️" label={t("today.eaten")} value={Math.round(total.calories)} />
+          <Stat icon="🔥" label={t("today.burned")} value={burned} onClick={() => setEditingBurned(true)} />
         </div>
       </section>
 
       <section className="macro-row">
-        <MacroCard label="Protein" value={total.protein} goal={goals.protein} color="var(--protein)" />
-        <MacroCard label="Carbs" value={total.carbs} goal={goals.carbs} color="var(--carbs)" />
-        <MacroCard label="Fat" value={total.fat} goal={goals.fat} color="var(--fat)" />
+        <MacroCard label={t("nutrient.protein")} value={total.protein} goal={goals.protein} color="var(--protein)" />
+        <MacroCard label={t("nutrient.carbs")} value={total.carbs} goal={goals.carbs} color="var(--carbs)" />
+        <MacroCard label={t("nutrient.fat")} value={total.fat} goal={goals.fat} color="var(--fat)" />
       </section>
 
       <button className="scan-banner" onClick={onScan}>
@@ -110,8 +111,8 @@ export default function Today({
           <ScanIcon />
         </span>
         <span className="scan-banner-text">
-          <strong>Scan a meal with AI</strong>
-          <span>Photo → calories &amp; macros</span>
+          <strong>{t("today.scanTitle")}</strong>
+          <span>{t("today.scanSubtitle")}</span>
         </span>
         <span className="scan-banner-go" aria-hidden="true">
           →
@@ -119,9 +120,9 @@ export default function Today({
       </button>
 
       <div className="section-head">
-        <h2>{date === todayKey() ? "Today's meals" : "Meals"}</h2>
+        <h2>{date === todayKey() ? t("today.todaysMeals") : t("today.meals")}</h2>
         <button className="link" onClick={onSeeAll}>
-          See all
+          {t("today.seeAll")}
         </button>
       </div>
 
@@ -136,14 +137,14 @@ export default function Today({
                 {MEAL_ICONS[meal]}
               </span>
               <div className="meal-title">
-                <h3>{MEAL_LABELS[meal]}</h3>
+                <h3>{t(`meal.${meal}`)}</h3>
                 <span className="muted">
                   {items.length
-                    ? `${kcal.toLocaleString("en-US")} / ${suggested.toLocaleString("en-US")} kcal suggested`
-                    : `Suggested ${suggested.toLocaleString("en-US")} kcal`}
+                    ? t("today.mealProgress", { eaten: num(kcal), suggested: num(suggested) })
+                    : t("today.mealSuggested", { kcal: num(suggested) })}
                 </span>
               </div>
-              <button className="plus-btn" onClick={() => setAdding(meal)} aria-label={`Add food to ${MEAL_LABELS[meal]}`}>
+              <button className="plus-btn" onClick={() => setAdding(meal)} aria-label={t("today.addFoodTo", { meal: t(`meal.${meal}`) })}>
                 +
               </button>
             </div>
@@ -170,12 +171,10 @@ export default function Today({
             💧
           </span>
           <div className="meal-title">
-            <h3>Water</h3>
-            <span className="muted">
-              {water} / {WATER_GOAL} glasses · {(water * GLASS_ML).toLocaleString("en-US")}ml
-            </span>
+            <h3>{t("today.water")}</h3>
+            <span className="muted">{t("today.waterStatus", { n: water, goal: WATER_GOAL, ml: num(water * GLASS_ML) })}</span>
           </div>
-          <button className="plus-btn" onClick={() => actions.setWater(date, water + 1)} aria-label="Add a glass of water">
+          <button className="plus-btn" onClick={() => actions.setWater(date, water + 1)} aria-label={t("today.addWater")}>
             +
           </button>
         </div>
@@ -185,17 +184,17 @@ export default function Today({
               key={i}
               className={`glass ${i < water ? "full" : ""}`}
               onClick={() => actions.setWater(date, i < water ? i : i + 1)}
-              aria-label={i < water ? `Remove glass ${i + 1}` : `Fill to ${i + 1} glasses`}
+              aria-label={i < water ? t("today.removeGlass", { n: i + 1 }) : t("today.fillGlasses", { n: i + 1 })}
             />
           ))}
         </div>
       </section>
 
       <details className="card more">
-        <summary>More nutrients</summary>
-        <NutrientBar label="Fiber" value={total.fiber} goal={goals.fiber} unit="g" color="var(--neutral-fill)" />
-        <NutrientBar label="Sugar" value={total.sugar} goal={goals.sugar} unit="g" color="var(--neutral-fill)" limit />
-        <NutrientBar label="Sodium" value={total.sodium} goal={goals.sodium} unit="mg" color="var(--neutral-fill)" limit />
+        <summary>{t("today.moreNutrients")}</summary>
+        <NutrientBar label={t("nutrient.fiber")} value={total.fiber} goal={goals.fiber} unit="g" color="var(--neutral-fill)" />
+        <NutrientBar label={t("nutrient.sugar")} value={total.sugar} goal={goals.sugar} unit="g" color="var(--neutral-fill)" limit />
+        <NutrientBar label={t("nutrient.sodium")} value={total.sodium} goal={goals.sodium} unit="mg" color="var(--neutral-fill)" limit />
       </details>
 
       {adding && <AddFood date={date} meal={adding} onClose={() => setAdding(null)} />}
@@ -206,6 +205,7 @@ export default function Today({
 }
 
 function Stat({ icon, label, value, onClick }: { icon: string; label: string; value: number; onClick?: () => void }) {
+  const { t, num } = useI18n();
   const body = (
     <>
       <span className="kpi-icon" aria-hidden="true">
@@ -213,12 +213,12 @@ function Stat({ icon, label, value, onClick }: { icon: string; label: string; va
       </span>
       <span className="kpi-text">
         <span className="kpi-label">{label}</span>
-        <strong>{value.toLocaleString("en-US")}</strong>
+        <strong>{num(value)}</strong>
       </span>
     </>
   );
   return onClick ? (
-    <button className="kpi" onClick={onClick} aria-label={`${label}: ${value} kcal. Edit`}>
+    <button className="kpi" onClick={onClick} aria-label={t("today.editStat", { label, value: num(value) })}>
       {body}
     </button>
   ) : (
@@ -227,18 +227,18 @@ function Stat({ icon, label, value, onClick }: { icon: string; label: string; va
 }
 
 function BurnedSheet({ date, value, onClose }: { date: string; value: number; onClose: () => void }) {
+  const i18n = useI18n();
+  const { t } = i18n;
   const [kcal, setKcal] = useState(value ? String(value) : "");
   const add = (n: number) => setKcal(String((Number(kcal) || 0) + n));
   return (
-    <Sheet title="Calories burned" onClose={onClose}>
-      <p className="muted small">
-        Exercise calories for {formatLongDate(date)}. They're added back to what you can eat today.
-      </p>
+    <Sheet title={t("burned.title")} onClose={onClose}>
+      <p className="muted small">{t("burned.help", { date: formatLongDate(date, i18n) })}</p>
       <input
         type="number"
         inputMode="numeric"
         min={0}
-        placeholder="e.g. 300"
+        placeholder={t("burned.placeholder")}
         value={kcal}
         onChange={(e) => setKcal(e.target.value)}
         autoFocus
@@ -257,7 +257,7 @@ function BurnedSheet({ date, value, onClose }: { date: string; value: number; on
           onClose();
         }}
       >
-        Save
+        {t("common.save")}
       </button>
     </Sheet>
   );

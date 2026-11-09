@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { sumNutrients, type Nutrients } from "../../shared/nutrition.ts";
+import { useI18n } from "../i18n/index.ts";
 import { addDays, formatDateLabel, parseDateKey, todayKey } from "../lib/dates.ts";
 import { useAppState } from "../lib/store.ts";
 
@@ -11,6 +12,8 @@ interface Day {
 
 export default function History({ onPickDate }: { onPickDate: (d: string) => void }) {
   const state = useAppState();
+  const i18n = useI18n();
+  const { t, num } = i18n;
   const [range, setRange] = useState<7 | 30>(7);
   const [hover, setHover] = useState<number | null>(null);
   const goal = state.goals.calories;
@@ -53,42 +56,42 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
   return (
     <div className="page">
       <header className="page-head">
-        <h1>Trends</h1>
-        <p className="muted">How your eating adds up over time.</p>
+        <h1>{t("trends.title")}</h1>
+        <p className="muted">{t("trends.subtitle")}</p>
       </header>
 
       <div className="segmented">
         {([7, 30] as const).map((r) => (
           <button key={r} className={r === range ? "active" : ""} onClick={() => setRange(r)}>
-            {r} days
+            {t("trends.days", { n: r })}
           </button>
         ))}
       </div>
 
       <section className="stat-row">
         <div className="card stat">
-          <span className="muted small">Avg calories</span>
-          <strong>{logged.length ? avgKcal.toLocaleString("en-US") : "—"}</strong>
-          <span className="muted small">goal {goal.toLocaleString("en-US")}</span>
+          <span className="muted small">{t("trends.avgCalories")}</span>
+          <strong>{logged.length ? num(avgKcal) : "—"}</strong>
+          <span className="muted small">{t("trends.goal", { n: num(goal) })}</span>
         </div>
         <div className="card stat">
-          <span className="muted small">Days logged</span>
+          <span className="muted small">{t("trends.daysLogged")}</span>
           <strong>
             {logged.length}/{range}
           </strong>
-          <span className="muted small">{onTarget} within ±10% of goal</span>
+          <span className="muted small">{t("trends.onTarget", { n: onTarget })}</span>
         </div>
       </section>
 
       <section className="card chart-card">
-        <h2 className="title">Calories per day</h2>
+        <h2 className="title">{t("trends.perDay")}</h2>
         <div className="chart-wrap">
-          <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label="Daily calories bar chart" onMouseLeave={() => setHover(null)}>
-            {ticks.map((t) => (
-              <g key={t}>
-                <line x1={pad.left} x2={W - pad.right} y1={y(t)} y2={y(t)} className="grid" />
-                <text x={pad.left - 6} y={y(t)} className="axis" textAnchor="end" dominantBaseline="middle">
-                  {t >= 1000 ? `${(t / 1000).toFixed(1)}k` : t}
+          <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label={t("trends.chartAria")} onMouseLeave={() => setHover(null)}>
+            {ticks.map((tick) => (
+              <g key={tick}>
+                <line x1={pad.left} x2={W - pad.right} y1={y(tick)} y2={y(tick)} className="grid" />
+                <text x={pad.left - 6} y={y(tick)} className="axis" textAnchor="end" dominantBaseline="middle">
+                  {tick >= 1000 ? `${num(tick / 1000, 1)}k` : tick}
                 </text>
               </g>
             ))}
@@ -117,7 +120,7 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
                   {(range === 7 || i % 5 === 4) && (
                     <text x={pad.left + i * slot + slot / 2} y={H - 6} className="axis" textAnchor="middle">
                       {range === 7
-                        ? parseDateKey(d.date).toLocaleDateString(undefined, { weekday: "narrow" })
+                        ? i18n.date(parseDateKey(d.date), { weekday: "narrow" })
                         : parseDateKey(d.date).getDate()}
                     </text>
                   )}
@@ -126,21 +129,21 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
             })}
             <line x1={pad.left} x2={W - pad.right} y1={y(goal)} y2={y(goal)} className="goal-line" />
             <text x={W - pad.right} y={y(goal) - 4} className="axis" textAnchor="end">
-              goal
+              {t("trends.goalLine")}
             </text>
           </svg>
           {hovered && (
             <div className="tooltip">
-              <strong>{formatDateLabel(hovered.date)}</strong>
-              <span>{hovered.logged ? `${Math.round(hovered.total.calories).toLocaleString("en-US")} kcal` : "Nothing logged"}</span>
+              <strong>{formatDateLabel(hovered.date, i18n)}</strong>
+              <span>{hovered.logged ? `${num(hovered.total.calories)} kcal` : t("trends.nothingLogged")}</span>
               {hovered.logged && (
                 <span className="muted small">
-                  P {Math.round(hovered.total.protein)}g · C {Math.round(hovered.total.carbs)}g · F{" "}
-                  {Math.round(hovered.total.fat)}g
+                  {t("abbr.protein")} {Math.round(hovered.total.protein)}g · {t("abbr.carbs")} {Math.round(hovered.total.carbs)}g ·{" "}
+                  {t("abbr.fat")} {Math.round(hovered.total.fat)}g
                 </span>
               )}
               <button className="link small" onClick={() => onPickDate(hovered.date)}>
-                Open day →
+                {t("trends.openDay")}
               </button>
             </div>
           )}
@@ -148,51 +151,51 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
       </section>
 
       <section className="card">
-        <h2 className="title">Average macro split</h2>
+        <h2 className="title">{t("trends.macroSplit")}</h2>
         {macroKcal > 0 ? (
           <>
-            <div className="split" role="img" aria-label="Macro split by calories">
+            <div className="split" role="img" aria-label={t("trends.macroAria")}>
               <div style={{ flex: avg.protein * 4, background: "var(--protein)" }} />
               <div style={{ flex: avg.carbs * 4, background: "var(--carbs)" }} />
               <div style={{ flex: avg.fat * 9, background: "var(--fat)" }} />
             </div>
             <ul className="legend">
               <li>
-                <i style={{ background: "var(--protein)" }} /> Protein {Math.round((avg.protein * 400) / macroKcal)}% ·{" "}
-                {Math.round(avg.protein / n)} g/day
+                <i style={{ background: "var(--protein)" }} />{" "}
+                {t("trends.macroLine", { name: t("nutrient.protein"), pct: Math.round((avg.protein * 400) / macroKcal), grams: Math.round(avg.protein / n) })}
               </li>
               <li>
-                <i style={{ background: "var(--carbs)" }} /> Carbs {Math.round((avg.carbs * 400) / macroKcal)}% ·{" "}
-                {Math.round(avg.carbs / n)} g/day
+                <i style={{ background: "var(--carbs)" }} />{" "}
+                {t("trends.macroLine", { name: t("nutrient.carbs"), pct: Math.round((avg.carbs * 400) / macroKcal), grams: Math.round(avg.carbs / n) })}
               </li>
               <li>
-                <i style={{ background: "var(--fat)" }} /> Fat {Math.round((avg.fat * 900) / macroKcal)}% ·{" "}
-                {Math.round(avg.fat / n)} g/day
+                <i style={{ background: "var(--fat)" }} />{" "}
+                {t("trends.macroLine", { name: t("nutrient.fat"), pct: Math.round((avg.fat * 900) / macroKcal), grams: Math.round(avg.fat / n) })}
               </li>
             </ul>
           </>
         ) : (
-          <p className="muted">Log some meals to see your macro split.</p>
+          <p className="muted">{t("trends.noMacros")}</p>
         )}
       </section>
 
       <section className="card">
-        <h2 className="title">Daily log</h2>
+        <h2 className="title">{t("trends.dailyLog")}</h2>
         <table className="table">
           <thead>
             <tr>
-              <th>Day</th>
+              <th>{t("trends.day")}</th>
               <th>kcal</th>
-              <th>P</th>
-              <th>C</th>
-              <th>F</th>
+              <th>{t("abbr.protein")}</th>
+              <th>{t("abbr.carbs")}</th>
+              <th>{t("abbr.fat")}</th>
             </tr>
           </thead>
           <tbody>
             {[...logged].reverse().map((d) => (
               <tr key={d.date} onClick={() => onPickDate(d.date)}>
-                <td>{formatDateLabel(d.date)}</td>
-                <td>{Math.round(d.total.calories).toLocaleString("en-US")}</td>
+                <td>{formatDateLabel(d.date, i18n)}</td>
+                <td>{num(d.total.calories)}</td>
                 <td>{Math.round(d.total.protein)}</td>
                 <td>{Math.round(d.total.carbs)}</td>
                 <td>{Math.round(d.total.fat)}</td>
@@ -201,7 +204,7 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
             {logged.length === 0 && (
               <tr>
                 <td colSpan={5} className="muted">
-                  No meals logged in this range yet.
+                  {t("trends.noMeals")}
                 </td>
               </tr>
             )}

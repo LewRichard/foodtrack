@@ -4,15 +4,16 @@ import History from "./components/History.tsx";
 import Profile from "./components/Profile.tsx";
 import Scan from "./components/Scan.tsx";
 import Today, { ScanIcon } from "./components/Today.tsx";
+import { useI18n, type MessageKey } from "./i18n/index.ts";
 import { todayKey } from "./lib/dates.ts";
 
 type Tab = "today" | "history" | "scan" | "goals" | "profile";
 
-const TABS: { id: Exclude<Tab, "scan">; label: string; icon: string }[] = [
-  { id: "today", label: "Diary", icon: "M4 6h16M4 12h16M4 18h10" },
-  { id: "history", label: "Trends", icon: "M6 20V11M12 20V5M18 20v-8" },
-  { id: "goals", label: "Goals", icon: "M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18M12 16a4 4 0 1 0 0-8a4 4 0 0 0 0 8" },
-  { id: "profile", label: "Profile", icon: "M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0" },
+const TABS: { id: Exclude<Tab, "scan">; label: MessageKey; icon: string }[] = [
+  { id: "today", label: "tab.diary", icon: "M4 6h16M4 12h16M4 18h10" },
+  { id: "history", label: "tab.trends", icon: "M6 20V11M12 20V5M18 20v-8" },
+  { id: "goals", label: "tab.goals", icon: "M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18M12 16a4 4 0 1 0 0-8a4 4 0 0 0 0 8" },
+  { id: "profile", label: "tab.profile", icon: "M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0" },
 ];
 
 const TAB_IDS: Tab[] = ["today", "history", "scan", "goals", "profile"];
@@ -29,6 +30,12 @@ function tabFromUrl(): Tab {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>(tabFromUrl);
+  const { t, lang } = useI18n();
+
+  // Screen readers and the browser's own UI (e.g. translation offers) follow the page language.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   // Tapping a reminder in the iPhone app asks to open a tab.
   useEffect(() => {
@@ -41,17 +48,17 @@ export default function App() {
   }, []);
   const [date, setDate] = useState(todayKey());
 
-  const navButton = (t: (typeof TABS)[number]) => (
+  const navButton = (item: (typeof TABS)[number]) => (
     <button
-      key={t.id}
-      className={`tab ${tab === t.id ? "active" : ""}`}
-      onClick={() => setTab(t.id)}
-      aria-current={tab === t.id ? "page" : undefined}
+      key={item.id}
+      className={`tab ${tab === item.id ? "active" : ""}`}
+      onClick={() => setTab(item.id)}
+      aria-current={tab === item.id ? "page" : undefined}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d={t.icon} />
+        <path d={item.icon} />
       </svg>
-      <span>{t.label}</span>
+      <span>{t(item.label)}</span>
     </button>
   );
 
@@ -91,7 +98,7 @@ export default function App() {
         <button
           className={`tab-scan ${tab === "scan" ? "active" : ""}`}
           onClick={() => setTab("scan")}
-          aria-label="Scan a meal"
+          aria-label={t("tab.scan")}
           aria-current={tab === "scan" ? "page" : undefined}
         >
           <ScanIcon />

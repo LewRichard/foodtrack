@@ -73,6 +73,17 @@ describe("reminder run", () => {
     const result = await runReminders(f.deps, breakfastTime);
     expect(result).toMatchObject({ people: 2, sent: 3, alreadyLogged: 0 });
     expect(f.sent[0].message).toMatchObject({ title: "🍳 Breakfast time", url: "/?tab=scan&meal=breakfast" });
+  });
+
+  it("sends each person's reminder in their language", async () => {
+    const f = fakeDeps([row("lew", { language: "vi" }), row("an", { language: "xx" })]);
+    await runReminders(f.deps, breakfastTime);
+    expect(f.sent.map((s) => s.message.title)).toEqual(["🍳 Đến giờ ăn sáng", "🍳 Breakfast time"]);
+  });
+
+  it("marks reminders as handled", async () => {
+    const f = fakeDeps([row("lew")]);
+    await runReminders(f.deps, breakfastTime);
     expect(f.marked.lew).toEqual({ breakfast: "2026-11-09" });
 
     // Next run 10 minutes later: already handled today, nothing more is sent.

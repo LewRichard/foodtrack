@@ -198,6 +198,10 @@ create policy "own reminder settings" on public.reminder_settings
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
+-- Language for the notification text (added later; safe to run again).
+alter table public.reminder_settings add column if not exists language text not null default 'en'
+  check (char_length(language) <= 8);
+
 revoke all on public.push_subscriptions, public.reminder_settings from anon;
 grant select, insert, update, delete on public.push_subscriptions, public.reminder_settings to authenticated;
 

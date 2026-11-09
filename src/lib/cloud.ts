@@ -5,6 +5,7 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
 import { actions, getState, INITIAL_STATE, onStateChange, type AppState } from "./store.ts";
 import { projectUrl, supabaseKey } from "../../shared/supabase.ts";
+import { t } from "../i18n/index.ts";
 import { isNative } from "./native.ts";
 import { setSyncStatus, syncOnce, type Remote } from "./sync.ts";
 import { attachAccount, hasPending, type DayRow, type EntryRow, type Pulled, type SettingsRow } from "./syncState.ts";
@@ -25,7 +26,7 @@ const ready: Promise<SupabaseClient> | null = cloudEnabled
   : null;
 
 async function client(): Promise<SupabaseClient> {
-  if (!ready) throw new Error("Cloud backup isn't set up for this app.");
+  if (!ready) throw new Error(t("cloud.notSetUp"));
   return ready;
 }
 
@@ -138,9 +139,9 @@ export function syncNow(): Promise<void> {
 function describeError(e: unknown): string {
   const message = e instanceof Error ? e.message : typeof e === "object" && e && "message" in e ? String(e.message) : String(e);
   if (/relation .* does not exist|schema cache/i.test(message)) {
-    return "The database isn't set up yet. Run supabase/schema.sql in the Supabase SQL editor.";
+    return t("sync.notSetUp");
   }
-  if (/Failed to fetch|NetworkError|Load failed/i.test(message)) return "Can't reach the server. Will retry.";
+  if (/Failed to fetch|NetworkError|Load failed/i.test(message)) return t("sync.unreachable");
   return message;
 }
 
@@ -248,11 +249,11 @@ export async function deleteAccount(): Promise<void> {
 }
 
 function friendlyAuthError(message: string): string {
-  if (/invalid login credentials/i.test(message)) return "Wrong email or password.";
-  if (/email not confirmed/i.test(message)) return "Please confirm your email first (check your inbox), then sign in.";
-  if (/already registered|already exists/i.test(message)) return "This email already has an account. Sign in instead.";
-  if (/password should be at least/i.test(message)) return "Password must be at least 6 characters.";
-  if (/rate limit/i.test(message)) return "Too many attempts. Please wait a minute and try again.";
-  if (/Failed to fetch|NetworkError|Load failed/i.test(message)) return "Can't reach the server. Check your connection.";
+  if (/invalid login credentials/i.test(message)) return t("auth.wrongPassword");
+  if (/email not confirmed/i.test(message)) return t("auth.confirmFirst");
+  if (/already registered|already exists/i.test(message)) return t("auth.exists");
+  if (/password should be at least/i.test(message)) return t("auth.shortPassword");
+  if (/rate limit/i.test(message)) return t("auth.rateLimit");
+  if (/Failed to fetch|NetworkError|Load failed/i.test(message)) return t("err.network");
   return message;
 }

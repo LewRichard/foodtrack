@@ -1,3 +1,5 @@
+import type { I18n } from "../i18n/index.ts";
+
 /** Local calendar date as YYYY-MM-DD (not UTC). */
 export function toDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -21,20 +23,21 @@ export function addDays(key: string, days: number): string {
   return toDateKey(date);
 }
 
-export function formatDateLabel(key: string): string {
+/** "Today", "Yesterday", or a short date, in the app's language. */
+export function formatDateLabel(key: string, i18n: I18n): string {
   const today = todayKey();
-  if (key === today) return "Today";
-  if (key === addDays(today, -1)) return "Yesterday";
-  return parseDateKey(key).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  if (key === today) return i18n.t("date.today");
+  if (key === addDays(today, -1)) return i18n.t("date.yesterday");
+  return i18n.date(parseDateKey(key), { weekday: "short", month: "short", day: "numeric" });
 }
 
-export function formatLongDate(key: string): string {
-  return parseDateKey(key).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+export function formatLongDate(key: string, i18n: I18n): string {
+  return i18n.date(parseDateKey(key), { weekday: "long", month: "long", day: "numeric" });
 }
 
-export function greeting(date = new Date()): string {
+export function greetingKey(date = new Date()): "greet.morning" | "greet.afternoon" | "greet.evening" {
   const h = date.getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "greet.morning";
+  if (h < 18) return "greet.afternoon";
+  return "greet.evening";
 }

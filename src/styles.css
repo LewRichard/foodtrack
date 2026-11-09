@@ -2105,3 +2105,71 @@ img.avatar {
   object-fit: cover;
   display: block;
 }
+
+/* Profile photo cropper */
+.cropper-wrap {
+  align-items: center;
+}
+
+.cropper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #111;
+  touch-action: none; /* we handle drag and pinch ourselves */
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  display: grid;
+  place-items: center;
+}
+
+.cropper:active {
+  cursor: grabbing;
+}
+
+.cropper:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.cropper img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* Dims everything outside the circle the photo will be shown in. */
+.cropper-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgb(0 0 0 / 0.5);
+  border: 2px solid rgb(255 255 255 / 0.9);
+  pointer-events: none;
+}
+
+.cropper-zoom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  font-size: 20px;
+  color: var(--text-2);
+}
+
+.cropper-zoom input {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  accent-color: var(--accent);
+}
+
+.cropper-wrap > .row {
+  width: 100%;
+}

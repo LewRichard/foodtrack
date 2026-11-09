@@ -7,6 +7,7 @@ import { setAvatar, syncNotificationLanguage, useMyProfile } from "../lib/commun
 import { enableReminders } from "../lib/reminders.ts";
 import { THEME_PREFS } from "../lib/theme.ts";
 import Account from "./Account.tsx";
+import AvatarCropper from "./AvatarCropper.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import Reminders from "./Reminders.tsx";
 
@@ -33,10 +34,16 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState("");
 
-  async function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  const [cropping, setCropping] = useState<File | null>(null);
+
+  function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (file) setCropping(file);
+  }
+
+  async function savePhoto(file: Blob) {
+    setCropping(null);
     setPhotoBusy(true);
     setPhotoError("");
     try {
@@ -102,6 +109,7 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
             </button>
             <input ref={photoInput} type="file" accept="image/*" hidden onChange={pickPhoto} />
             {photoError && <p className="error small">{photoError}</p>}
+            {cropping && <AvatarCropper file={cropping} onCancel={() => setCropping(null)} onDone={savePhoto} />}
           </>
         )}
         <h1>{name.trim() || t("profile.yourProfile")}</h1>

@@ -48,6 +48,7 @@ import {
 import { timeAgo, todayKey } from "../lib/dates.ts";
 import { photoForUpload } from "../lib/image.ts";
 import { entriesForDate, getState, useAppState } from "../lib/store.ts";
+import AvatarCropper from "./AvatarCropper.tsx";
 import Sheet from "./Sheet.tsx";
 
 type Section = "feed" | "chats" | "friends";
@@ -1115,10 +1116,12 @@ export function EditProfile({ me, onClose }: { me: Profile; onClose: () => void 
     }
   }
 
-  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
+  const [cropping, setCropping] = useState<File | null>(null);
+
+  function pick(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (file) await run(() => setAvatar(file));
+    if (file) setCropping(file);
   }
 
   return (
@@ -1138,6 +1141,16 @@ export function EditProfile({ me, onClose }: { me: Profile; onClose: () => void 
           </div>
         </div>
         <input ref={fileInput} type="file" accept="image/*" hidden onChange={pick} />
+        {cropping && (
+          <AvatarCropper
+            file={cropping}
+            onCancel={() => setCropping(null)}
+            onDone={(photo) => {
+              setCropping(null);
+              void run(() => setAvatar(photo));
+            }}
+          />
+        )}
         <label className="stack">
           <span className="label">{t("community.displayName")}</span>
           <div className="row gap">

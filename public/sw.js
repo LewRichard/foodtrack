@@ -1,5 +1,5 @@
 // Minimal offline support: cache the app shell, always go to the network for the API.
-const CACHE = "foodtrack-v1";
+const CACHE = "foodtrack-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/icon.svg", "/manifest.webmanifest"])));
@@ -25,5 +25,41 @@ self.addEventListener("fetch", (event) => {
         return res;
       })
       .catch(() => caches.match(event.request).then((r) => r ?? caches.match("/"))),
+  );
+});
+
+// ---- Meal reminders (web push) ----
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "FoodTrack", {
+      body: data.body || "Time to log your meal.",
+      icon: "/icon-512.png",
+      badge: "/icon-512.png",
+      tag: data.tag || "foodtrack",
+      data: { url: data.url || "/" },
+    }),
+  );
+});
+
+// Tapping a reminder opens the app (on the scan screen), reusing an open window if there is one.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const w of windows) {
+        if (new URL(w.url).origin === self.location.origin && "focus" in w) {
+          return w.navigate(url).then((nav) => (nav || w).focus());
+        }
+      }
+      return self.clients.openWindow(url);
+    }),
   );
 });

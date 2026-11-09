@@ -1015,6 +1015,38 @@ select:focus {
   margin: 0;
 }
 
+.reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reminder-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.reminder-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.reminder-row input[type="time"] {
+  width: 148px;
+}
+
+.reminder-row input[type="time"]:disabled {
+  opacity: 0.4;
+}
+
 /* ---- Sheet ---- */
 .sheet-backdrop {
   position: fixed;

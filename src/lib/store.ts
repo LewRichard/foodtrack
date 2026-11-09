@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
+import { DEFAULT_REMINDER_TIMES, type ReminderTimes } from "../../shared/reminders.ts";
 import {
   EMPTY_SYNC,
   isUuid,
@@ -24,6 +25,7 @@ export interface AppState {
   dayUpdatedAt: Record<string, number>; // date -> when water/burned last changed (for sync)
   settingsUpdatedAt: number; // when name/goals/profile last changed (for sync); 0 = never
   sync: SyncMeta; // cloud backup bookkeeping (see syncState.ts)
+  reminders: { enabled: boolean; times: ReminderTimes }; // meal reminders on this device
 }
 
 const STORAGE_KEY = "foodtrack:v1";
@@ -41,6 +43,7 @@ export const INITIAL_STATE: AppState = {
   dayUpdatedAt: {},
   settingsUpdatedAt: 0,
   sync: EMPTY_SYNC,
+  reminders: { enabled: false, times: DEFAULT_REMINDER_TIMES },
 };
 
 function load(): AppState {
@@ -155,6 +158,9 @@ export const actions = {
   },
   setProfile(profile: Profile | null) {
     setState(markSettingsChanged({ ...state, profile }, Date.now()));
+  },
+  setReminders(reminders: AppState["reminders"]) {
+    setState({ ...state, reminders });
   },
   setAiConsent(aiConsent: boolean) {
     setState({ ...state, aiConsent });

@@ -24,6 +24,17 @@ services:
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
         sync: false
+      # Meal reminders (optional, see docs/REMINDERS.md)
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
       - key: SCANS_PER_IP_PER_HOUR
         value: "30"
       - key: DAILY_SCAN_LIMIT

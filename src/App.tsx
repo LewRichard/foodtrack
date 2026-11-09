@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Goals from "./components/Goals.tsx";
 import History from "./components/History.tsx";
 import Profile from "./components/Profile.tsx";
@@ -15,8 +15,30 @@ const TABS: { id: Exclude<Tab, "scan">; label: string; icon: string }[] = [
   { id: "profile", label: "Profile", icon: "M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0" },
 ];
 
+const TAB_IDS: Tab[] = ["today", "history", "scan", "goals", "profile"];
+
+/** A notification can open the app on a given tab, e.g. /?tab=scan. */
+function tabFromUrl(): Tab {
+  const tab = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+  if (tab && TAB_IDS.includes(tab)) {
+    window.history.replaceState(null, "", window.location.pathname);
+    return tab;
+  }
+  return "today";
+}
+
 export default function App() {
-  const [tab, setTab] = useState<Tab>("today");
+  const [tab, setTab] = useState<Tab>(tabFromUrl);
+
+  // Tapping a reminder in the iPhone app asks to open a tab.
+  useEffect(() => {
+    const open = (e: Event) => {
+      const next = (e as CustomEvent<string>).detail as Tab;
+      if (TAB_IDS.includes(next)) setTab(next);
+    };
+    window.addEventListener("foodtrack:navigate", open);
+    return () => window.removeEventListener("foodtrack:navigate", open);
+  }, []);
   const [date, setDate] = useState(todayKey());
 
   const navButton = (t: (typeof TABS)[number]) => (

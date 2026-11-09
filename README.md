@@ -21,6 +21,8 @@ calls Claude's vision model, so your API key never reaches the browser.
   lose / maintain / gain) or set them manually.
 - **Trends** – 7- and 30-day calorie chart vs. goal, average macro split, daily log table.
 - **Private by default** – your diary is stored on the device. Export/import a JSON backup.
+- **Meal reminders** – push notifications at meal times, only if that meal isn't logged yet; tapping one
+  opens the scan screen. Setup: [docs/REMINDERS.md](docs/REMINDERS.md).
 - **Optional accounts & cloud backup** – sign in to save the diary online and sync it between phone,
   computer and the iPhone app (Supabase). Works offline and catches up later. Setup: [docs/DATABASE.md](docs/DATABASE.md).
 - **Safe to put online** – sign-in or an access code to scan, a per-person hourly scan limit and a daily cap protect your
@@ -81,6 +83,7 @@ Build command `npm ci && npm run build`, start command `npm start`, and set the 
 | `PORT` | 8787 | Port to listen on (hosts usually set this for you). |
 | `TRUST_PROXY` | 1 | Proxies in front of the server, so the rate limit sees real visitor IPs. |
 | `ALLOWED_ORIGINS` | `capacitor://localhost` | Other origins allowed to call the API (the iPhone app). |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` | empty | Turn on meal reminders ([docs/REMINDERS.md](docs/REMINDERS.md)). Server-only secrets. |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | empty | Turn on accounts & cloud backup ([docs/DATABASE.md](docs/DATABASE.md)). Built into the app, so rebuild after changing. |
 
 Also set a monthly spend limit in the [Anthropic Console](https://console.anthropic.com) as a final safety net.

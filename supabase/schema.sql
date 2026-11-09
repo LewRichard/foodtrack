@@ -153,3 +153,71 @@ $$;
 
 revoke all on function public.delete_my_account() from public, anon;
 grant execute on function public.delete_my_account() to authenticated;
+
+-- ---------------------------------------------------------------------------------------------
+-- Meal reminders (web push). Added later; running this file again adds them safely.
+-- ---------------------------------------------------------------------------------------------
+
+-- One row per device that allowed notifications. The keys come from the browser's push service.
+create table if not exists public.push_subscriptions (
+  endpoint text primary key check (char_length(endpoint) <= 2000),
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  p256dh text not null check (char_length(p256dh) <= 200),
+  auth text not null check (char_length(auth) <= 100),
+  user_agent text check (user_agent is null or char_length(user_agent) <= 500),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists push_subscriptions_user on public.push_subscriptions (user_id);
+
+-- When to remind each person (local times in their time zone; null = that reminder is off).
+-- last_sent records the local date each reminder was last handled, so it goes out once a day.
+create table if not exists public.reminder_settings (
+  user_id uuid primary key default auth.uid() references auth.users (id) on delete cascade,
+  enabled boolean not null default true,
+  timezone text not null default 'UTC' check (char_length(timezone) <= 64),
+  breakfast time,
+  lunch time,
+  dinner time,
+  last_sent jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.push_subscriptions enable row level security;
+alter table public.reminder_settings enable row level security;
+
+drop policy if exists "own push subscriptions" on public.push_subscriptions;
+create policy "own push subscriptions" on public.push_subscriptions
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+drop policy if exists "own reminder settings" on public.reminder_settings;
+create policy "own reminder settings" on public.reminder_settings
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+revoke all on public.push_subscriptions, public.reminder_settings from anon;
+grant select, insert, update, delete on public.push_subscriptions, public.reminder_settings to authenticated;
+
+-- Registers this device for the signed-in user. A browser keeps the same push address when a
+-- different person signs in on it, so any earlier owner's registration for it is replaced.
+create or replace function public.save_push_subscription(p_endpoint text, p_p256dh text, p_auth text, p_user_agent text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'not signed in';
+  end if;
+  delete from public.push_subscriptions where endpoint = p_endpoint;
+  insert into public.push_subscriptions (endpoint, user_id, p256dh, auth, user_agent)
+  values (p_endpoint, auth.uid(), p_p256dh, p_auth, left(p_user_agent, 500));
+end;
+$$;
+
+revoke all on function public.save_push_subscription(text, text, text, text) from public, anon;
+grant execute on function public.save_push_subscription(text, text, text, text) to authenticated;

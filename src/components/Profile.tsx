@@ -3,6 +3,7 @@ import { getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
 import Account from "./Account.tsx";
+import Reminders from "./Reminders.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
   const { name, profile, goals, entries, aiConsent } = useAppState();
@@ -74,6 +75,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
       </section>
 
       {cloudEnabled && <Account />}
+
+      <Reminders />
 
       <section className="card">
         <h2 className="title">Your name</h2>

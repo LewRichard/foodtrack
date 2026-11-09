@@ -5,6 +5,7 @@ import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
 import { actions, getState, INITIAL_STATE, onStateChange, type AppState } from "./store.ts";
 import { projectUrl, supabaseKey } from "../../shared/supabase.ts";
+import { isNative } from "./native.ts";
 import { setSyncStatus, syncOnce, type Remote } from "./sync.ts";
 import { attachAccount, hasPending, type DayRow, type EntryRow, type Pulled, type SettingsRow } from "./syncState.ts";
 
@@ -176,6 +177,28 @@ export async function startCloud() {
   }, 2 * 60 * 1000);
 }
 
+/** The Supabase client (for features like reminders that store their own rows). */
+export function cloudClient(): Promise<SupabaseClient> {
+  return client();
+}
+
+const beforeSignOut: Array<() => Promise<void>> = [];
+
+// Web reminders belong to the account and stop on sign-out; the iPhone app's are on the phone itself.
+function keptReminders(): AppState["reminders"] {
+  const r = getState().reminders;
+  return isNative ? r : { ...r, enabled: false };
+}
+
+/** Runs `fn` before signing out or deleting the account (e.g. to stop this device's notifications). */
+export function onBeforeSignOut(fn: () => Promise<void>) {
+  beforeSignOut.push(fn);
+}
+
+async function runBeforeSignOut() {
+  for (const fn of beforeSignOut) await fn().catch(() => {});
+}
+
 /** The signed-in user's access token (refreshed if needed), sent to our server to prove sign-in. */
 export async function accessToken(): Promise<string | null> {
   if (!ready || !session) return null;
@@ -206,8 +229,9 @@ export async function signUp(email: string, password: string): Promise<AuthResul
 export async function signOut(force = false): Promise<boolean> {
   await syncNow().catch(() => {});
   if (!force && hasPending(getState())) return false;
+  await runBeforeSignOut();
   await (await client()).auth.signOut();
-  actions.replace({ ...INITIAL_STATE, aiConsent: getState().aiConsent });
+  actions.replace({ ...INITIAL_STATE, aiConsent: getState().aiConsent, reminders: keptReminders() });
   setSyncStatus({ kind: "idle" });
   return true;
 }
@@ -215,10 +239,11 @@ export async function signOut(force = false): Promise<boolean> {
 /** Permanently deletes the account and everything stored in it, then clears this device. */
 export async function deleteAccount(): Promise<void> {
   const db = await client();
+  await runBeforeSignOut();
   const { error } = await db.rpc("delete_my_account");
   if (error) throw new Error(describeError(error));
   await db.auth.signOut().catch(() => {});
-  actions.replace({ ...INITIAL_STATE, aiConsent: getState().aiConsent });
+  actions.replace({ ...INITIAL_STATE, aiConsent: getState().aiConsent, reminders: keptReminders() });
   setSyncStatus({ kind: "idle" });
 }
 

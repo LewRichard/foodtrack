@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { currentLanguage, t } from "../i18n/index.ts";
+import { projectUrl } from "../../shared/supabase.ts";
 import { API_BASE } from "./api.ts";
 import { accessToken, cloudClient, onBeforeDeleteAccount } from "./cloud.ts";
 import { isNative } from "./native.ts";
 import { reminderSupport, subscribeThisDevice, unsubscribeThisDevice } from "./reminders.ts";
+import { photoSquare } from "./image.ts";
 import { actions, getState } from "./store.ts";
 
 // Community: profiles, friends, posts, comments, likes and chat, all stored in Supabase.
@@ -14,6 +16,7 @@ export interface Profile {
   id: string;
   username: string;
   display_name: string;
+  avatar_path: string | null;
 }
 
 export type ConnectionState = "friend" | "incoming" | "outgoing" | "none";
@@ -41,7 +44,7 @@ export interface Post {
   like_count: number;
   comment_count: number;
   created_at: string;
-  author_profile: Pick<Profile, "username" | "display_name"> | null;
+  author_profile: Pick<Profile, "username" | "display_name" | "avatar_path"> | null;
   liked: boolean;
   imageUrl: string | null;
 }
@@ -52,13 +55,14 @@ export interface Comment {
   author: string;
   body: string;
   created_at: string;
-  author_profile: Pick<Profile, "username" | "display_name"> | null;
+  author_profile: Pick<Profile, "username" | "display_name" | "avatar_path"> | null;
 }
 
 export interface Conversation {
   other: string;
   username: string;
   display_name: string;
+  avatar_path: string | null;
   last_body: string;
   last_at: string;
   last_from_me: boolean;
@@ -122,11 +126,115 @@ function notify(kind: NotifyKind, id: string) {
 
 // ---- Profile ------------------------------------------------------------------------------------
 
+// My own profile, shared by the Community and Profile tabs (undefined = not loaded yet).
+let myProfile: Profile | null | undefined;
+const profileListeners = new Set<() => void>();
+function setMyProfile(p: Profile | null | undefined) {
+  myProfile = p;
+  profileListeners.forEach((fn) => fn());
+}
+
 export async function loadMyProfile(): Promise<Profile | null> {
   const id = await me();
-  const { data, error } = await (await db()).from("profiles").select("id, username, display_name").eq("id", id).maybeSingle();
+  const { data, error } = await (await db()).from("profiles").select("id, username, display_name, avatar_path").eq("id", id).maybeSingle();
   fail(error);
+  setMyProfile(data as Profile | null);
   return data as Profile | null;
+}
+
+let profileError = "";
+
+/**
+ * My community profile while signed in (loaded once, shared by every screen). `profile` is
+ * undefined while loading and null when I haven't joined yet; `error` is set if loading failed.
+ */
+export function useMyProfile(userId: string | null): { profile: Profile | null | undefined; error: string; retry: () => void } {
+  const [, rerender] = useState(0);
+  useEffect(() => {
+    const fn = () => rerender((n) => n + 1);
+    profileListeners.add(fn);
+    return () => void profileListeners.delete(fn);
+  }, []);
+  const load = () => {
+    profileError = "";
+    setMyProfile(undefined);
+    loadMyProfile().catch((e) => {
+      profileError = e instanceof Error ? e.message : String(e);
+      setMyProfile(undefined);
+    });
+  };
+  useEffect(() => {
+    if (!userId) {
+      profileError = "";
+      setMyProfile(undefined); // signed out: forget it, so the next account loads its own
+    } else if ((myProfile === undefined && !profileError) || (myProfile && myProfile.id !== userId)) {
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+  return { profile: userId ? myProfile : null, error: userId ? profileError : "", retry: load };
+}
+
+const SUPABASE_URL = projectUrl(import.meta.env.VITE_SUPABASE_URL ?? "");
+const AVATARS = "avatars";
+
+/** Public link to a profile photo. */
+export function avatarUrl(path: string | null | undefined): string | null {
+  return path && SUPABASE_URL ? `${SUPABASE_URL}/storage/v1/object/public/${AVATARS}/${path}` : null;
+}
+
+/** Sets my profile photo (cropped to a square) and removes the previous one. */
+export async function setAvatar(file: Blob): Promise<Profile> {
+  const client = await db();
+  const myId = await me();
+  const photo = await photoSquare(file);
+  // A new name each time, so phones don't keep showing the old photo from their cache.
+  const path = `${myId}/${crypto.randomUUID()}.jpg`;
+  const { error: uploadError } = await client.storage.from(AVATARS).upload(path, photo, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (uploadError) throw new CommunityError(t("community.photoFailed", { error: uploadError.message }));
+  return replaceAvatar(path);
+}
+
+export async function removeAvatar(): Promise<Profile> {
+  return replaceAvatar(null);
+}
+
+async function replaceAvatar(path: string | null): Promise<Profile> {
+  const client = await db();
+  const myId = await me();
+  const old = myProfile?.avatar_path ?? null;
+  const { data, error } = await client
+    .from("profiles")
+    .update({ avatar_path: path })
+    .eq("id", myId)
+    .select("id, username, display_name, avatar_path")
+    .single();
+  if (error && path) await client.storage.from(AVATARS).remove([path]);
+  fail(error);
+  if (old && old !== path) await client.storage.from(AVATARS).remove([old]);
+  return saved(data);
+}
+
+export async function updateDisplayName(name: string): Promise<Profile> {
+  const { data, error } = await (await db())
+    .from("profiles")
+    .update({ display_name: name.trim().slice(0, 40) })
+    .eq("id", await me())
+    .select("id, username, display_name, avatar_path")
+    .single();
+  fail(error);
+  return saved(data);
+}
+
+/** Shares a just-saved profile with every screen (reloading it if the save didn't send it back). */
+async function saved(data: unknown): Promise<Profile> {
+  if (data) {
+    setMyProfile(data as Profile);
+    return data as Profile;
+  }
+  const fresh = await loadMyProfile();
+  if (!fresh) throw new CommunityError(t("community.notAllowed"));
+  return fresh;
 }
 
 export async function createProfile(username: string, displayName: string): Promise<Profile> {
@@ -135,9 +243,10 @@ export async function createProfile(username: string, displayName: string): Prom
   const { data, error } = await (await db())
     .from("profiles")
     .insert({ username: clean, display_name: displayName.trim().slice(0, 40) })
-    .select("id, username, display_name")
+    .select("id, username, display_name, avatar_path")
     .single();
   fail(error);
+  setMyProfile(data as Profile);
   return data as Profile;
 }
 
@@ -186,14 +295,14 @@ export async function unblockUser(id: string): Promise<void> {
 }
 
 export async function loadBlocked(): Promise<Profile[]> {
-  const { data, error } = await (await db()).from("blocks").select("blocked, profile:profiles!blocks_blocked_fkey(id, username, display_name)");
+  const { data, error } = await (await db()).from("blocks").select("blocked, profile:profiles!blocks_blocked_fkey(id, username, display_name, avatar_path)");
   fail(error);
   return ((data ?? []) as unknown as { profile: Profile | null }[]).flatMap((row) => (row.profile ? [row.profile] : []));
 }
 
 // ---- Posts ----------------------------------------------------------------------------------------
 
-const POST_FIELDS = "id, author, body, image_path, visibility, day_summary, like_count, comment_count, created_at, author_profile:profiles!posts_author_fkey(username, display_name)";
+const POST_FIELDS = "id, author, body, image_path, visibility, day_summary, like_count, comment_count, created_at, author_profile:profiles!posts_author_fkey(username, display_name, avatar_path)";
 
 async function withExtras(rows: Omit<Post, "liked" | "imageUrl">[]): Promise<Post[]> {
   if (!rows.length) return [];
@@ -263,7 +372,7 @@ export async function setLiked(postId: string, liked: boolean): Promise<void> {
 export async function loadComments(postId: string): Promise<Comment[]> {
   const { data, error } = await (await db())
     .from("comments")
-    .select("id, post_id, author, body, created_at, author_profile:profiles!comments_author_fkey(username, display_name)")
+    .select("id, post_id, author, body, created_at, author_profile:profiles!comments_author_fkey(username, display_name, avatar_path)")
     .eq("post_id", postId)
     .order("created_at", { ascending: true })
     .limit(200);
@@ -275,7 +384,7 @@ export async function addComment(postId: string, body: string): Promise<Comment>
   const { data, error } = await (await db())
     .from("comments")
     .insert({ post_id: postId, body: body.trim() })
-    .select("id, post_id, author, body, created_at, author_profile:profiles!comments_author_fkey(username, display_name)")
+    .select("id, post_id, author, body, created_at, author_profile:profiles!comments_author_fkey(username, display_name, avatar_path)")
     .single();
   fail(error);
   notify("comment", (data as { id: string }).id);
@@ -425,7 +534,9 @@ export async function syncNotificationLanguage(): Promise<void> {
 onBeforeDeleteAccount(async () => {
   const client = await db();
   const myId = await me();
-  const { data } = await client.storage.from(BUCKET).list(myId, { limit: 1000 });
-  const paths = (data ?? []).map((f) => `${myId}/${f.name}`);
-  if (paths.length) await client.storage.from(BUCKET).remove(paths);
+  for (const bucket of [BUCKET, AVATARS]) {
+    const { data } = await client.storage.from(bucket).list(myId, { limit: 1000 });
+    const paths = (data ?? []).map((f) => `${myId}/${f.name}`);
+    if (paths.length) await client.storage.from(bucket).remove(paths);
+  }
 });

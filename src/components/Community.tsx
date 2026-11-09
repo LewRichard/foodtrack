@@ -18,18 +18,22 @@ import {
   loadConversations,
   loadFeed,
   loadMessages,
-  loadMyProfile,
   markRead,
+  removeAvatar,
   refreshAlerts,
   removeFriend,
   report,
   searchPeople,
   sendFriendRequest,
   sendMessage,
+  setAvatar,
   setCommunityNotifications,
   setLiked,
   syncNotificationLanguage,
   unblockUser,
+  updateDisplayName,
+  useMyProfile,
+  avatarUrl,
   USERNAME_PATTERN,
   type Comment,
   type Connection,
@@ -47,26 +51,16 @@ import { entriesForDate, getState, useAppState } from "../lib/store.ts";
 import Sheet from "./Sheet.tsx";
 
 type Section = "feed" | "chats" | "friends";
-type Person = Pick<Profile, "id" | "username" | "display_name">;
+type Person = Pick<Profile, "id" | "username" | "display_name" | "avatar_path">;
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export default function Community({ onSignIn, alerts }: { onSignIn: () => void; alerts: { messages: number; requests: number } }) {
   const session = useSession();
   const { t } = useI18n();
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [error, setError] = useState("");
   const userId = session?.user.id ?? null;
-
-  const load = useCallback(() => {
-    setError("");
-    setProfile(undefined);
-    loadMyProfile().then(setProfile, (e) => setError(message(e)));
-  }, []);
-
-  useEffect(() => {
-    if (userId) load();
-  }, [userId, load]);
+  // Shared with the Profile tab, so a new photo or name shows up everywhere at once.
+  const { profile, error, retry: load } = useMyProfile(userId);
 
   if (!cloudEnabled || !userId) {
     return (
@@ -108,13 +102,13 @@ export default function Community({ onSignIn, alerts }: { onSignIn: () => void; 
     );
   }
 
-  if (profile === null) return <Setup onCreated={setProfile} />;
+  if (profile === null) return <Setup />;
   return <Home profile={profile} alerts={alerts} />;
 }
 
 // ---- First visit: pick a username and agree to the rules -----------------------------------------
 
-function Setup({ onCreated }: { onCreated: (p: Profile) => void }) {
+function Setup() {
   const { t } = useI18n();
   const { name } = useAppState();
   const [username, setUsername] = useState(() =>
@@ -137,7 +131,7 @@ function Setup({ onCreated }: { onCreated: (p: Profile) => void }) {
     setBusy(true);
     setError("");
     try {
-      onCreated(await createProfile(username, displayName || username));
+      await createProfile(username, displayName || username); // updates the shared profile
     } catch (err) {
       setError(message(err));
     } finally {
@@ -379,7 +373,12 @@ function NotifySheet({ onClose }: { onClose: () => void }) {
 
 // ---- Shared bits ------------------------------------------------------------------------------------
 
-function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
+export function Avatar({ name, path, size = "md" }: { name: string; path?: string | null; size?: "sm" | "md" | "lg" }) {
+  const [broken, setBroken] = useState(false);
+  const url = avatarUrl(path);
+  if (url && !broken) {
+    return <img className={`c-avatar ${size}`} src={url} alt="" loading="lazy" onError={() => setBroken(true)} />;
+  }
   let hue = 0;
   for (const ch of name) hue = (hue * 31 + ch.codePointAt(0)!) % 360;
   return (
@@ -389,10 +388,10 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
   );
 }
 
-function PersonRow({ person, children }: { person: Pick<Profile, "username" | "display_name">; children?: React.ReactNode }) {
+function PersonRow({ person, children }: { person: Pick<Profile, "username" | "display_name" | "avatar_path">; children?: React.ReactNode }) {
   return (
     <div className="person-row">
-      <Avatar name={person.display_name || person.username} />
+      <Avatar name={person.display_name || person.username} path={person.avatar_path} />
       <span className="person-name">
         <strong>{person.display_name || person.username}</strong>
         <span className="muted small">@{person.username}</span>
@@ -515,7 +514,7 @@ function Feed({
       </div>
 
       <button className="card composer-open" onClick={() => setComposing(true)}>
-        <Avatar name={me.display_name || me.username} />
+        <Avatar name={me.display_name || me.username} path={me.avatar_path} />
         <span className="muted">{t("community.composePrompt")}</span>
         <span className="composer-photo" aria-hidden="true">
           📷
@@ -580,7 +579,7 @@ function PostCard({ post, me, onChange, onOpen }: { post: Post; me: Profile; onC
   const { t, locale } = useI18n();
   const [menu, setMenu] = useState(false);
   const [reporting, setReporting] = useState<{ target: ReportTarget; id: string } | null>(null);
-  const author = post.author_profile ?? { username: "?", display_name: "" };
+  const author = post.author_profile ?? { username: "?", display_name: "", avatar_path: null };
   const mine = post.author === me.id;
 
   async function toggleLike() {
@@ -618,7 +617,7 @@ function PostCard({ post, me, onChange, onOpen }: { post: Post; me: Profile; onC
   return (
     <article className="card post">
       <header className="post-head">
-        <Avatar name={author.display_name || author.username} />
+        <Avatar name={author.display_name || author.username} path={author.avatar_path} />
         <span className="person-name">
           <strong>{author.display_name || author.username}</strong>
           <span className="muted small">
@@ -731,11 +730,11 @@ function PostSheet({ post, me, onClose, onChange }: { post: Post; me: Profile; o
         {comments === null && !error && <div className="spinner dark center-spinner" />}
         {comments?.length === 0 && <p className="muted small center">{t("community.noComments")}</p>}
         {comments?.map((c) => {
-          const who = c.author_profile ?? { username: "?", display_name: "" };
+          const who = c.author_profile ?? { username: "?", display_name: "", avatar_path: null };
           const canDelete = c.author === me.id || post.author === me.id;
           return (
             <div key={c.id} className="comment">
-              <Avatar name={who.display_name || who.username} size="sm" />
+              <Avatar name={who.display_name || who.username} path={who.avatar_path} size="sm" />
               <div className="comment-bubble">
                 <strong className="small">{who.display_name || who.username}</strong>
                 <p>{c.body}</p>
@@ -897,6 +896,7 @@ function Friends({
   const [menuFor, setMenuFor] = useState<Connection | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<Profile[] | null>(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -957,8 +957,13 @@ function Friends({
     <>
       <section className="card">
         <p className="small muted">{t("community.yourHandle")}</p>
-        <PersonRow person={me} />
+        <PersonRow person={me}>
+          <button className="btn small-btn" onClick={() => setEditing(true)}>
+            {t("community.editProfile")}
+          </button>
+        </PersonRow>
       </section>
+      {editing && <EditProfile me={me} onClose={() => setEditing(false)} />}
 
       <input
         className="search"
@@ -1088,6 +1093,69 @@ function Friends({
   );
 }
 
+export function EditProfile({ me, onClose }: { me: Profile; onClose: () => void }) {
+  const { t } = useI18n();
+  const [name, setName] = useState(me.display_name);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  async function run(fn: () => Promise<unknown>) {
+    setBusy(true);
+    setError("");
+    setSaved(false);
+    try {
+      await fn();
+      setSaved(true);
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) await run(() => setAvatar(file));
+  }
+
+  return (
+    <Sheet title={t("community.editProfile")} onClose={onClose}>
+      <div className="stack edit-profile">
+        <div className="edit-avatar">
+          <Avatar name={me.display_name || me.username} path={me.avatar_path} size="lg" />
+          <div className="stack">
+            <button className="btn" disabled={busy} onClick={() => fileInput.current?.click()}>
+              📷 {me.avatar_path ? t("community.changeAvatar") : t("community.addAvatar")}
+            </button>
+            {me.avatar_path && (
+              <button className="btn danger" disabled={busy} onClick={() => run(removeAvatar)}>
+                {t("community.removeAvatar")}
+              </button>
+            )}
+          </div>
+        </div>
+        <input ref={fileInput} type="file" accept="image/*" hidden onChange={pick} />
+        <label className="stack">
+          <span className="label">{t("community.displayName")}</span>
+          <div className="row gap">
+            <input className="grow" value={name} onChange={(e) => setName(e.target.value.slice(0, 40))} />
+            <button className="btn" disabled={busy || !name.trim() || name.trim() === me.display_name} onClick={() => run(() => updateDisplayName(name))}>
+              {t("common.save")}
+            </button>
+          </div>
+        </label>
+        <p className="muted small">@{me.username}</p>
+        {busy && <p className="muted small">{t("common.pleaseWait")}</p>}
+        {saved && !busy && <p className="small">{t("common.saved")}</p>}
+        {error && <p className="error small">{error}</p>}
+      </div>
+    </Sheet>
+  );
+}
+
 // ---- Chat -----------------------------------------------------------------------------------------------
 
 function Chats({ friends, onOpen, onFindFriends }: { friends: Connection[]; onOpen: (p: Person) => void; onFindFriends: () => void }) {
@@ -1109,8 +1177,8 @@ function Chats({ friends, onOpen, onFindFriends }: { friends: Connection[]; onOp
       {list && list.length > 0 && (
         <section className="card list">
           {list.map((c) => (
-            <button key={c.other} className="conversation" onClick={() => onOpen({ id: c.other, username: c.username, display_name: c.display_name })}>
-              <Avatar name={c.display_name || c.username} />
+            <button key={c.other} className="conversation" onClick={() => onOpen({ id: c.other, username: c.username, display_name: c.display_name, avatar_path: c.avatar_path })}>
+              <Avatar name={c.display_name || c.username} path={c.avatar_path} />
               <span className="person-name">
                 <strong>{c.display_name || c.username}</strong>
                 <span className={`small ${c.unread ? "" : "muted"} ellipsis`}>

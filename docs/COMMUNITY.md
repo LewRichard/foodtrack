@@ -22,6 +22,7 @@ Enforced by the database's row level security, not just the app:
 | Photos | Stored in a private bucket; only people who can see the post get a link (valid 1 hour) |
 | Likes, comments | People who can see the post |
 | Messages | Only the two people in the conversation; only friends can message each other |
+| Profile photo | Public link (like most apps), stored in the `avatars` bucket; only the owner can change it |
 | Diary, goals, weight | Never shared. Only what someone posts is visible |
 
 Blocking someone ends the friendship and hides each other's posts, comments and messages.
@@ -42,6 +43,8 @@ Reports go to the `reports` table. Check it regularly (Apple expects action with
 
 ## Limits
 
+- Profile photos are cropped to a 320 px square JPEG (bucket limit 1 MB). People set them in
+  Community → Friends → Edit profile, or from the Profile tab.
 - Post text up to 2000 characters, comments 1000, messages 2000. One photo per post, resized to
   1280 px JPEG before upload (bucket limit 3 MB). Supabase's free plan includes 1 GB of storage.
 - Chat updates live while the app is open.

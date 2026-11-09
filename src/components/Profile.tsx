@@ -3,10 +3,11 @@ import { deviceLanguage, LANGUAGES, useI18n, type LanguagePref } from "../i18n/i
 import { errorMessage, getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
-import { syncNotificationLanguage } from "../lib/community.ts";
+import { setAvatar, syncNotificationLanguage, useMyProfile } from "../lib/community.ts";
 import { enableReminders } from "../lib/reminders.ts";
 import { THEME_PREFS } from "../lib/theme.ts";
 import Account from "./Account.tsx";
+import ProfilePhoto from "./ProfilePhoto.tsx";
 import Reminders from "./Reminders.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
@@ -26,6 +27,26 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const daysLogged = new Set(entries.map((e) => e.date)).size;
   const initial = name.trim()[0]?.toUpperCase();
+  // The photo belongs to the Community profile, so it can be changed once someone has joined.
+  const { profile: community } = useMyProfile(cloudEnabled ? (session?.user.id ?? null) : null);
+  const photoInput = useRef<HTMLInputElement>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+
+  async function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoBusy(true);
+    setPhotoError("");
+    try {
+      await setAvatar(file);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
 
   async function saveCode() {
     if (!code.trim()) {
@@ -72,8 +93,17 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
     <div className="page">
       <section className="profile-hero">
         <span className="avatar large" aria-hidden="true">
-          {initial ?? "🙂"}
+          <ProfilePhoto fallback={initial ?? "🙂"} />
         </span>
+        {community && (
+          <>
+            <button className="link small" disabled={photoBusy} onClick={() => photoInput.current?.click()}>
+              {photoBusy ? t("common.pleaseWait") : community.avatar_path ? t("community.changeAvatar") : t("community.addAvatar")}
+            </button>
+            <input ref={photoInput} type="file" accept="image/*" hidden onChange={pickPhoto} />
+            {photoError && <p className="error small">{photoError}</p>}
+          </>
+        )}
         <h1>{name.trim() || t("profile.yourProfile")}</h1>
         <p className="muted">{tp("profile.stats", daysLogged, { kcal: num(goals.calories) })}</p>
       </section>

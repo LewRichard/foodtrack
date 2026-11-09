@@ -23,6 +23,9 @@ create table if not exists public.profiles (
 -- Added for notifications (running the file again adds them to existing databases).
 alter table public.profiles add column if not exists notify boolean not null default true; -- community push notifications
 alter table public.profiles add column if not exists language text not null default 'en' check (char_length(language) <= 8);
+-- Profile photo in the public "avatars" bucket; must be inside the person's own folder.
+alter table public.profiles add column if not exists avatar_path text
+  check (avatar_path is null or (avatar_path like id::text || '/%' and char_length(avatar_path) <= 200));
 
 alter table public.profiles enable row level security;
 
@@ -160,10 +163,11 @@ returns void language sql security definer set search_path = '' as $$
 $$;
 
 -- Everyone I'm connected to: friends, requests I received and requests I sent.
-create or replace function public.my_connections()
-returns table (id uuid, username text, display_name text, state text)
+drop function if exists public.my_connections(); -- (its columns changed when photos were added)
+create function public.my_connections()
+returns table (id uuid, username text, display_name text, avatar_path text, state text)
 language sql stable security definer set search_path = '' as $$
-  select p.id, p.username, p.display_name,
+  select p.id, p.username, p.display_name, p.avatar_path,
          case when f.status = 'accepted' then 'friend'
               when f.addressee = auth.uid() then 'incoming'
               else 'outgoing' end
@@ -174,10 +178,11 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 -- Finds people by username or display name (not me, nobody blocked either way).
-create or replace function public.search_profiles(query text)
-returns table (id uuid, username text, display_name text, state text)
+drop function if exists public.search_profiles(text);
+create function public.search_profiles(query text)
+returns table (id uuid, username text, display_name text, avatar_path text, state text)
 language sql stable security definer set search_path = '' as $$
-  select p.id, p.username, p.display_name,
+  select p.id, p.username, p.display_name, p.avatar_path,
          coalesce((select case when f.status = 'accepted' then 'friend'
                                when f.addressee = auth.uid() then 'incoming'
                                else 'outgoing' end
@@ -340,8 +345,9 @@ returns void language sql security definer set search_path = '' as $$
 $$;
 
 -- My conversations, newest first, with the last message and how many are unread.
-create or replace function public.my_conversations()
-returns table (other uuid, username text, display_name text, last_body text, last_at timestamptz, last_from_me boolean, unread integer)
+drop function if exists public.my_conversations();
+create function public.my_conversations()
+returns table (other uuid, username text, display_name text, avatar_path text, last_body text, last_at timestamptz, last_from_me boolean, unread integer)
 language sql stable security definer set search_path = '' as $$
   with mine as (
     select m.*, case when m.sender = auth.uid() then m.recipient else m.sender end as other_id
@@ -351,7 +357,7 @@ language sql stable security definer set search_path = '' as $$
     select distinct on (other_id) other_id, body, created_at, sender = auth.uid() as from_me
     from mine order by other_id, created_at desc
   )
-  select l.other_id, p.username, p.display_name, l.body, l.created_at, l.from_me,
+  select l.other_id, p.username, p.display_name, p.avatar_path, l.body, l.created_at, l.from_me,
          (select count(*)::integer from mine u where u.other_id = l.other_id and u.recipient = auth.uid() and u.read_at is null)
   from last l join public.profiles p on p.id = l.other_id
   where not public.is_blocked_with(l.other_id)
@@ -412,6 +418,30 @@ drop policy if exists "post images: delete own" on storage.objects;
 create policy "post images: delete own" on storage.objects
   for delete to authenticated
   using (bucket_id = 'post-images' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ---------------------------------------------------------------------------------------------
+-- Profile photos: public bucket (anyone with the link can see a profile photo, like most apps),
+-- files under "<user id>/...", only the owner can add, replace or remove them
+-- ---------------------------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 1048576, array['image/jpeg', 'image/webp', 'image/png'])
+on conflict (id) do nothing;
+
+drop policy if exists "avatars: upload to own folder" on storage.objects;
+create policy "avatars: upload to own folder" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "avatars: see own files" on storage.objects;
+create policy "avatars: see own files" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "avatars: delete own" on storage.objects;
+create policy "avatars: delete own" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ---------------------------------------------------------------------------------------------
 -- Permissions for the functions

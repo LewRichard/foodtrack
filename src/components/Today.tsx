@@ -15,6 +15,7 @@ import AddFood from "./AddFood.tsx";
 import EditEntry from "./EditEntry.tsx";
 import { CalorieRing, MacroCard, NutrientBar } from "./Progress.tsx";
 import Sheet from "./Sheet.tsx";
+import ProfilePhoto from "./ProfilePhoto.tsx";
 import WeekStrip from "./WeekStrip.tsx";
 
 const GLASS_ML = 250;
@@ -70,7 +71,7 @@ export default function Today({
           </h1>
         </div>
         <button className="avatar" onClick={onOpenProfile} aria-label={t("tab.profile")}>
-          {firstName ? firstName[0].toUpperCase() : <PersonIcon />}
+          <ProfilePhoto fallback={firstName ? firstName[0].toUpperCase() : <PersonIcon />} />
         </button>
       </header>
 

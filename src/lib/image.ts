@@ -49,3 +49,21 @@ export async function photoForUpload(file: Blob, maxEdge = 1280, quality = 0.8):
     bitmap.close();
   }
 }
+
+/** A square crop from the middle of a photo (for profile photos), as a small JPEG. */
+export async function photoSquare(file: Blob, size = 320, quality = 0.85): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    const side = Math.min(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = Math.min(size, side);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas is not supported in this browser.");
+    ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Couldn't prepare the photo."))), "image/jpeg", quality),
+    );
+  } finally {
+    bitmap.close();
+  }
+}

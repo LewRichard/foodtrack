@@ -155,6 +155,10 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
         ) : (
           <p className="muted">{t("profile.bodyEmpty")}</p>
         )}
+        <button className="btn goals-link" onClick={onEditGoals}>
+          <span>🎯 {t("goals.title")}</span>
+          <span className="muted">{num(goals.calories)} kcal ›</span>
+        </button>
       </section>
 
       <section className="card">

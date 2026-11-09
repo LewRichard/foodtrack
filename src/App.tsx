@@ -1,24 +1,34 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import Goals from "./components/Goals.tsx";
 import History from "./components/History.tsx";
 import Profile from "./components/Profile.tsx";
 import Scan from "./components/Scan.tsx";
 import Today, { ScanIcon } from "./components/Today.tsx";
 import { useI18n, type MessageKey } from "./i18n/index.ts";
+import { useSession } from "./lib/cloud.ts";
+import { useCommunityAlerts } from "./lib/community.ts";
 import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
 import { watchTheme } from "./lib/theme.ts";
 
-type Tab = "today" | "history" | "scan" | "goals" | "profile";
+type Tab = "today" | "history" | "scan" | "community" | "goals" | "profile";
 
-const TABS: { id: Exclude<Tab, "scan">; label: MessageKey; icon: string }[] = [
+// Loaded when first opened, so the rest of the app starts faster.
+const Community = lazy(() => import("./components/Community.tsx"));
+
+// Goals is opened from Profile, so the bar has room for Community.
+const TABS: { id: Exclude<Tab, "scan" | "goals">; label: MessageKey; icon: string }[] = [
   { id: "today", label: "tab.diary", icon: "M4 6h16M4 12h16M4 18h10" },
   { id: "history", label: "tab.trends", icon: "M6 20V11M12 20V5M18 20v-8" },
-  { id: "goals", label: "tab.goals", icon: "M12 21a9 9 0 1 0 0-18a9 9 0 0 0 0 18M12 16a4 4 0 1 0 0-8a4 4 0 0 0 0 8" },
+  {
+    id: "community",
+    label: "tab.community",
+    icon: "M9 11a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7M2.5 20a6.5 6.5 0 0 1 13 0M16 4.2a3.5 3.5 0 0 1 0 6.6M18.5 14a6.5 6.5 0 0 1 3 6",
+  },
   { id: "profile", label: "tab.profile", icon: "M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0" },
 ];
 
-const TAB_IDS: Tab[] = ["today", "history", "scan", "goals", "profile"];
+const TAB_IDS: Tab[] = ["today", "history", "scan", "community", "goals", "profile"];
 
 /** A notification can open the app on a given tab, e.g. /?tab=scan. */
 function tabFromUrl(): Tab {
@@ -35,6 +45,9 @@ export default function App() {
   const { t, lang } = useI18n();
 
   const { theme } = useAppState();
+  const session = useSession();
+  const alerts = useCommunityAlerts(session?.user.id ?? null);
+  const badge = alerts.messages + alerts.requests;
   useEffect(() => watchTheme(theme), [theme]);
 
   // Screen readers and the browser's own UI (e.g. translation offers) follow the page language.
@@ -56,7 +69,7 @@ export default function App() {
   const navButton = (item: (typeof TABS)[number]) => (
     <button
       key={item.id}
-      className={`tab ${tab === item.id ? "active" : ""}`}
+      className={`tab ${tab === item.id || (item.id === "profile" && tab === "goals") ? "active" : ""}`}
       onClick={() => setTab(item.id)}
       aria-current={tab === item.id ? "page" : undefined}
     >
@@ -64,6 +77,7 @@ export default function App() {
         <path d={item.icon} />
       </svg>
       <span>{t(item.label)}</span>
+      {item.id === "community" && badge > 0 && <span className="tab-badge">{badge > 99 ? "99+" : badge}</span>}
     </button>
   );
 
@@ -95,7 +109,12 @@ export default function App() {
             }}
           />
         )}
-        {tab === "goals" && <Goals />}
+        {tab === "community" && (
+          <Suspense fallback={<div className="page center-page"><div className="spinner dark" /></div>}>
+            <Community onSignIn={() => setTab("profile")} alerts={alerts} />
+          </Suspense>
+        )}
+        {tab === "goals" && <Goals onBack={() => setTab("profile")} />}
         {tab === "profile" && <Profile onEditGoals={() => setTab("goals")} />}
       </main>
       <nav className="tabbar" aria-label="Main">

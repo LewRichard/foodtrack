@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useI18n } from "../i18n/index.ts";
 import { deleteAccount, signIn, signOut, signUp, syncNow, useSession } from "../lib/cloud.ts";
 import { useAppState } from "../lib/store.ts";
+import { timeAgo } from "../lib/dates.ts";
 import { useSyncStatus } from "../lib/sync.ts";
 import { hasPending } from "../lib/syncState.ts";
 
@@ -255,11 +256,3 @@ function SignedIn({ email }: { email: string }) {
 }
 
 /** "just now" / "5 minutes ago" / a date, in the app's language. */
-function timeAgo(ms: number, locale: string): string {
-  const s = Math.round((Date.now() - ms) / 1000);
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  if (s < 60) return rtf.format(0, "second");
-  if (s < 3600) return rtf.format(-Math.round(s / 60), "minute");
-  if (s < 86400) return rtf.format(-Math.round(s / 3600), "hour");
-  return new Date(ms).toLocaleDateString(locale, { month: "short", day: "numeric" });
-}

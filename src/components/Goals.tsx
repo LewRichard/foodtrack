@@ -26,7 +26,7 @@ const GOAL_FIELDS: { key: keyof Goals; label: MessageKey; unit: string }[] = [
 
 const DEFAULT_PROFILE: Profile = { sex: "female", age: 30, heightCm: 168, weightKg: 68, activity: "light", goal: "maintain" };
 
-export default function Goals() {
+export default function Goals({ onBack }: { onBack?: () => void }) {
   const { goals, profile: savedProfile } = useAppState();
   const { t, num } = useI18n();
   const [profile, setProfile] = useState<Profile>(savedProfile ?? DEFAULT_PROFILE);
@@ -53,6 +53,11 @@ export default function Goals() {
   return (
     <div className="page">
       <header className="page-head">
+        {onBack && (
+          <button className="link back-link" onClick={onBack}>
+            ‹ {t("tab.profile")}
+          </button>
+        )}
         <h1>{t("goals.title")}</h1>
         <p className="muted">{t("goals.subtitle")}</p>
       </header>

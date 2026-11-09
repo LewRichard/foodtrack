@@ -1,3 +1,5 @@
+import { isNative } from "./native.ts";
+
 // Light/dark appearance. "system" follows the phone's setting and updates when it changes.
 // index.html sets the same attribute before the app loads, so there's no flash of the wrong theme.
 
@@ -22,12 +24,12 @@ function apply(pref: ThemePref) {
   const theme = resolveTheme(pref);
   document.documentElement.dataset.theme = theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", BAR_COLORS[theme]);
-  void import("./native.ts").then(async ({ isNative }) => {
-    if (!isNative) return;
-    const { StatusBar, Style } = await import("@capacitor/status-bar");
+  if (isNative) {
     // Style.Dark = light text, for dark backgrounds.
-    await StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light });
-  }).catch(() => {});
+    void import("@capacitor/status-bar")
+      .then(({ StatusBar, Style }) => StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light }))
+      .catch(() => {});
+  }
 }
 
 /** Applies the preference now and, for "system", whenever the phone switches. Returns a cleanup. */

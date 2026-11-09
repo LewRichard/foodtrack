@@ -41,3 +41,13 @@ export function greetingKey(date = new Date()): "greet.morning" | "greet.afterno
   if (h < 18) return "greet.afternoon";
   return "greet.evening";
 }
+
+/** "just now", "5 minutes ago", "3 hours ago", then a short date. */
+export function timeAgo(ms: number, locale: string): string {
+  const s = Math.round((Date.now() - ms) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (s < 60) return rtf.format(0, "second");
+  if (s < 3600) return rtf.format(-Math.round(s / 60), "minute");
+  if (s < 86400) return rtf.format(-Math.round(s / 3600), "hour");
+  return new Date(ms).toLocaleDateString(locale, { month: "short", day: "numeric" });
+}

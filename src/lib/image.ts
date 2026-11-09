@@ -36,3 +36,16 @@ export async function prepareFromFile(file: File): Promise<PreparedImage> {
     bitmap.close();
   }
 }
+
+/** A photo resized for sharing (smaller than for AI analysis), as a JPEG ready to upload. */
+export async function photoForUpload(file: Blob, maxEdge = 1280, quality = 0.8): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    const canvas = drawToCanvas(bitmap, bitmap.width, bitmap.height, maxEdge);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Couldn't prepare the photo."))), "image/jpeg", quality),
+    );
+  } finally {
+    bitmap.close();
+  }
+}

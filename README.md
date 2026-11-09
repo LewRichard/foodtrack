@@ -112,7 +112,8 @@ log to localStorage diary
 
 - `src/lib/cloud.ts` handles accounts and syncing with Supabase; the sync rules (newest change wins,
   offline queue) are in `src/lib/syncState.ts`. The database schema and its security rules are in
-  `supabase/schema.sql`.
+  `supabase/schema.sql`. The Community tab (friends, posts, chat) uses `supabase/community.sql`
+  and `src/lib/community.ts`; see `docs/COMMUNITY.md` for setup and moderation.
 - `server/guard.ts` holds the access code check and scan limits.
 - `server/analyze.ts` sends the image to Claude with a dietitian-style system prompt and uses
   **structured outputs** (`betaZodOutputFormat`) so the response is always valid JSON matching the

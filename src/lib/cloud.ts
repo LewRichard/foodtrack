@@ -196,6 +196,13 @@ export function onBeforeSignOut(fn: () => Promise<void>) {
   beforeSignOut.push(fn);
 }
 
+const beforeDelete: Array<() => Promise<void>> = [];
+
+/** Runs `fn` before the account is deleted (e.g. to remove files the database can't delete itself). */
+export function onBeforeDeleteAccount(fn: () => Promise<void>) {
+  beforeDelete.push(fn);
+}
+
 async function runBeforeSignOut() {
   for (const fn of beforeSignOut) await fn().catch(() => {});
 }
@@ -240,6 +247,7 @@ export async function signOut(force = false): Promise<boolean> {
 /** Permanently deletes the account and everything stored in it, then clears this device. */
 export async function deleteAccount(): Promise<void> {
   const db = await client();
+  for (const fn of beforeDelete) await fn().catch(() => {});
   await runBeforeSignOut();
   const { error } = await db.rpc("delete_my_account");
   if (error) throw new Error(describeError(error));

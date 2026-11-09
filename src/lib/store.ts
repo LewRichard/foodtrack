@@ -7,6 +7,8 @@ export interface AppState {
   goals: Goals;
   profile: Profile | null;
   water: Record<string, number>; // date -> glasses (250 ml)
+  burned: Record<string, number>; // date -> kcal burned by exercise
+  name: string; // shown in the greeting
   recents: Omit<LogEntry, "id" | "date" | "meal" | "loggedAt" | "photo">[]; // most recent first, de-duplicated by name
   aiConsent: boolean; // agreed to send meal photos to the AI service
 }
@@ -19,6 +21,8 @@ export const INITIAL_STATE: AppState = {
   goals: DEFAULT_GOALS,
   profile: null,
   water: {},
+  burned: {},
+  name: "",
   recents: [],
   aiConsent: false,
 };
@@ -103,6 +107,12 @@ export const actions = {
   },
   setAiConsent(aiConsent: boolean) {
     setState({ ...state, aiConsent });
+  },
+  setName(name: string) {
+    setState({ ...state, name });
+  },
+  setBurned(date: string, kcal: number) {
+    setState({ ...state, burned: { ...state.burned, [date]: Math.max(0, Math.round(kcal) || 0) } });
   },
   setWater(date: string, glasses: number) {
     setState({ ...state, water: { ...state.water, [date]: Math.max(0, glasses) } });

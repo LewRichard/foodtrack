@@ -27,3 +27,14 @@ export function formatDateLabel(key: string): string {
   if (key === addDays(today, -1)) return "Yesterday";
   return parseDateKey(key).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
+
+export function formatLongDate(key: string): string {
+  return parseDateKey(key).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+}
+
+export function greeting(date = new Date()): string {
+  const h = date.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}

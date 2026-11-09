@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { bmr, goalsFromProfile, scaleItem, sumNutrients, tdee, type FoodItem, type Profile } from "../shared/nutrition.ts";
-import { addDays, toDateKey } from "../src/lib/dates.ts";
+import { addDays, greeting, toDateKey } from "../src/lib/dates.ts";
 import { searchFoods } from "../src/lib/foods.ts";
 import { entriesForDate, INITIAL_STATE, withEntries } from "../src/lib/store.ts";
-import { mealForTime, type LogEntry } from "../src/lib/types.ts";
+import { MEAL_SHARE, mealForTime, suggestedMealKcal, type LogEntry } from "../src/lib/types.ts";
 
 const apple: FoodItem = {
   name: "Apple",
@@ -97,5 +97,18 @@ describe("helpers", () => {
   it("searches the food database by all words", () => {
     expect(searchFoods("rice brown").map((f) => f.name)).toEqual(["Brown rice, cooked"]);
     expect(searchFoods("")).toHaveLength(12);
+  });
+
+  it("splits the daily goal into suggested meal sizes", () => {
+    expect(Object.values(MEAL_SHARE).reduce((a, b) => a + b, 0)).toBeCloseTo(1);
+    expect(suggestedMealKcal("breakfast", 2000)).toBe(500);
+    expect(suggestedMealKcal("lunch", 2000)).toBe(700);
+    expect(suggestedMealKcal("dinner", 1950)).toBe(590);
+  });
+
+  it("greets by time of day", () => {
+    expect(greeting(new Date(2026, 0, 1, 8))).toBe("Good morning");
+    expect(greeting(new Date(2026, 0, 1, 13))).toBe("Good afternoon");
+    expect(greeting(new Date(2026, 0, 1, 20))).toBe("Good evening");
   });
 });

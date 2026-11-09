@@ -11,6 +11,25 @@ export const MEAL_LABELS: Record<MealType, string> = {
   snack: "Snacks",
 };
 
+export const MEAL_ICONS: Record<MealType, string> = {
+  breakfast: "🍳",
+  lunch: "🥗",
+  dinner: "🍲",
+  snack: "🍎",
+};
+
+/** Share of the daily calorie goal suggested for each meal (sums to 1). */
+export const MEAL_SHARE: Record<MealType, number> = {
+  breakfast: 0.25,
+  lunch: 0.35,
+  dinner: 0.3,
+  snack: 0.1,
+};
+
+export function suggestedMealKcal(meal: MealType, dailyGoal: number): number {
+  return Math.round((dailyGoal * MEAL_SHARE[meal]) / 10) * 10;
+}
+
 /** A food that has been logged to the diary. */
 export interface LogEntry extends FoodItem {
   id: string;

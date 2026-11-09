@@ -52,8 +52,9 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
 
   return (
     <div className="page">
-      <header className="date-nav">
+      <header className="page-head">
         <h1>Trends</h1>
+        <p className="muted">How your eating adds up over time.</p>
       </header>
 
       <div className="segmented">
@@ -67,8 +68,8 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
       <section className="stat-row">
         <div className="card stat">
           <span className="muted small">Avg calories</span>
-          <strong>{logged.length ? avgKcal.toLocaleString() : "—"}</strong>
-          <span className="muted small">goal {goal.toLocaleString()}</span>
+          <strong>{logged.length ? avgKcal.toLocaleString("en-US") : "—"}</strong>
+          <span className="muted small">goal {goal.toLocaleString("en-US")}</span>
         </div>
         <div className="card stat">
           <span className="muted small">Days logged</span>
@@ -131,7 +132,7 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
           {hovered && (
             <div className="tooltip">
               <strong>{formatDateLabel(hovered.date)}</strong>
-              <span>{hovered.logged ? `${Math.round(hovered.total.calories).toLocaleString()} kcal` : "Nothing logged"}</span>
+              <span>{hovered.logged ? `${Math.round(hovered.total.calories).toLocaleString("en-US")} kcal` : "Nothing logged"}</span>
               {hovered.logged && (
                 <span className="muted small">
                   P {Math.round(hovered.total.protein)}g · C {Math.round(hovered.total.carbs)}g · F{" "}
@@ -191,7 +192,7 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
             {[...logged].reverse().map((d) => (
               <tr key={d.date} onClick={() => onPickDate(d.date)}>
                 <td>{formatDateLabel(d.date)}</td>
-                <td>{Math.round(d.total.calories).toLocaleString()}</td>
+                <td>{Math.round(d.total.calories).toLocaleString("en-US")}</td>
                 <td>{Math.round(d.total.protein)}</td>
                 <td>{Math.round(d.total.carbs)}</td>
                 <td>{Math.round(d.total.fat)}</td>

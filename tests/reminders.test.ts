@@ -99,3 +99,27 @@ describe("reminder run", () => {
     expect(f.sent.map((s) => s.endpoint)).toEqual(["https://push/lew"]);
   });
 });
+
+describe("push settings", async () => {
+  const { pushConfigFromEnv } = await import("../server/push.ts");
+  const { generateVAPIDKeys } = await import("web-push");
+  const base = { VITE_SUPABASE_URL: "https://abc.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "sb_secret_x", VAPID_SUBJECT: "mailto:a@b.c" };
+
+  it("turns reminders on with valid keys", () => {
+    const k = generateVAPIDKeys();
+    expect(pushConfigFromEnv({ ...base, VAPID_PUBLIC_KEY: k.publicKey, VAPID_PRIVATE_KEY: k.privateKey })).not.toBeNull();
+  });
+
+  it("keeps the server running (reminders off) when a key was pasted incompletely", () => {
+    const k = generateVAPIDKeys();
+    const errors: unknown[] = [];
+    const orig = console.error;
+    console.error = (...a: unknown[]) => errors.push(a);
+    try {
+      expect(pushConfigFromEnv({ ...base, VAPID_PUBLIC_KEY: k.publicKey.slice(6), VAPID_PRIVATE_KEY: k.privateKey })).toBeNull();
+    } finally {
+      console.error = orig;
+    }
+    expect(errors).toHaveLength(1);
+  });
+});

@@ -111,7 +111,16 @@ export function pushConfigFromEnv(env: NodeJS.ProcessEnv = process.env): PushCon
   const url = projectUrl(env.VITE_SUPABASE_URL ?? env.SUPABASE_URL ?? "");
   const serviceKey = supabaseKey(env.SUPABASE_SERVICE_ROLE_KEY ?? "");
   if (!publicKey || !privateKey || !url || !serviceKey) return null;
-  setVapidDetails(subject.startsWith("mailto:") || subject.startsWith("https://") ? subject : `mailto:${subject || "noreply@example.com"}`, publicKey, privateKey);
+  try {
+    setVapidDetails(subject.startsWith("mailto:") || subject.startsWith("https://") ? subject : `mailto:${subject || "noreply@example.com"}`, publicKey, privateKey);
+  } catch (e) {
+    // A key pasted incompletely shouldn't take the whole app down: run without reminders and say why.
+    console.error(
+      `Meal reminders are off: the VAPID keys aren't valid (${e instanceof Error ? e.message : e}). ` +
+        "Generate new ones with `npx web-push generate-vapid-keys` and paste both in full.",
+    );
+    return null;
+  }
   return {
     publicKey,
     privateKey,

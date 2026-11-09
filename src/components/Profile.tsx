@@ -110,7 +110,9 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
       <section className="card">
         <h2 className="title">Photo scanning</h2>
         <label className="stack">
-          <span className="muted small">Access code (only if the server owner gave you one)</span>
+          <span className="muted small">
+            Access code (only if the server owner gave you one{session ? "; not needed while you're signed in" : ""})
+          </span>
           <div className="row gap">
             <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" autoCapitalize="off" />
             <button className="btn" onClick={saveCode}>

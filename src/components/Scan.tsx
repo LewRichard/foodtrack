@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { sumNutrients, type AnalysisResult } from "../../shared/nutrition.ts";
-import { analyzeImage, isAccessError, unlock } from "../lib/api.ts";
+import { analyzeImage, isAccessError, isSignInError, unlock } from "../lib/api.ts";
 import { todayKey } from "../lib/dates.ts";
 import { prepareFromFile, prepareFromSource, type PreparedImage } from "../lib/image.ts";
 import { isNative, pickNativePhoto } from "../lib/native.ts";
@@ -13,9 +13,19 @@ type Phase =
   | { kind: "capture" }
   | { kind: "analyzing"; image: PreparedImage }
   | { kind: "review"; image: PreparedImage; result: AnalysisResult }
-  | { kind: "error"; image: PreparedImage; message: string; needsCode: boolean };
+  | { kind: "error"; image: PreparedImage; message: string; needs: "code" | "signin" | null };
 
-export default function Scan({ date, onLogged, onCancel }: { date: string; onLogged: () => void; onCancel: () => void }) {
+export default function Scan({
+  date,
+  onLogged,
+  onCancel,
+  onSignIn,
+}: {
+  date: string;
+  onLogged: () => void;
+  onCancel: () => void;
+  onSignIn: () => void;
+}) {
   const [phase, setPhase] = useState<Phase>({ kind: "capture" });
   const [note, setNote] = useState("");
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -44,7 +54,7 @@ export default function Scan({ date, onLogged, onCancel }: { date: string; onLog
         kind: "error",
         image,
         message: e instanceof Error ? e.message : String(e),
-        needsCode: isAccessError(e),
+        needs: isSignInError(e) ? "signin" : isAccessError(e) ? "code" : null,
       });
     }
   }
@@ -99,11 +109,29 @@ export default function Scan({ date, onLogged, onCancel }: { date: string; onLog
         )}
       </div>
 
-      {phase.kind === "error" && phase.needsCode && (
+      {phase.kind === "error" && phase.needs === "code" && (
         <AccessCodeCard onUnlocked={() => analyze(image)} onCancel={() => setPhase({ kind: "capture" })} />
       )}
 
-      {phase.kind === "error" && !phase.needsCode && (
+      {phase.kind === "error" && phase.needs === "signin" && (
+        <div className="card">
+          <h2 className="title">Sign in to scan</h2>
+          <p className="muted small">
+            Photo scanning is for signed-in users. It's free to create an account, and it also backs up your diary. You can
+            still log food by hand without one.
+          </p>
+          <div className="row gap">
+            <button className="btn" onClick={() => setPhase({ kind: "capture" })}>
+              Cancel
+            </button>
+            <button className="btn primary grow" onClick={onSignIn}>
+              Sign in or create account
+            </button>
+          </div>
+        </div>
+      )}
+
+      {phase.kind === "error" && !phase.needs && (
         <div className="card">
           <p className="error">{phase.message}</p>
           <div className="row gap">

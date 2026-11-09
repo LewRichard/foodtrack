@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_GOALS } from "../shared/nutrition.ts";
+import { projectUrl } from "../shared/supabase.ts";
 import { syncOnce, type Remote } from "../src/lib/sync.ts";
 import {
   attachAccount,
@@ -285,8 +286,7 @@ describe("signing in", () => {
   });
 });
 
-describe("Supabase project address", async () => {
-  const { projectUrl } = await import("../src/lib/cloud.ts");
+describe("Supabase project address", () => {
   it("keeps only the base address however it was copied", () => {
     const base = "https://abcdefgh.supabase.co";
     expect(projectUrl(base)).toBe(base);

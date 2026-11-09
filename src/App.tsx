@@ -45,7 +45,14 @@ export default function App() {
             onSeeAll={() => setTab("history")}
           />
         )}
-        {tab === "scan" && <Scan date={date} onLogged={() => setTab("today")} onCancel={() => setTab("today")} />}
+        {tab === "scan" && (
+          <Scan
+            date={date}
+            onLogged={() => setTab("today")}
+            onCancel={() => setTab("today")}
+            onSignIn={() => setTab("profile")}
+          />
+        )}
         {tab === "history" && (
           <History
             onPickDate={(d) => {

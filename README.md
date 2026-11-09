@@ -23,7 +23,7 @@ calls Claude's vision model, so your API key never reaches the browser.
 - **Private by default** – your diary is stored on the device. Export/import a JSON backup.
 - **Optional accounts & cloud backup** – sign in to save the diary online and sync it between phone,
   computer and the iPhone app (Supabase). Works offline and catches up later. Setup: [docs/DATABASE.md](docs/DATABASE.md).
-- **Safe to put online** – optional access code, per-visitor hourly scan limit and a daily cap protect your
+- **Safe to put online** – sign-in or an access code to scan, a per-person hourly scan limit and a daily cap protect your
   API key and bill; users consent before their first photo is sent to the AI; a privacy policy page is included.
 
 ## Getting started
@@ -74,8 +74,9 @@ Build command `npm ci && npm run build`, start command `npm start`, and set the 
 | Variable | Default | Purpose |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | – | Required. Your Anthropic API key. |
-| `APP_ACCESS_CODE` | empty | If set, the app asks for this code before scanning. **Set it before going public.** |
-| `SCANS_PER_IP_PER_HOUR` | 30 | Scans one visitor can make per hour (`0` = unlimited). |
+| `REQUIRE_SIGN_IN` | empty | `true`: only signed-in users can scan, with no code (needs accounts, see [docs/DATABASE.md](docs/DATABASE.md)). |
+| `APP_ACCESS_CODE` | empty | A shared code that unlocks scanning without an account. Signed-in users never need it. **Set this or `REQUIRE_SIGN_IN` before going public.** |
+| `SCANS_PER_IP_PER_HOUR` | 30 | Scans one person can make per hour, counted per account when signed in, else per IP (`0` = unlimited). |
 | `DAILY_SCAN_LIMIT` | 300 | Scans the whole server allows per day, UTC (`0` = unlimited). |
 | `PORT` | 8787 | Port to listen on (hosts usually set this for you). |
 | `TRUST_PROXY` | 1 | Proxies in front of the server, so the rate limit sees real visitor IPs. |

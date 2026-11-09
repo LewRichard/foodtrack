@@ -1,14 +1,17 @@
 import { timingSafeEqual } from "node:crypto";
 import type { RequestHandler } from "express";
+import type { VerifyUser } from "./auth.ts";
 
 // Protection for the paid /api/analyze endpoint once the server is public:
-//  - an optional shared access code (APP_ACCESS_CODE), so only people you give it to can scan
-//  - a per-IP hourly limit, so one person can't run up the bill
+//  - optional: only signed-in users can scan (REQUIRE_SIGN_IN), and/or
+//  - an optional shared access code (APP_ACCESS_CODE); signed-in users never need it
+//  - a per-person hourly limit (per account when signed in, otherwise per IP address)
 //  - a server-wide daily cap, a hard ceiling on what a day can cost
 // Counters live in memory: they reset when the server restarts, which is fine for one instance.
 
 export interface GuardConfig {
   accessCode: string;
+  requireSignIn: boolean;
   perIpPerHour: number;
   dailyLimit: number;
   allowedOrigins: string[];
@@ -25,6 +28,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): GuardConfig
   };
   return {
     accessCode: (env.APP_ACCESS_CODE ?? "").trim(),
+    requireSignIn: /^(1|true|yes|on)$/i.test((env.REQUIRE_SIGN_IN ?? "").trim()),
     perIpPerHour: int(env.SCANS_PER_IP_PER_HOUR, 30),
     dailyLimit: int(env.DAILY_SCAN_LIMIT, 300),
     allowedOrigins: (env.ALLOWED_ORIGINS ?? DEFAULT_ORIGINS.join(","))
@@ -82,16 +86,42 @@ export class ScanLimiter {
   }
 }
 
-export function requireAccessCode(config: GuardConfig): RequestHandler {
-  return (req, res, next) => {
-    if (codeMatches(config.accessCode, req.get("x-access-code"))) return next();
-    res.status(401).json({ error: "This app needs an access code.", code: "access_code_required" });
+export type ScanAccess = "ok" | "sign_in_required" | "access_code_required";
+
+/**
+ * Who may scan:
+ *  - signed-in users always can;
+ *  - anyone with the right access code can;
+ *  - otherwise it depends on the settings: sign-in required, code required, or open to all.
+ */
+export function scanAccess(config: GuardConfig, signedIn: boolean, givenCode: unknown): ScanAccess {
+  if (signedIn) return "ok";
+  if (config.accessCode && codeMatches(config.accessCode, givenCode)) return "ok";
+  if (config.requireSignIn) return "sign_in_required";
+  if (config.accessCode) return "access_code_required";
+  return "ok";
+}
+
+/** Checks sign-in (if a verifier is configured) and the access code, and remembers who is scanning. */
+export function requireScanAccess(config: GuardConfig, verify: VerifyUser | null): RequestHandler {
+  return async (req, res, next) => {
+    const token = /^Bearer\s+(.+)$/i.exec(req.get("authorization") ?? "")?.[1];
+    const userId = token && verify ? await verify(token) : null;
+    res.locals.userId = userId;
+    const access = scanAccess(config, Boolean(userId), req.get("x-access-code"));
+    if (access === "ok") return next();
+    if (access === "sign_in_required") {
+      res.status(401).json({ error: "Sign in to scan meals.", code: "sign_in_required" });
+    } else {
+      res.status(401).json({ error: "This app needs an access code.", code: "access_code_required" });
+    }
   };
 }
 
 export function limitScans(limiter: ScanLimiter): RequestHandler {
   return (req, res, next) => {
-    const refused = limiter.take(req.ip ?? "unknown");
+    // Count per account when signed in (so people sharing Wi-Fi don't share a limit), else per IP.
+    const refused = limiter.take(res.locals.userId ? `user:${res.locals.userId}` : `ip:${req.ip ?? "unknown"}`);
     if (refused === "ip") {
       res.status(429).json({ error: "You've reached the hourly scan limit. Try again later.", code: "rate_limited" });
     } else if (refused === "daily") {
@@ -110,7 +140,7 @@ export function cors(config: GuardConfig): RequestHandler {
       res.set({
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, X-Access-Code",
+        "Access-Control-Allow-Headers": "Content-Type, X-Access-Code, Authorization",
         "Access-Control-Max-Age": "86400",
         Vary: "Origin",
       });

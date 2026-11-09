@@ -70,6 +70,13 @@ Open the app → **Profile** → **Back up & sync** → **Create account**. Afte
 
 You can see the stored rows in Supabase under **Table Editor** (`food_entries`, `day_logs`, `user_settings`).
 
+## Only signed-in users can scan
+
+With accounts set up, you can drop the access code and let only signed-in users scan instead: on Render,
+set `REQUIRE_SIGN_IN` to `true` and delete `APP_ACCESS_CODE` (or leave it, as an extra way in without an
+account). The server checks each scan's sign-in with Supabase using the same two settings, so nothing else
+is needed. Signed-out users can still log food by hand; tapping scan asks them to sign in.
+
 ## How it works
 
 - The diary is still saved on the device first, so the app is fast and works offline. Changes are uploaded

@@ -4,30 +4,12 @@
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
 import { actions, getState, INITIAL_STATE, onStateChange, type AppState } from "./store.ts";
+import { projectUrl, supabaseKey } from "../../shared/supabase.ts";
 import { setSyncStatus, syncOnce, type Remote } from "./sync.ts";
 import { attachAccount, hasPending, type DayRow, type EntryRow, type Pulled, type SettingsRow } from "./syncState.ts";
 
-// Values pasted into settings often pick up invisible characters (zero-width or non-breaking
-// spaces, quotes) that make requests fail with "No API key found". Keep only valid characters.
 const url = projectUrl(import.meta.env.VITE_SUPABASE_URL ?? "");
-const key = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").replace(/[^A-Za-z0-9._-]/g, "");
-
-/**
- * The project's base address. Copied values often include an API path (".../rest/v1/") or are the
- * dashboard link (".../dashboard/project/<ref>"); both make every request fail with "Invalid path".
- */
-export function projectUrl(raw: string): string {
-  const cleaned = raw.replace(/[^\x21-\x7E]|["']/g, "");
-  if (!cleaned) return "";
-  try {
-    const u = new URL(cleaned.includes("://") ? cleaned : `https://${cleaned}`);
-    const dashboard = u.pathname.match(/\/project\/([a-z0-9]+)/i);
-    if (u.hostname.endsWith("supabase.com") && dashboard) return `https://${dashboard[1]}.supabase.co`;
-    return u.origin;
-  } catch {
-    return cleaned.replace(/\/+$/, "");
-  }
-}
+const key = supabaseKey(import.meta.env.VITE_SUPABASE_ANON_KEY ?? "");
 
 /** True when this build has Supabase settings, so accounts and backup are available. */
 export const cloudEnabled = Boolean(url && key);
@@ -192,6 +174,13 @@ export async function startCloud() {
   setInterval(() => {
     if (document.visibilityState === "visible") void syncNow();
   }, 2 * 60 * 1000);
+}
+
+/** The signed-in user's access token (refreshed if needed), sent to our server to prove sign-in. */
+export async function accessToken(): Promise<string | null> {
+  if (!ready || !session) return null;
+  const { data } = await (await ready).auth.getSession();
+  return data.session?.access_token ?? null;
 }
 
 // ---- Account actions ----------------------------------------------------------------------------

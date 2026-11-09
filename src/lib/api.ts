@@ -1,4 +1,5 @@
 import type { AnalysisResult } from "../../shared/nutrition.ts";
+import { accessToken } from "./cloud.ts";
 import type { PreparedImage } from "./image.ts";
 
 const CODE_KEY = "foodtrack:accessCode";
@@ -36,9 +37,15 @@ export function setAccessCode(code: string) {
 }
 
 async function request<T>(path: string, init: RequestInit, code = getAccessCode()): Promise<T> {
+  // Signed-in users prove it with their account token, so they never need an access code.
+  const token = await accessToken().catch(() => null);
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(code ? { "x-access-code": code } : {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(code ? { "x-access-code": code } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
   });
   const body = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(body?.error ?? `Request failed (${res.status})`, res.status, body?.code);
@@ -61,4 +68,8 @@ export async function unlock(code: string): Promise<void> {
 
 export function isAccessError(e: unknown): boolean {
   return e instanceof ApiError && e.code === "access_code_required";
+}
+
+export function isSignInError(e: unknown): boolean {
+  return e instanceof ApiError && e.code === "sign_in_required";
 }

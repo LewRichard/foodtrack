@@ -13,6 +13,10 @@ services:
         value: "22"
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Only signed-in users can scan (needs the Supabase settings below). Set to "false" to allow everyone.
+      - key: REQUIRE_SIGN_IN
+        value: "true"
+      # Optional shared code that also unlocks scanning without an account. Signed-in users never need it.
       - key: APP_ACCESS_CODE
         sync: false
       # Accounts & cloud backup (optional). From Supabase: Project Settings → API / API Keys.

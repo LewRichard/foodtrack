@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
 import { isLang, type Lang } from "../../shared/languages.ts";
+import { isThemePref, type ThemePref } from "./theme.ts";
 import { DEFAULT_REMINDER_TIMES, type ReminderTimes } from "../../shared/reminders.ts";
 import {
   EMPTY_SYNC,
@@ -28,6 +29,7 @@ export interface AppState {
   sync: SyncMeta; // cloud backup bookkeeping (see syncState.ts)
   reminders: { enabled: boolean; times: ReminderTimes }; // meal reminders on this device
   language: "auto" | Lang; // app language; "auto" follows the device
+  theme: ThemePref; // light/dark look; "system" follows the device
 }
 
 const STORAGE_KEY = "foodtrack:v1";
@@ -47,6 +49,7 @@ export const INITIAL_STATE: AppState = {
   sync: EMPTY_SYNC,
   reminders: { enabled: false, times: DEFAULT_REMINDER_TIMES },
   language: "auto",
+  theme: "system",
 };
 
 function load(): AppState {
@@ -60,6 +63,7 @@ function load(): AppState {
       goals: { ...DEFAULT_GOALS, ...parsed.goals },
       sync: { ...EMPTY_SYNC, ...parsed.sync },
       language: isLang(parsed.language) ? parsed.language : "auto",
+      theme: isThemePref(parsed.theme) ? parsed.theme : "system",
     };
     // Diaries saved before cloud backup existed have no settings timestamp; if the person had
     // customised anything, give it the oldest possible one so it's uploaded but never beats a real edit.
@@ -166,6 +170,9 @@ export const actions = {
   setLanguage(language: AppState["language"]) {
     setState({ ...state, language });
   },
+  setTheme(theme: ThemePref) {
+    setState({ ...state, theme });
+  },
   setReminders(reminders: AppState["reminders"]) {
     setState({ ...state, reminders });
   },
@@ -192,6 +199,7 @@ export const actions = {
       goals: { ...DEFAULT_GOALS, ...data.goals },
       aiConsent: state.aiConsent,
       language: state.language,
+      theme: state.theme,
       sync: { ...state.sync, pendingEntries: [], pendingDeletes: [], pendingDays: [], pendingSettings: false },
     };
     // Keep ids, so re-importing a backup updates the same entries in the cloud instead of duplicating them.
@@ -209,6 +217,11 @@ export const actions = {
     setState(next);
   },
 };
+
+/** Choices that belong to this device, not the diary: kept when someone signs in or out. */
+export function devicePrefs(): Pick<AppState, "aiConsent" | "language" | "theme"> {
+  return { aiConsent: state.aiConsent, language: state.language, theme: state.theme };
+}
 
 /** Runs `listener` whenever the state changes (used to trigger uploads). */
 export function onStateChange(listener: () => void): () => void {

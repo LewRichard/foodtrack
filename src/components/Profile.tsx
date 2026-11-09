@@ -4,11 +4,12 @@ import { errorMessage, getAccessCode, setAccessCode, unlock } from "../lib/api.t
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
 import { enableReminders } from "../lib/reminders.ts";
+import { THEME_PREFS } from "../lib/theme.ts";
 import Account from "./Account.tsx";
 import Reminders from "./Reminders.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
-  const { name, profile, goals, entries, aiConsent, language } = useAppState();
+  const { name, profile, goals, entries, aiConsent, language, theme } = useAppState();
   const { t, tp, num } = useI18n();
   const deviceLang = LANGUAGES.find((l) => l.code === deviceLanguage())!;
   const session = useSession();
@@ -100,6 +101,23 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
             ))}
           </select>
         </label>
+      </section>
+
+      <section className="card">
+        <h2 className="title" id="theme-title">{t("profile.theme")}</h2>
+        <div className="segmented" role="radiogroup" aria-labelledby="theme-title">
+          {THEME_PREFS.map((option) => (
+            <button
+              key={option}
+              role="radio"
+              aria-checked={theme === option}
+              className={theme === option ? "active" : ""}
+              onClick={() => actions.setTheme(option)}
+            >
+              {t(`theme.${option}`)}
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="card">

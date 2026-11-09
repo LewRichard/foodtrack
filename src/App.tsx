@@ -6,6 +6,8 @@ import Scan from "./components/Scan.tsx";
 import Today, { ScanIcon } from "./components/Today.tsx";
 import { useI18n, type MessageKey } from "./i18n/index.ts";
 import { todayKey } from "./lib/dates.ts";
+import { useAppState } from "./lib/store.ts";
+import { watchTheme } from "./lib/theme.ts";
 
 type Tab = "today" | "history" | "scan" | "goals" | "profile";
 
@@ -31,6 +33,9 @@ function tabFromUrl(): Tab {
 export default function App() {
   const [tab, setTab] = useState<Tab>(tabFromUrl);
   const { t, lang } = useI18n();
+
+  const { theme } = useAppState();
+  useEffect(() => watchTheme(theme), [theme]);
 
   // Screen readers and the browser's own UI (e.g. translation offers) follow the page language.
   useEffect(() => {

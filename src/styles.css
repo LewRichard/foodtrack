@@ -43,41 +43,40 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #0f1210;
-    --bg-glow: #12301b;
-    --surface: #1a1e1b;
-    --surface-2: #252a26;
-    --border: #2c322d;
-    --text: #f2f5f1;
-    --text-2: #a8b1a9;
-    --accent: #22c55e;
-    --accent-strong: #4ade80;
-    --accent-soft: #163821;
-    --on-accent: #06200f;
-    --ink: #f2f5f1;
-    --on-ink: #0f1210;
-    --danger: #ef5350;
-    --warn: #fbbf24;
-    --warn-soft: #3a2a07;
-    --ring-track: #262b27;
-    --on-banner: #06240f;
-    --protein: #f4836a;
-    --carbs: #5ab2f2;
-    --fat: #f2c14e;
-    --neutral-fill: #7d857e;
-    --chart-bar: #2fbf63;
-    --grid: #2a2f2b;
-    --tile-breakfast: #3a2e1c;
-    --tile-lunch: #1b3038;
-    --tile-dinner: #3a2420;
-    --tile-snack: #3a2028;
-    --tile-water: #1a2b3d;
-    --shadow: none;
-    --shadow-float: 0 8px 32px rgb(0 0 0 / 0.5);
-  }
+/* Dark theme: set by src/lib/theme.ts (and index.html at startup) from Profile → Appearance. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1210;
+  --bg-glow: #12301b;
+  --surface: #1a1e1b;
+  --surface-2: #252a26;
+  --border: #2c322d;
+  --text: #f2f5f1;
+  --text-2: #a8b1a9;
+  --accent: #22c55e;
+  --accent-strong: #4ade80;
+  --accent-soft: #163821;
+  --on-accent: #06200f;
+  --ink: #f2f5f1;
+  --on-ink: #0f1210;
+  --danger: #ef5350;
+  --warn: #fbbf24;
+  --warn-soft: #3a2a07;
+  --ring-track: #262b27;
+  --on-banner: #06240f;
+  --protein: #f4836a;
+  --carbs: #5ab2f2;
+  --fat: #f2c14e;
+  --neutral-fill: #7d857e;
+  --chart-bar: #2fbf63;
+  --grid: #2a2f2b;
+  --tile-breakfast: #3a2e1c;
+  --tile-lunch: #1b3038;
+  --tile-dinner: #3a2420;
+  --tile-snack: #3a2028;
+  --tile-water: #1a2b3d;
+  --shadow: none;
+  --shadow-float: 0 8px 32px rgb(0 0 0 / 0.5);
 }
 
 * {

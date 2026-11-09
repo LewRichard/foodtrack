@@ -3,7 +3,7 @@
 
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { useSyncExternalStore } from "react";
-import { actions, getState, INITIAL_STATE, onStateChange, type AppState } from "./store.ts";
+import { actions, devicePrefs, getState, INITIAL_STATE, onStateChange, type AppState } from "./store.ts";
 import { projectUrl, supabaseKey } from "../../shared/supabase.ts";
 import { t } from "../i18n/index.ts";
 import { isNative } from "./native.ts";
@@ -155,7 +155,7 @@ export async function startCloud() {
   db.auth.onAuthStateChange((event, next) => {
     setSession(next);
     if (next && (event === "INITIAL_SESSION" || event === "SIGNED_IN")) {
-      actions.replace(attachAccount(getState(), next.user.id, { ...INITIAL_STATE, aiConsent: getState().aiConsent }));
+      actions.replace(attachAccount(getState(), next.user.id, { ...INITIAL_STATE, ...devicePrefs() }));
       // Run outside the auth callback (Supabase recommends not awaiting calls inside it).
       setTimeout(() => void syncNow(), 0);
     }
@@ -232,7 +232,7 @@ export async function signOut(force = false): Promise<boolean> {
   if (!force && hasPending(getState())) return false;
   await runBeforeSignOut();
   await (await client()).auth.signOut();
-  actions.replace({ ...INITIAL_STATE, aiConsent: getState().aiConsent, reminders: keptReminders() });
+  actions.replace({ ...INITIAL_STATE, ...devicePrefs(), reminders: keptReminders() });
   setSyncStatus({ kind: "idle" });
   return true;
 }
@@ -244,7 +244,7 @@ export async function deleteAccount(): Promise<void> {
   const { error } = await db.rpc("delete_my_account");
   if (error) throw new Error(describeError(error));
   await db.auth.signOut().catch(() => {});
-  actions.replace({ ...INITIAL_STATE, aiConsent: getState().aiConsent, reminders: keptReminders() });
+  actions.replace({ ...INITIAL_STATE, ...devicePrefs(), reminders: keptReminders() });
   setSyncStatus({ kind: "idle" });
 }
 

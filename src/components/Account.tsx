@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { deleteAccount, signIn, signOut, signUp, syncNow, useSession } from "../lib/cloud.ts";
 import { useAppState } from "../lib/store.ts";
 import { useSyncStatus } from "../lib/sync.ts";
@@ -26,10 +26,46 @@ function rememberEmail(email: string | null) {
 /** Sign in / account card for the Profile tab. Only rendered when cloud backup is configured. */
 export default function Account() {
   const session = useSession();
-  return session ? <SignedIn email={session.user.email ?? "your account"} /> : <SignInForm />;
+  // Keep the form on screen for a moment after signing in, so the browser sees the login form
+  // submitted and offers to save the password (see offerToSavePassword).
+  const [finishing, setFinishing] = useState(false);
+  return session && !finishing ? (
+    <SignedIn email={session.user.email ?? "your account"} />
+  ) : (
+    <SignInForm onStart={() => setFinishing(true)} onFinish={() => setFinishing(false)} />
+  );
 }
 
-function SignInForm() {
+// Name of a hidden frame that receives the login form after a successful sign-in.
+const SAVE_FRAME = "ft-password-save";
+
+/**
+ * Browsers only offer "Save password?" when they see a login form actually submitted, which an app
+ * that signs in with JavaScript never does. So after a successful sign-in:
+ *  - Chrome / Edge / Android: ask directly with the Credential Management API;
+ *  - Safari / iPhone (and others): submit the form into a hidden frame at about:blank. That's a real
+ *    form submission for the browser's password manager, but nothing is sent anywhere: about:blank
+ *    makes no network request.
+ */
+async function offerToSavePassword(form: HTMLFormElement, email: string, password: string) {
+  const w = window as Window & { PasswordCredential?: new (data: { id: string; password: string; name?: string }) => Credential };
+  if (w.PasswordCredential && navigator.credentials?.store) {
+    try {
+      await navigator.credentials.store(new w.PasswordCredential({ id: email, password, name: email }));
+      return;
+    } catch {
+      // Fall through to the form submission.
+    }
+  }
+  try {
+    form.submit(); // programmatic submit: doesn't fire onSubmit again
+  } catch {
+    // Nothing else to try; the user can still save the password manually.
+  }
+}
+
+function SignInForm({ onStart, onFinish }: { onStart: () => void; onFinish: () => void }) {
+  const formRef = useRef<HTMLFormElement>(null);
   // Pre-fill the email used last time on this device, so signing back in is just the password
   // (which the phone's password manager can fill with Face ID / fingerprint).
   const [email, setEmail] = useState(rememberedEmail);
@@ -43,23 +79,38 @@ function SignInForm() {
     e.preventDefault();
     setBusy(true);
     setMessage(null);
+    onStart();
     try {
       const result = mode === "signin" ? await signIn(email, password) : await signUp(email, password);
       rememberEmail(email.trim());
       if (result.needsConfirmation) {
         setMessage({ error: false, text: "Check your email and tap the confirmation link, then sign in here." });
         setMode("signin");
+      } else if (formRef.current) {
+        await offerToSavePassword(formRef.current, email.trim(), password);
+        // Give the browser a moment to register the submission before the form is replaced.
+        await new Promise((r) => setTimeout(r, 400));
       }
     } catch (err) {
       setMessage({ error: true, text: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
+      onFinish();
     }
   }
 
   // method/name/autocomplete let Safari, Chrome and iCloud Keychain offer to save and fill the login.
   return (
-    <form className="card" onSubmit={submit} method="post" action="#" autoComplete="on">
+    <form
+      ref={formRef}
+      className="card"
+      onSubmit={submit}
+      method="post"
+      action="about:blank"
+      target={SAVE_FRAME}
+      autoComplete="on"
+    >
+      <iframe name={SAVE_FRAME} title="" hidden tabIndex={-1} aria-hidden="true" />
       <div>
         <h2 className="title">Back up &amp; sync</h2>
         <p className="muted small">

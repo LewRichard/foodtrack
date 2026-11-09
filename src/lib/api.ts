@@ -82,6 +82,8 @@ const ERROR_MESSAGES: Record<string, MessageKey> = {
   bad_image: "err.badImage",
   server_error: "err.server",
   network: "err.network",
+  barcode_unavailable: "err.barcodeUnavailable",
+  bad_barcode: "barcode.invalid",
 };
 
 /** A message for any error, translated when the server sent a known code. */

@@ -4,6 +4,8 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { isLang } from "../shared/languages.ts";
+import { normalizeBarcode } from "../shared/barcode.ts";
+import { BarcodeLookup, BarcodeLookupError } from "./barcode.ts";
 import { AnalysisError, analyzeFoodImage, MODEL, type ImageMediaType } from "./analyze.ts";
 import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
@@ -17,6 +19,9 @@ const guard = configFromEnv();
 const limiter = new ScanLimiter(guard.perIpPerHour, guard.dailyLimit);
 const verifyUser = supabaseVerifier();
 const push = pushConfigFromEnv();
+const barcodes = new BarcodeLookup();
+// Lookups are free for us but shouldn't let one visitor hammer Open Food Facts through this server.
+const barcodeLimiter = new ScanLimiter(120, 20000);
 
 const app = express();
 app.disable("x-powered-by");
@@ -135,6 +140,28 @@ app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, l
       console.error(error);
       res.status(500).json({ error: "Unexpected server error.", code: "server_error" });
     }
+  }
+});
+
+// Packaged food by barcode (Open Food Facts). Free, so no sign-in needed; just rate-limited.
+app.get("/api/barcode/:code", async (req, res) => {
+  const code = normalizeBarcode(String(req.params.code));
+  if (!code) {
+    res.status(400).json({ error: "A barcode is 8–14 digits.", code: "bad_barcode" });
+    return;
+  }
+  if (barcodeLimiter.take(`ip:${req.ip}`)) {
+    res.status(429).json({ error: "Too many lookups — please wait a little.", code: "rate_limited" });
+    return;
+  }
+  const lang = typeof req.query.lang === "string" && isLang(req.query.lang) ? req.query.lang : "en";
+  try {
+    const product = await barcodes.find(code, lang);
+    if (product) res.json(product);
+    else res.status(404).json({ error: "No product found for this barcode.", code: "barcode_not_found" });
+  } catch (e) {
+    if (!(e instanceof BarcodeLookupError)) console.error(e);
+    res.status(502).json({ error: "Couldn't reach the product database.", code: "barcode_unavailable" });
   }
 });
 

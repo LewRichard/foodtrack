@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>FoodTrack uses the camera to photograph your meals so it can estimate their calories and nutrients.</string>
+	<string>FoodTrack uses the camera to photograph your meals and scan barcodes on packaged foods, so it can work out their calories and nutrients.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>FoodTrack lets you choose a meal photo from your library to estimate its calories and nutrients.</string>
 	<key>UIApplicationSceneManifest</key>

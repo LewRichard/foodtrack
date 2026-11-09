@@ -7,6 +7,7 @@ import { prepareFromFile, prepareFromSource, type PreparedImage } from "../lib/i
 import { isNative, pickNativePhoto } from "../lib/native.ts";
 import { actions, getState, newId } from "../lib/store.ts";
 import { MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
+import AddFood from "./AddFood.tsx";
 import Consent from "./Consent.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 
@@ -32,6 +33,7 @@ export default function Scan({
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [meal, setMeal] = useState<MealType>(mealForTime());
   const [awaitingConsent, setAwaitingConsent] = useState<PreparedImage | null>(null);
+  const [barcode, setBarcode] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const i18n = useI18n();
   const { t, tp, num } = i18n;
@@ -78,10 +80,15 @@ export default function Scan({
     onLogged();
   }
 
+  if (phase.kind === "capture" && barcode) {
+    // The photo camera is closed meanwhile, so the barcode scanner can have the camera.
+    return <AddFood date={date} meal={mealForTime()} startWithBarcode onClose={() => setBarcode(false)} onAdded={onLogged} />;
+  }
+
   if (phase.kind === "capture") {
     return (
       <>
-        <Capture note={note} onNoteChange={setNote} onImage={analyze} onCancel={onCancel} />
+        <Capture note={note} onNoteChange={setNote} onImage={analyze} onCancel={onCancel} onBarcode={() => setBarcode(true)} />
         {awaitingConsent && (
           <Consent
             onClose={() => setAwaitingConsent(null)}
@@ -242,11 +249,13 @@ function Capture({
   onNoteChange,
   onImage,
   onCancel,
+  onBarcode,
 }: {
   note: string;
   onNoteChange: (s: string) => void;
   onImage: (img: PreparedImage) => void;
   onCancel: () => void;
+  onBarcode: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -355,7 +364,9 @@ function Capture({
             {t("scan.takePhoto")}
           </button>
         )}
-        <span className="spacer" />
+        <button className="btn" onClick={onBarcode}>
+          {t("scan.barcode")}
+        </button>
       </div>
       {pickError && <p className="error small center">{pickError}</p>}
       <p className="muted small center">{t("scan.tip")}</p>

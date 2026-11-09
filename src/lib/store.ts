@@ -39,14 +39,17 @@ function load(): AppState {
 }
 
 let state: AppState = typeof localStorage === "undefined" ? INITIAL_STATE : load();
+let saveFailed = false;
 const listeners = new Set<() => void>();
 
 function setState(next: AppState) {
   state = next;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    saveFailed = false;
   } catch {
-    // Storage full or unavailable (private mode). Keep working in memory.
+    // Storage full or blocked. Keep working in memory, and let the UI warn that nothing is being saved.
+    saveFailed = true;
   }
   listeners.forEach((l) => l());
 }
@@ -58,6 +61,23 @@ function subscribe(listener: () => void) {
 
 export function useAppState(): AppState {
   return useSyncExternalStore(subscribe, () => state);
+}
+
+/** True when the last save to this device failed, so data will be lost when the page closes. */
+export function useSaveFailed(): boolean {
+  return useSyncExternalStore(subscribe, () => saveFailed);
+}
+
+/**
+ * Asks the browser not to clear this site's storage when space runs low or the site
+ * hasn't been opened for a while (Safari otherwise may after 7 days without a visit).
+ */
+export async function requestPersistentStorage(): Promise<void> {
+  try {
+    if (navigator.storage?.persist && !(await navigator.storage.persisted())) await navigator.storage.persist();
+  } catch {
+    // Not supported: nothing to do.
+  }
 }
 
 export function getState(): AppState {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { sumNutrients } from "../../shared/nutrition.ts";
 import { formatLongDate, greeting, todayKey } from "../lib/dates.ts";
-import { actions, entriesForDate, useAppState } from "../lib/store.ts";
+import { actions, entriesForDate, useAppState, useSaveFailed } from "../lib/store.ts";
 import {
   MEAL_ICONS,
   MEAL_LABELS,
@@ -33,6 +33,7 @@ export default function Today({
   onSeeAll: () => void;
 }) {
   const state = useAppState();
+  const saveFailed = useSaveFailed();
   const { goals, name } = state;
   const entries = entriesForDate(state, date);
   const total = sumNutrients(entries);
@@ -68,6 +69,13 @@ export default function Today({
           {firstName ? firstName[0].toUpperCase() : <PersonIcon />}
         </button>
       </header>
+
+      {saveFailed && (
+        <p className="save-warning" role="alert">
+          ⚠️ Your diary can't be saved on this device right now (private browsing, or storage is full). Entries will
+          disappear when you close this page. Open the app in a normal browser window, or export a backup in Profile.
+        </p>
+      )}
 
       <WeekStrip date={date} onChange={onDateChange} hasEntries={(d) => loggedDates.has(d)} />
 

@@ -538,6 +538,15 @@ select:focus {
   background: #4ade80;
 }
 
+.save-warning {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 14px;
+}
+
 /* ---- Diary: summary ---- */
 .summary {
   flex-direction: row;

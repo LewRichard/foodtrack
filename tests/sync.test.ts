@@ -69,6 +69,8 @@ const BLANK: SyncedState = {
   name: "",
   water: {},
   burned: {},
+  weights: {},
+  targetWeight: null,
   dayUpdatedAt: {},
   settingsUpdatedAt: 0,
   sync: EMPTY_SYNC,
@@ -95,6 +97,13 @@ function device(initial: SyncedState = BLANK) {
     },
     water: (date: string, glasses: number, at: number) => set(markDayChanged({ ...s, water: { ...s.water, [date]: glasses } }, date, at)),
     name: (name: string, at: number) => set(markSettingsChanged({ ...s, name }, at)),
+    weigh: (date: string, kg: number | null, at: number) => {
+      const weights = { ...s.weights };
+      if (kg === null) delete weights[date];
+      else weights[date] = kg;
+      set(markDayChanged({ ...s, weights }, date, at));
+    },
+    target: (kg: number | null, at: number) => set(markSettingsChanged({ ...s, targetWeight: kg }, at)),
   };
 }
 
@@ -297,5 +306,42 @@ describe("Supabase project address", () => {
     expect(projectUrl(`${base}​`)).toBe(base); // invisible character from copy-paste
     expect(projectUrl("https://supabase.com/dashboard/project/abcdefgh/settings/api")).toBe(base);
     expect(projectUrl("")).toBe("");
+  });
+});
+
+describe("weight sync", () => {
+  it("syncs weigh-ins, removals and the goal weight between devices", async () => {
+    const cloud = new FakeCloud();
+    const phone = device();
+    const laptop = device();
+    phone.signIn("u1");
+    laptop.signIn("u1");
+    phone.weigh("2026-11-08", 80.2, 100);
+    phone.weigh("2026-11-09", 79.8, 101);
+    phone.target(75, 102);
+    await phone.sync(cloud);
+    await laptop.sync(cloud);
+    expect(laptop.get().weights).toEqual({ "2026-11-08": 80.2, "2026-11-09": 79.8 });
+    expect(laptop.get().targetWeight).toBe(75);
+
+    laptop.weigh("2026-11-08", null, 200); // laptop deletes a weigh-in
+    await laptop.sync(cloud);
+    await phone.sync(cloud);
+    expect(phone.get().weights).toEqual({ "2026-11-09": 79.8 });
+  });
+
+  it("keeps local weights when the database has no weight column yet", async () => {
+    const cloud = new FakeCloud();
+    const phone = device();
+    phone.signIn("u1");
+    phone.weigh("2026-11-09", 70, 100);
+    await phone.sync(cloud);
+    // An old database drops the column: rows come back without `weight`.
+    for (const [k, d] of cloud.days) {
+      const { weight: _w, ...rest } = d;
+      cloud.days.set(k, { ...rest, updated_at: 300 });
+    }
+    await phone.sync(cloud);
+    expect(phone.get().weights).toEqual({ "2026-11-09": 70 });
   });
 });

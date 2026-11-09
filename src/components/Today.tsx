@@ -16,6 +16,7 @@ import EditEntry from "./EditEntry.tsx";
 import { CalorieRing, MacroCard, NutrientBar } from "./Progress.tsx";
 import Sheet from "./Sheet.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
+import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
 
 const GLASS_ML = 250;
@@ -190,6 +191,8 @@ export default function Today({
           ))}
         </div>
       </section>
+
+      <WeightTile date={date} />
 
       <details className="card more">
         <summary>{t("today.moreNutrients")}</summary>

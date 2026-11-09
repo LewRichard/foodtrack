@@ -52,6 +52,10 @@ create table if not exists public.day_logs (
 
 create index if not exists day_logs_user_synced on public.day_logs (user_id, synced_at);
 
+-- Body weight that day (kg). Added later; running this file again adds it.
+alter table public.day_logs add column if not exists weight double precision
+  check (weight is null or (weight >= 20 and weight <= 400));
+
 -- Name, goals and body details (one row per user).
 create table if not exists public.user_settings (
   user_id uuid primary key default auth.uid() references auth.users (id) on delete cascade,
@@ -61,6 +65,10 @@ create table if not exists public.user_settings (
   updated_at bigint not null,
   synced_at timestamptz not null default now()
 );
+
+-- Goal weight (kg). Added later; running this file again adds it.
+alter table public.user_settings add column if not exists target_weight double precision
+  check (target_weight is null or (target_weight >= 20 and target_weight <= 400));
 
 -- ---------------------------------------------------------------------------------------------
 -- Newer-edit-wins and server sync timestamps

@@ -21,6 +21,8 @@ export interface AppState {
   profile: Profile | null;
   water: Record<string, number>; // date -> glasses (250 ml)
   burned: Record<string, number>; // date -> kcal burned by exercise
+  weights: Record<string, number>; // date -> body weight that day (kg)
+  targetWeight: number | null; // goal weight (kg)
   name: string; // shown in the greeting
   recents: Omit<LogEntry, "id" | "date" | "meal" | "loggedAt" | "photo">[]; // most recent first, de-duplicated by name
   aiConsent: boolean; // agreed to send meal photos to the AI service
@@ -42,6 +44,8 @@ export const INITIAL_STATE: AppState = {
   profile: null,
   water: {},
   burned: {},
+  weights: {},
+  targetWeight: null,
   name: "",
   recents: [],
   aiConsent: false,
@@ -195,6 +199,23 @@ export const actions = {
     const water = { ...state.water, [date]: Math.max(0, glasses) };
     setState(markDayChanged({ ...state, water }, date, Date.now()));
   },
+  /** Records (or with null, removes) the weight for a day. The latest weigh-in also updates the
+   *  body details, so calorie goals suggested from them stay current. */
+  setWeight(date: string, kg: number | null) {
+    const now = Date.now();
+    const weights = { ...state.weights };
+    if (kg === null) delete weights[date];
+    else weights[date] = Math.round(kg * 10) / 10;
+    let next = markDayChanged({ ...state, weights }, date, now);
+    const latest = latestWeight(weights);
+    if (latest && next.profile && latest.date === date && next.profile.weightKg !== latest.kg) {
+      next = markSettingsChanged({ ...next, profile: { ...next.profile, weightKg: latest.kg } }, now);
+    }
+    setState(next);
+  },
+  setTargetWeight(kg: number | null) {
+    setState(markSettingsChanged({ ...state, targetWeight: kg === null ? null : Math.round(kg * 10) / 10 }, Date.now()));
+  },
   /** Replaces the diary with a backup. When signed in, everything in it is queued for upload. */
   importData(data: Partial<AppState>) {
     const now = Date.now();
@@ -210,7 +231,7 @@ export const actions = {
     };
     // Keep ids, so re-importing a backup updates the same entries in the cloud instead of duplicating them.
     const entries = imported.entries.map((e) => ({ ...e, id: isUuid(e.id) ? e.id : newId(), updatedAt: now }));
-    const dates = [...new Set([...Object.keys(imported.water), ...Object.keys(imported.burned)])];
+    const dates = [...new Set([...Object.keys(imported.water), ...Object.keys(imported.burned), ...Object.keys(imported.weights ?? {})])];
     let next = markEntriesChanged({ ...imported, entries }, entries.map((e) => e.id));
     for (const d of dates) next = markDayChanged(next, d, now);
     setState(markSettingsChanged(next, now));
@@ -223,6 +244,12 @@ export const actions = {
     setState(next);
   },
 };
+
+/** The most recent weigh-in, if any. */
+export function latestWeight(weights: Record<string, number>): { date: string; kg: number } | null {
+  const date = Object.keys(weights).sort().at(-1);
+  return date ? { date, kg: weights[date] } : null;
+}
 
 /** Choices that belong to this device, not the diary: kept when someone signs in or out. */
 export function devicePrefs(): Pick<AppState, "aiConsent" | "language" | "theme"> {

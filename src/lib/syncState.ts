@@ -37,6 +37,8 @@ export interface SyncedState {
   name: string;
   water: Record<string, number>;
   burned: Record<string, number>;
+  weights: Record<string, number>; // date -> body weight (kg)
+  targetWeight: number | null; // goal weight (kg)
   dayUpdatedAt: Record<string, number>;
   settingsUpdatedAt: number;
   sync: SyncMeta;
@@ -71,6 +73,7 @@ export interface DayRow {
   date: string;
   water: number;
   burned: number;
+  weight?: number | null; // missing on databases set up before weights existed
   updated_at: number;
   synced_at?: string;
 }
@@ -79,6 +82,7 @@ export interface SettingsRow {
   name: string;
   goals: Partial<Goals>;
   profile: Profile | null;
+  target_weight?: number | null; // missing on databases set up before weights existed
   updated_at: number;
   synced_at?: string;
 }
@@ -209,10 +213,11 @@ export function collectPush(s: SyncedState): PushBatch {
     date,
     water: s.water[date] ?? 0,
     burned: s.burned[date] ?? 0,
+    weight: s.weights?.[date] ?? null,
     updated_at: s.dayUpdatedAt[date] ?? 1,
   }));
   const settings = s.sync.pendingSettings
-    ? { name: s.name, goals: s.goals, profile: s.profile, updated_at: s.settingsUpdatedAt || 1 }
+    ? { name: s.name, goals: s.goals, profile: s.profile, target_weight: s.targetWeight ?? null, updated_at: s.settingsUpdatedAt || 1 }
     : null;
   return { entries, days, settings };
 }
@@ -278,6 +283,7 @@ export function mergeRemote<S extends SyncedState>(s: S, pulled: Pulled): S {
 
   const water = { ...s.water };
   const burned = { ...s.burned };
+  const weights = { ...(s.weights ?? {}) };
   const dayUpdatedAt = { ...s.dayUpdatedAt };
   let pendingDays = s.sync.pendingDays;
   for (const row of pulled.days) {
@@ -285,11 +291,16 @@ export function mergeRemote<S extends SyncedState>(s: S, pulled: Pulled): S {
     if ((dayUpdatedAt[row.date] ?? 0) >= Number(row.updated_at)) continue;
     water[row.date] = row.water;
     burned[row.date] = row.burned;
+    if (row.weight !== undefined) {
+      if (row.weight === null) delete weights[row.date];
+      else weights[row.date] = Number(row.weight);
+    }
     dayUpdatedAt[row.date] = Number(row.updated_at);
     pendingDays = pendingDays.filter((d) => d !== row.date);
   }
 
   let { name, goals, profile, settingsUpdatedAt } = s;
+  let targetWeight = s.targetWeight ?? null;
   let pendingSettings = s.sync.pendingSettings;
   for (const row of pulled.settings) {
     cursors = { ...cursors, settings: later(cursors.settings, row.synced_at) };
@@ -297,6 +308,7 @@ export function mergeRemote<S extends SyncedState>(s: S, pulled: Pulled): S {
     name = row.name ?? "";
     goals = { ...DEFAULT_GOALS, ...row.goals };
     profile = row.profile ?? null;
+    if (row.target_weight !== undefined) targetWeight = row.target_weight === null ? null : Number(row.target_weight);
     settingsUpdatedAt = Number(row.updated_at);
     pendingSettings = false;
   }
@@ -306,10 +318,12 @@ export function mergeRemote<S extends SyncedState>(s: S, pulled: Pulled): S {
     entries: [...entries.values()],
     water,
     burned,
+    weights,
     dayUpdatedAt,
     name,
     goals,
     profile,
+    targetWeight,
     settingsUpdatedAt,
     sync: { ...s.sync, pendingEntries, pendingDeletes, pendingDays, pendingSettings, cursors },
   };
@@ -329,7 +343,7 @@ export function attachAccount<S extends SyncedState>(s: S, userId: string, blank
 
   // Database ids must be UUIDs; older entries may have used a different format.
   const entries = s.entries.map((e) => (isUuid(e.id) ? e : { ...e, id: uuid() }));
-  const dates = [...new Set([...Object.keys(s.water), ...Object.keys(s.burned)])];
+  const dates = [...new Set([...Object.keys(s.water), ...Object.keys(s.burned), ...Object.keys(s.weights ?? {})])];
   const dayUpdatedAt = { ...s.dayUpdatedAt };
   for (const d of dates) dayUpdatedAt[d] ??= 1;
   return {

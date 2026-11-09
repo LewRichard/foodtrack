@@ -81,11 +81,20 @@ function supabaseRemote(userId: string): Remote {
       }
       if (batch.days.length) {
         const rows = batch.days.map((d) => ({ ...d, user_id: userId }));
-        const { error } = await db.from("day_logs").upsert(rows, { onConflict: "user_id,date" });
+        let { error } = await db.from("day_logs").upsert(rows, { onConflict: "user_id,date" });
+        // A database set up before weights existed has no weight column: save the rest.
+        if (error && /weight/.test(error.message)) {
+          ({ error } = await db.from("day_logs").upsert(rows.map(({ weight: _w, ...rest }) => rest), { onConflict: "user_id,date" }));
+        }
         if (error) throw error;
       }
       if (batch.settings) {
-        const { error } = await db.from("user_settings").upsert({ ...batch.settings, user_id: userId }, { onConflict: "user_id" });
+        const row = { ...batch.settings, user_id: userId };
+        let { error } = await db.from("user_settings").upsert(row, { onConflict: "user_id" });
+        if (error && /target_weight/.test(error.message)) {
+          const { target_weight: _t, ...rest } = row;
+          ({ error } = await db.from("user_settings").upsert(rest, { onConflict: "user_id" }));
+        }
         if (error) throw error;
       }
     },

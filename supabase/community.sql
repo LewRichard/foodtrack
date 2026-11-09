@@ -20,6 +20,10 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+-- Added for notifications (running the file again adds them to existing databases).
+alter table public.profiles add column if not exists notify boolean not null default true; -- community push notifications
+alter table public.profiles add column if not exists language text not null default 'en' check (char_length(language) <= 8);
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "profiles are visible to signed-in users" on public.profiles;

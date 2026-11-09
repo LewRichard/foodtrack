@@ -30,6 +30,8 @@ export interface PushMessage {
   body: string;
   url: string;
   tag: string;
+  /** Skip the banner while the app is open in front of the person (it updates its badge instead). */
+  quietWhenOpen?: boolean;
 }
 
 /** Everything the reminder run needs from the outside world (Supabase + web push), so it can be tested. */

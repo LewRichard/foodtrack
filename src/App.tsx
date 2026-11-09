@@ -6,7 +6,7 @@ import Scan from "./components/Scan.tsx";
 import Today, { ScanIcon } from "./components/Today.tsx";
 import { useI18n, type MessageKey } from "./i18n/index.ts";
 import { useSession } from "./lib/cloud.ts";
-import { useCommunityAlerts } from "./lib/community.ts";
+import { refreshAlerts, useCommunityAlerts } from "./lib/community.ts";
 import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
 import { watchTheme } from "./lib/theme.ts";
@@ -32,8 +32,18 @@ const TAB_IDS: Tab[] = ["today", "history", "scan", "community", "goals", "profi
 
 /** A notification can open the app on a given tab, e.g. /?tab=scan. */
 function tabFromUrl(): Tab {
-  const tab = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get("tab") as Tab | null;
   if (tab && TAB_IDS.includes(tab)) {
+    // A Community notification also says which part to open (chats, friends).
+    const section = params.get("section");
+    if (tab === "community" && section) {
+      try {
+        sessionStorage.setItem("foodtrack:communitySection", section);
+      } catch {
+        // storage unavailable: opens on the feed
+      }
+    }
     window.history.replaceState(null, "", window.location.pathname);
     return tab;
   }
@@ -54,6 +64,15 @@ export default function App() {
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
+
+  // A Community notification arrived while the app was open: refresh the badge instead of a banner.
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if ((e.data as { type?: string } | null)?.type === "community-activity") refreshAlerts();
+    };
+    navigator.serviceWorker?.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker?.removeEventListener("message", onMessage);
+  }, []);
 
   // Tapping a reminder in the iPhone app asks to open a tab.
   useEffect(() => {

@@ -413,6 +413,13 @@ const en = {
   "community.noChats": "No chats yet. Add friends to start chatting.",
   "community.sayHi": "Say hi to {name} 👋",
   "community.writeMessage": "Write a message…",
+  "community.notifications": "Notifications",
+  "community.notifyTitle": "Get notified",
+  "community.notifyBody": "Know when friends message you, send a friend request, or like and comment on your posts.",
+  "community.notifyTurnOn": "Turn on notifications",
+  "community.notifyLater": "Later",
+  "community.notifyOn": "Notifications are on for this device.",
+  "community.notifyNative": "Notifications for messages and friends aren't available in the iPhone app yet. You'll see a red badge on the Community tab instead.",
 };
 
 export default en;

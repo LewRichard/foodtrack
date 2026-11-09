@@ -401,6 +401,13 @@ const de: Messages = {
   "community.noChats": "Noch keine Chats. Füge Freunde hinzu, um loszulegen.",
   "community.sayHi": "Sag Hallo zu {name} 👋",
   "community.writeMessage": "Nachricht schreiben…",
+  "community.notifications": "Benachrichtigungen",
+  "community.notifyTitle": "Benachrichtigt werden",
+  "community.notifyBody": "Erfahre, wenn Freunde dir schreiben, eine Anfrage senden oder deine Beiträge liken und kommentieren.",
+  "community.notifyTurnOn": "Benachrichtigungen einschalten",
+  "community.notifyLater": "Später",
+  "community.notifyOn": "Benachrichtigungen sind auf diesem Gerät eingeschaltet.",
+  "community.notifyNative": "Die iPhone-App unterstützt Benachrichtigungen für Nachrichten und Freunde noch nicht. Stattdessen siehst du einen roten Punkt am Community-Tab.",
 };
 
 export default de;

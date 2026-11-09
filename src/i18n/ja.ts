@@ -396,6 +396,13 @@ const ja: Messages = {
   "community.noChats": "チャットはまだありません。友達を追加して始めましょう。",
   "community.sayHi": "{name}さんにあいさつしよう 👋",
   "community.writeMessage": "メッセージを入力…",
+  "community.notifications": "通知",
+  "community.notifyTitle": "通知を受け取る",
+  "community.notifyBody": "友達からのメッセージ、友達リクエスト、投稿へのいいね・コメントをすぐにお知らせします。",
+  "community.notifyTurnOn": "通知をオンにする",
+  "community.notifyLater": "あとで",
+  "community.notifyOn": "この端末で通知がオンになっています。",
+  "community.notifyNative": "iPhoneアプリはまだメッセージや友達の通知に対応していません。代わりに「コミュニティ」タブに赤いバッジが表示されます。",
 };
 
 export default ja;

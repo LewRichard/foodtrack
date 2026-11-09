@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { t } from "../i18n/index.ts";
-import { cloudClient, onBeforeDeleteAccount } from "./cloud.ts";
+import { currentLanguage, t } from "../i18n/index.ts";
+import { API_BASE } from "./api.ts";
+import { accessToken, cloudClient, onBeforeDeleteAccount } from "./cloud.ts";
+import { isNative } from "./native.ts";
+import { reminderSupport, subscribeThisDevice, unsubscribeThisDevice } from "./reminders.ts";
+import { actions, getState } from "./store.ts";
 
 // Community: profiles, friends, posts, comments, likes and chat, all stored in Supabase.
 // Who can see or do what is enforced by the database (supabase/community.sql); this file just asks.
@@ -101,6 +105,21 @@ async function me(): Promise<string> {
   return id;
 }
 
+type NotifyKind = "message" | "comment" | "like" | "friend_request" | "friend_accept";
+
+/** Tells the server what I just did so it can notify the other person. Best effort: never throws. */
+function notify(kind: NotifyKind, id: string) {
+  void (async () => {
+    const token = await accessToken();
+    if (!token) return;
+    await fetch(`${API_BASE}/api/community/notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ kind, id }),
+    });
+  })().catch(() => {});
+}
+
 // ---- Profile ------------------------------------------------------------------------------------
 
 export async function loadMyProfile(): Promise<Profile | null> {
@@ -140,12 +159,14 @@ export async function searchPeople(query: string): Promise<Connection[]> {
 export async function sendFriendRequest(id: string): Promise<"pending" | "accepted"> {
   const { data, error } = await (await db()).rpc("send_friend_request", { target: id });
   fail(error);
+  notify(data === "accepted" ? "friend_accept" : "friend_request", id);
   return data as "pending" | "accepted";
 }
 
 export async function answerFriendRequest(id: string, accept: boolean): Promise<void> {
   const { error } = await (await db()).rpc("respond_friend_request", { requester_id: id, accept });
   fail(error);
+  if (accept) notify("friend_accept", id);
 }
 
 export async function removeFriend(id: string): Promise<void> {
@@ -236,6 +257,7 @@ export async function setLiked(postId: string, liked: boolean): Promise<void> {
     : await client.from("post_likes").delete().eq("post_id", postId).eq("user_id", await me());
   if (error?.code === "23505") return; // already liked (double tap)
   fail(error);
+  if (liked) notify("like", postId);
 }
 
 export async function loadComments(postId: string): Promise<Comment[]> {
@@ -256,6 +278,7 @@ export async function addComment(postId: string, body: string): Promise<Comment>
     .select("id, post_id, author, body, created_at, author_profile:profiles!comments_author_fkey(username, display_name)")
     .single();
   fail(error);
+  notify("comment", (data as { id: string }).id);
   return data as unknown as Comment;
 }
 
@@ -296,6 +319,7 @@ export async function sendMessage(recipient: string, body: string): Promise<Mess
     .select("id, sender, recipient, body, created_at, read_at")
     .single();
   fail(error);
+  notify("message", (data as Message).id);
   return data as Message;
 }
 
@@ -366,6 +390,35 @@ export function useCommunityAlerts(userId: string | null): { messages: number; r
     };
   }, [userId]);
   return alerts;
+}
+
+// ---- Notifications ----------------------------------------------------------------------------------
+
+export type CommunityPushSupport = "web" | "ios-needs-home-screen" | "unsupported" | "native";
+
+export function communityPushSupport(): CommunityPushSupport {
+  // The iPhone app would need Apple push (APNs) for this; for now Community notifications are web-only.
+  if (isNative) return "native";
+  const support = reminderSupport().kind;
+  return support === "native" ? "native" : support;
+}
+
+/** Turns Community notifications on or off for my account, and registers/unregisters this device. */
+export async function setCommunityNotifications(on: boolean): Promise<void> {
+  const client = await db();
+  const myId = await me();
+  if (on) await subscribeThisDevice();
+  const { error } = await client.from("profiles").update({ notify: on, language: currentLanguage() }).eq("id", myId);
+  fail(error);
+  if (!on && !getState().reminders.enabled) await unsubscribeThisDevice().catch(() => {});
+  actions.setCommunityPush(on);
+}
+
+/** Keeps the language of my notifications in step with the app's language. */
+export async function syncNotificationLanguage(): Promise<void> {
+  const client = await db();
+  const myId = await me();
+  await client.from("profiles").update({ language: currentLanguage() }).eq("id", myId);
 }
 
 // Photos aren't removed by the database when an account is deleted, so the app removes them first.

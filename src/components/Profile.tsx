@@ -3,6 +3,7 @@ import { deviceLanguage, LANGUAGES, useI18n, type LanguagePref } from "../i18n/i
 import { errorMessage, getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { actions, getState, useAppState, type AppState } from "../lib/store.ts";
+import { syncNotificationLanguage } from "../lib/community.ts";
 import { enableReminders } from "../lib/reminders.ts";
 import { THEME_PREFS } from "../lib/theme.ts";
 import Account from "./Account.tsx";
@@ -91,6 +92,7 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
               // Reminders already on: resend them so notifications come in the new language.
               const { reminders } = getState();
               if (reminders.enabled) void enableReminders(reminders.times).catch(() => {});
+              if (session) void syncNotificationLanguage().catch(() => {});
             }}
           >
             <option value="auto">{t("profile.languageAuto", { name: deviceLang.name })}</option>

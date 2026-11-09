@@ -30,6 +30,7 @@ export interface AppState {
   reminders: { enabled: boolean; times: ReminderTimes }; // meal reminders on this device
   language: "auto" | Lang; // app language; "auto" follows the device
   theme: ThemePref; // light/dark look; "system" follows the device
+  communityPush: boolean; // this device gets Community notifications (reset on sign-out)
 }
 
 const STORAGE_KEY = "foodtrack:v1";
@@ -50,6 +51,7 @@ export const INITIAL_STATE: AppState = {
   reminders: { enabled: false, times: DEFAULT_REMINDER_TIMES },
   language: "auto",
   theme: "system",
+  communityPush: false,
 };
 
 function load(): AppState {
@@ -173,6 +175,9 @@ export const actions = {
   setTheme(theme: ThemePref) {
     setState({ ...state, theme });
   },
+  setCommunityPush(communityPush: boolean) {
+    setState({ ...state, communityPush });
+  },
   setReminders(reminders: AppState["reminders"]) {
     setState({ ...state, reminders });
   },
@@ -200,6 +205,7 @@ export const actions = {
       aiConsent: state.aiConsent,
       language: state.language,
       theme: state.theme,
+      communityPush: state.communityPush,
       sync: { ...state.sync, pendingEntries: [], pendingDeletes: [], pendingDays: [], pendingSettings: false },
     };
     // Keep ids, so re-importing a backup updates the same entries in the cloud instead of duplicating them.

@@ -397,6 +397,13 @@ const zh: Messages = {
   "community.noChats": "还没有聊天。添加好友后就能开始聊天。",
   "community.sayHi": "和 {name} 打个招呼 👋",
   "community.writeMessage": "输入消息…",
+  "community.notifications": "通知",
+  "community.notifyTitle": "接收通知",
+  "community.notifyBody": "好友给你发消息、发送好友请求，或点赞和评论你的动态时，第一时间知道。",
+  "community.notifyTurnOn": "开启通知",
+  "community.notifyLater": "以后再说",
+  "community.notifyOn": "此设备已开启通知。",
+  "community.notifyNative": "iPhone 应用暂不支持消息和好友通知。你会在“社区”标签上看到红点提醒。",
 };
 
 export default zh;

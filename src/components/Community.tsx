@@ -6,6 +6,7 @@ import {
   addComment,
   answerFriendRequest,
   blockUser,
+  communityPushSupport,
   createPost,
   createProfile,
   deleteComment,
@@ -25,7 +26,9 @@ import {
   searchPeople,
   sendFriendRequest,
   sendMessage,
+  setCommunityNotifications,
   setLiked,
+  syncNotificationLanguage,
   unblockUser,
   USERNAME_PATTERN,
   type Comment,
@@ -191,9 +194,28 @@ function Setup({ onCreated }: { onCreated: (p: Profile) => void }) {
 
 // ---- Signed in with a profile -----------------------------------------------------------------------
 
+const SECTION_KEY = "foodtrack:communitySection"; // set when a notification opens the app
+
+function initialSection(): Section {
+  try {
+    const saved = sessionStorage.getItem(SECTION_KEY);
+    sessionStorage.removeItem(SECTION_KEY);
+    if (saved === "chats" || saved === "friends") return saved;
+  } catch {
+    // storage unavailable
+  }
+  return "feed";
+}
+
 function Home({ profile, alerts }: { profile: Profile; alerts: { messages: number; requests: number } }) {
   const { t } = useI18n();
-  const [section, setSection] = useState<Section>("feed");
+  const { communityPush } = useAppState();
+  const [section, setSection] = useState<Section>(initialSection);
+  const [showNotify, setShowNotify] = useState(false);
+
+  useEffect(() => {
+    void syncNotificationLanguage().catch(() => {});
+  }, []);
   const [chatWith, setChatWith] = useState<Person | null>(null);
   const [connections, setConnections] = useState<Connection[]>([]);
 
@@ -230,8 +252,14 @@ function Home({ profile, alerts }: { profile: Profile; alerts: { messages: numbe
     <div className="page community">
       <div className="row between">
         <h1 className="page-title">{t("community.title")}</h1>
-        <span className="muted small">@{profile.username}</span>
+        <span className="row gap-sm">
+          <span className="muted small">@{profile.username}</span>
+          <button className="icon-btn" onClick={() => setShowNotify(true)} aria-label={t("community.notifications")}>
+            {communityPush ? "🔔" : "🔕"}
+          </button>
+        </span>
       </div>
+      {showNotify && <NotifySheet onClose={() => setShowNotify(false)} />}
       <div className="segmented" role="tablist">
         {tabs.map((tab) => (
           <button
@@ -246,6 +274,7 @@ function Home({ profile, alerts }: { profile: Profile; alerts: { messages: numbe
           </button>
         ))}
       </div>
+      {section === "feed" && !communityPush && <NotifyPrompt onOpen={() => setShowNotify(true)} />}
       {section === "feed" && (
         <Feed me={profile} friendIds={friends.map((f) => f.id)} onFindFriends={() => setSection("friends")} onRefresh={reloadConnections} />
       )}
@@ -254,6 +283,97 @@ function Home({ profile, alerts }: { profile: Profile; alerts: { messages: numbe
         <Friends me={profile} connections={connections} reload={reloadConnections} onChat={setChatWith} />
       )}
     </div>
+  );
+}
+
+// ---- Notifications ------------------------------------------------------------------------------------
+
+const PROMPT_KEY = "foodtrack:communityNotifyPrompt";
+
+function NotifyPrompt({ onOpen }: { onOpen: () => void }) {
+  const { t } = useI18n();
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(PROMPT_KEY) === "dismissed" || communityPushSupport() === "native";
+    } catch {
+      return false;
+    }
+  });
+  if (hidden) return null;
+  const dismiss = () => {
+    try {
+      localStorage.setItem(PROMPT_KEY, "dismissed");
+    } catch {
+      // storage unavailable: hide for now
+    }
+    setHidden(true);
+  };
+  return (
+    <section className="card notify-prompt">
+      <p className="small">
+        <strong>🔔 {t("community.notifyTitle")}</strong>
+        <br />
+        <span className="muted">{t("community.notifyBody")}</span>
+      </p>
+      <div className="row gap">
+        <button className="btn small-btn" onClick={dismiss}>
+          {t("community.notifyLater")}
+        </button>
+        <button className="btn primary small-btn" onClick={onOpen}>
+          {t("community.notifyTurnOn")}
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function NotifySheet({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
+  const { communityPush } = useAppState();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const support = communityPushSupport();
+
+  async function toggle(on: boolean) {
+    setBusy(true);
+    setError("");
+    try {
+      await setCommunityNotifications(on);
+      try {
+        localStorage.setItem(PROMPT_KEY, "dismissed");
+      } catch {
+        // ignore
+      }
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet title={t("community.notifications")} onClose={onClose}>
+      <div className="stack">
+        <p className="muted small">{t("community.notifyBody")}</p>
+        {support === "native" && <p className="small">{t("community.notifyNative")}</p>}
+        {support === "ios-needs-home-screen" && <p className="small">{t("rem.iosHomeScreen")}</p>}
+        {support === "unsupported" && <p className="small">{t("rem.unsupported")}</p>}
+        {support === "web" &&
+          (communityPush ? (
+            <>
+              <p className="small">✅ {t("community.notifyOn")}</p>
+              <button className="btn" disabled={busy} onClick={() => toggle(false)}>
+                {t("rem.turnOff")}
+              </button>
+            </>
+          ) : (
+            <button className="btn primary" disabled={busy} onClick={() => toggle(true)}>
+              {busy ? t("common.pleaseWait") : t("community.notifyTurnOn")}
+            </button>
+          ))}
+        {error && <p className="error small">{error}</p>}
+      </div>
+    </Sheet>
   );
 }
 

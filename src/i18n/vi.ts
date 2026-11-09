@@ -401,6 +401,13 @@ const vi: Messages = {
   "community.noChats": "Chưa có cuộc trò chuyện nào. Hãy kết bạn để bắt đầu nhắn tin.",
   "community.sayHi": "Chào {name} một tiếng 👋",
   "community.writeMessage": "Viết tin nhắn…",
+  "community.notifications": "Thông báo",
+  "community.notifyTitle": "Nhận thông báo",
+  "community.notifyBody": "Biết ngay khi bạn bè nhắn tin, gửi lời mời kết bạn, hoặc thích và bình luận bài viết của bạn.",
+  "community.notifyTurnOn": "Bật thông báo",
+  "community.notifyLater": "Để sau",
+  "community.notifyOn": "Đã bật thông báo trên thiết bị này.",
+  "community.notifyNative": "Ứng dụng iPhone chưa hỗ trợ thông báo tin nhắn và bạn bè. Thay vào đó, bạn sẽ thấy chấm đỏ trên tab Cộng đồng.",
 };
 
 export default vi;

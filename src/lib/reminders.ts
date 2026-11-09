@@ -93,7 +93,8 @@ function friendly(message: string): string {
 
 // ---- Web push -------------------------------------------------------------------------------------
 
-async function enableWeb(times: ReminderTimes) {
+/** Registers this browser for push notifications (meal reminders and Community share it). */
+export async function subscribeThisDevice(): Promise<void> {
   const publicKey = await serverPushKey();
   if (!publicKey) throw new Error(t("rem.serverOff"));
   const permission = await Notification.requestPermission();
@@ -113,11 +114,15 @@ async function enableWeb(times: ReminderTimes) {
     p_user_agent: navigator.userAgent,
   });
   if (error) throw new Error(friendly(error.message));
+}
+
+async function enableWeb(times: ReminderTimes) {
+  await subscribeThisDevice();
   await saveSettings(times, true);
 }
 
-/** Stops notifications on this device (other devices keep theirs). */
-async function disableWebDevice() {
+/** Stops all notifications on this device (other devices keep theirs). */
+export async function unsubscribeThisDevice() {
   const reg = await navigator.serviceWorker?.getRegistration();
   const sub = await reg?.pushManager.getSubscription();
   if (!sub) return;
@@ -169,7 +174,8 @@ export async function disableReminders(): Promise<void> {
   if (isNative) {
     await scheduleNative(null);
   } else {
-    await disableWebDevice();
+    // The device stays registered if Community notifications still use it.
+    if (!getState().communityPush) await unsubscribeThisDevice();
     await saveSettings(times, false).catch(() => {});
   }
   actions.setReminders({ enabled: false, times });
@@ -206,6 +212,6 @@ export function startReminders() {
     );
   } else {
     // Signing out (or deleting the account) stops this device's notifications for that account.
-    onBeforeSignOut(disableWebDevice);
+    onBeforeSignOut(unsubscribeThisDevice);
   }
 }

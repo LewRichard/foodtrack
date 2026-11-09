@@ -28,7 +28,7 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// ---- Meal reminders (web push) ----
+// ---- Notifications (web push): meal reminders and Community activity ----
 
 self.addEventListener("push", (event) => {
   let data = {};
@@ -37,14 +37,28 @@ self.addEventListener("push", (event) => {
   } catch {
     data = { body: event.data ? event.data.text() : "" };
   }
-  event.waitUntil(
+  const show = () =>
     self.registration.showNotification(data.title || "FoodTrack", {
-      body: data.body || "Time to log your meal.",
+      body: data.body ?? "",
       icon: "/icon-512.png",
       badge: "/icon-512.png",
       tag: data.tag || "foodtrack",
+      renotify: Boolean(data.tag),
       data: { url: data.url || "/" },
-    }),
+    });
+  event.waitUntil(
+    (async () => {
+      if (data.quietWhenOpen) {
+        // The person is looking at the app: no banner, just tell the app to refresh its badge.
+        const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        const open = windows.filter((w) => w.visibilityState === "visible" && w.focused);
+        if (open.length) {
+          for (const w of open) w.postMessage({ type: "community-activity" });
+          return;
+        }
+      }
+      await show();
+    })(),
   );
 });
 

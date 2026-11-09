@@ -44,4 +44,21 @@ Reports go to the `reports` table. Check it regularly (Apple expects action with
 
 - Post text up to 2000 characters, comments 1000, messages 2000. One photo per post, resized to
   1280 px JPEG before upload (bucket limit 3 MB). Supabase's free plan includes 1 GB of storage.
-- Chat updates live while the app is open; there are no push notifications for messages yet.
+- Chat updates live while the app is open.
+
+## Notifications
+
+People turn them on with the 🔔 button in the Community tab. They get a notification for new
+messages, friend requests, accepted requests, and likes and comments on their posts, in their
+app language. They use the same web push setup as meal reminders (`docs/REMINDERS.md`: VAPID keys
+and `SUPABASE_SERVICE_ROLE_KEY` on the server); no cron job is needed.
+
+How it works: after an action the app calls `POST /api/community/notify` with what it did. The
+server looks the event up with the service key and only notifies if it really exists, was done by
+the caller in the last 10 minutes, and the other person has notifications on and hasn't blocked
+them. Each event is sent once. While the app is open in front of the person there's no banner;
+the Community badge updates instead.
+
+Works on Android and desktop browsers, and on iPhone when FoodTrack is added to the Home Screen
+(iOS 16.4+). The native iPhone app would need Apple Push Notification service (APNs) set up
+first; until then it shows the red badge on the Community tab.

@@ -10,6 +10,7 @@ import { AnalysisError, analyzeFoodImage, MODEL, type ImageMediaType } from "./a
 import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
 import { testReminderText } from "../shared/reminders.ts";
+import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from "./communityPush.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -94,6 +95,58 @@ app.post("/api/push/test", async (req, res) => {
     }
   }
   res.json({ devices: subs.length, sent });
+});
+
+// The app reports something the person just did in Community (message, comment, like, friend
+// request); we check it really happened and notify the other person's devices.
+const notifyLimiter = new ScanLimiter(120, 100_000);
+const notified = new SentOnce();
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+app.post("/api/community/notify", async (req, res) => {
+  const token = /^Bearer\s+(.+)$/i.exec(req.get("authorization") ?? "")?.[1];
+  const userId = token && verifyUser ? await verifyUser(token) : null;
+  if (!userId) {
+    res.status(401).json({ error: "Sign in first." });
+    return;
+  }
+  const { kind, id } = req.body ?? {};
+  if (!isNotifyKind(kind) || typeof id !== "string" || !UUID.test(id)) {
+    res.status(400).json({ error: "Expected { kind, id }." });
+    return;
+  }
+  if (!push?.db) {
+    res.json({ sent: 0, reason: "push not configured" });
+    return;
+  }
+  if (notifyLimiter.take(`user:${userId}`)) {
+    res.status(429).json({ error: "Too many notifications.", code: "rate_limited" });
+    return;
+  }
+  try {
+    const note = await buildNotification(supabaseCommunityDeps(push.db), userId, kind, id);
+    // Each event is announced once (liking, unliking and liking again doesn't send it twice).
+    if (!note || !notified.first(`${kind}:${id}:${userId}`)) {
+      res.json({ sent: 0 });
+      return;
+    }
+    const deps = supabaseReminderDeps(push.db);
+    let sent = 0;
+    for (const sub of await deps.subscriptionsFor(note.to)) {
+      try {
+        await sendPush(sub, { ...note.message, quietWhenOpen: true });
+        sent++;
+      } catch (e) {
+        const status = (e as { statusCode?: number }).statusCode;
+        if (status === 404 || status === 410) await deps.deleteSubscription(sub.endpoint);
+        else console.error("Community push failed:", e);
+      }
+    }
+    res.json({ sent });
+  } catch (e) {
+    console.error("Community notify failed:", e);
+    res.status(500).json({ error: "Couldn't send the notification." });
+  }
 });
 
 // Lets the app check an access code without spending a scan.

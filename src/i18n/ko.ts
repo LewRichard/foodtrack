@@ -396,6 +396,13 @@ const ko: Messages = {
   "community.noChats": "아직 채팅이 없어요. 친구를 추가해 대화를 시작하세요.",
   "community.sayHi": "{name}님에게 인사해 보세요 👋",
   "community.writeMessage": "메시지 입력…",
+  "community.notifications": "알림",
+  "community.notifyTitle": "알림 받기",
+  "community.notifyBody": "친구가 메시지를 보내거나, 친구 요청을 하거나, 게시물에 좋아요·댓글을 남기면 바로 알려드려요.",
+  "community.notifyTurnOn": "알림 켜기",
+  "community.notifyLater": "나중에",
+  "community.notifyOn": "이 기기에서 알림이 켜져 있어요.",
+  "community.notifyNative": "iPhone 앱은 아직 메시지·친구 알림을 지원하지 않아요. 대신 커뮤니티 탭에 빨간 배지가 표시돼요.",
 };
 
 export default ko;

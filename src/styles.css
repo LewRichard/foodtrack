@@ -2052,3 +2052,20 @@ select:focus {
   justify-content: space-between;
   align-items: center;
 }
+
+.gap-sm {
+  gap: 8px;
+  align-items: center;
+}
+
+.notify-prompt {
+  gap: 10px;
+}
+
+.notify-prompt p {
+  margin: 0;
+}
+
+.notify-prompt .row {
+  justify-content: flex-end;
+}

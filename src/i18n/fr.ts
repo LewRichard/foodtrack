@@ -401,6 +401,13 @@ const fr: Messages = {
   "community.noChats": "Aucune discussion. Ajoutez des amis pour commencer.",
   "community.sayHi": "Dites bonjour à {name} 👋",
   "community.writeMessage": "Écrire un message…",
+  "community.notifications": "Notifications",
+  "community.notifyTitle": "Être prévenu",
+  "community.notifyBody": "Sachez quand vos amis vous écrivent, vous envoient une demande, ou aiment et commentent vos publications.",
+  "community.notifyTurnOn": "Activer les notifications",
+  "community.notifyLater": "Plus tard",
+  "community.notifyOn": "Les notifications sont activées sur cet appareil.",
+  "community.notifyNative": "L'app iPhone ne gère pas encore les notifications de messages et d'amis. Un point rouge apparaîtra sur l'onglet Communauté à la place.",
 };
 
 export default fr;

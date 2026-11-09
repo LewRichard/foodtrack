@@ -402,6 +402,13 @@ const pt: Messages = {
   "community.noChats": "Nenhuma conversa ainda. Adicione amigos para começar.",
   "community.sayHi": "Diga oi para {name} 👋",
   "community.writeMessage": "Escreva uma mensagem…",
+  "community.notifications": "Notificações",
+  "community.notifyTitle": "Receba avisos",
+  "community.notifyBody": "Saiba quando amigos mandarem mensagem, enviarem um pedido de amizade ou curtirem e comentarem suas publicações.",
+  "community.notifyTurnOn": "Ativar notificações",
+  "community.notifyLater": "Depois",
+  "community.notifyOn": "As notificações estão ativadas neste aparelho.",
+  "community.notifyNative": "O app de iPhone ainda não envia avisos de mensagens e amigos. Em vez disso, você verá um ponto vermelho na aba Comunidade.",
 };
 
 export default pt;

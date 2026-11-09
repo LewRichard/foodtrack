@@ -64,19 +64,23 @@ async function saveSettings(times: ReminderTimes, enabled: boolean) {
   const { data } = await db.auth.getSession();
   const userId = data.session?.user.id;
   if (!userId) throw new Error(t("rem.signInFirst"));
-  const { error } = await db.from("reminder_settings").upsert(
-    {
-      user_id: userId,
-      enabled,
-      timezone: timeZone(),
-      language: currentLanguage(),
-      breakfast: times.breakfast,
-      lunch: times.lunch,
-      dinner: times.dinner,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
+  const row = {
+    user_id: userId,
+    enabled,
+    timezone: timeZone(),
+    language: currentLanguage(),
+    breakfast: times.breakfast,
+    lunch: times.lunch,
+    dinner: times.dinner,
+    updated_at: new Date().toISOString(),
+  };
+  let { error } = await db.from("reminder_settings").upsert(row, { onConflict: "user_id" });
+  // Databases set up before languages existed have no language column: save without it
+  // (reminders then arrive in English) rather than failing.
+  if (error && /language/.test(error.message)) {
+    const { language: _language, ...withoutLanguage } = row;
+    ({ error } = await db.from("reminder_settings").upsert(withoutLanguage, { onConflict: "user_id" }));
+  }
   if (error) throw new Error(friendly(error.message));
 }
 

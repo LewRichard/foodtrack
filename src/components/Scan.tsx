@@ -3,6 +3,7 @@ import { sumNutrients, type AnalysisResult } from "../../shared/nutrition.ts";
 import { analyzeImage, isAccessError, unlock } from "../lib/api.ts";
 import { todayKey } from "../lib/dates.ts";
 import { prepareFromFile, prepareFromSource, type PreparedImage } from "../lib/image.ts";
+import { isNative, pickNativePhoto } from "../lib/native.ts";
 import { actions, getState, newId } from "../lib/store.ts";
 import { MEAL_LABELS, MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
 import Consent from "./Consent.tsx";
@@ -222,12 +223,14 @@ function Capture({
   const videoRef = useRef<HTMLVideoElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const galleryInput = useRef<HTMLInputElement>(null);
-  const [camera, setCamera] = useState<"starting" | "live" | "unavailable">("starting");
+  // In the iPhone app the native camera screen is used instead of a live preview.
+  const [camera, setCamera] = useState<"starting" | "live" | "unavailable">(isNative ? "unavailable" : "starting");
+  const [pickError, setPickError] = useState("");
 
   useEffect(() => {
     let stream: MediaStream | null = null;
     let cancelled = false;
-    if (!navigator.mediaDevices?.getUserMedia) {
+    if (isNative || !navigator.mediaDevices?.getUserMedia) {
       setCamera("unavailable");
       return;
     }
@@ -258,6 +261,24 @@ function Capture({
     onImage(prepareFromSource(v, v.videoWidth, v.videoHeight));
   }
 
+  async function pick(source: "camera" | "library") {
+    if (!isNative) {
+      (source === "camera" ? cameraInput : galleryInput).current?.click();
+      return;
+    }
+    setPickError("");
+    try {
+      const image = await pickNativePhoto(source);
+      if (image) onImage(image);
+    } catch (e) {
+      setPickError(
+        source === "camera"
+          ? "Couldn't open the camera. Check that FoodTrack has camera access in Settings."
+          : `Couldn't open your photos: ${e instanceof Error ? e.message : e}`,
+      );
+    }
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -271,8 +292,17 @@ function Capture({
           <video ref={videoRef} playsInline muted autoPlay />
         ) : (
           <div className="viewfinder-empty">
-            <p>Live camera isn't available here.</p>
-            <p className="muted small">Use the buttons below to take or choose a photo.</p>
+            {isNative ? (
+              <>
+                <p>Snap your meal</p>
+                <p className="muted small">Tap Take photo to open the camera, or choose one from your library.</p>
+              </>
+            ) : (
+              <>
+                <p>Live camera isn't available here.</p>
+                <p className="muted small">Use the buttons below to take or choose a photo.</p>
+              </>
+            )}
           </div>
         )}
         {camera === "live" && <div className="frame" aria-hidden="true" />}
@@ -290,18 +320,19 @@ function Capture({
       />
 
       <div className="capture-actions">
-        <button className="btn" onClick={() => galleryInput.current?.click()}>
+        <button className="btn" onClick={() => pick("library")}>
           Gallery
         </button>
         {camera === "live" ? (
           <button className="shutter" onClick={snap} aria-label="Take photo" />
         ) : (
-          <button className="btn primary" onClick={() => cameraInput.current?.click()}>
+          <button className="btn primary" onClick={() => pick("camera")}>
             Take photo
           </button>
         )}
         <span className="spacer" />
       </div>
+      {pickError && <p className="error small center">{pickError}</p>}
       <p className="muted small center">Fit the whole plate in the frame. Good light gives better estimates.</p>
 
       <input ref={cameraInput} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />

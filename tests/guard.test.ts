@@ -17,11 +17,24 @@ describe("access code", () => {
 
 describe("config", () => {
   it("uses defaults and parses numbers", () => {
-    expect(configFromEnv({})).toEqual({ accessCode: "", perIpPerHour: 30, dailyLimit: 300 });
-    expect(configFromEnv({ APP_ACCESS_CODE: " x ", SCANS_PER_IP_PER_HOUR: "5", DAILY_SCAN_LIMIT: "0" })).toEqual({
+    expect(configFromEnv({})).toEqual({
+      accessCode: "",
+      perIpPerHour: 30,
+      dailyLimit: 300,
+      allowedOrigins: ["capacitor://localhost"],
+    });
+    expect(
+      configFromEnv({
+        APP_ACCESS_CODE: " x ",
+        SCANS_PER_IP_PER_HOUR: "5",
+        DAILY_SCAN_LIMIT: "0",
+        ALLOWED_ORIGINS: "capacitor://localhost, https://example.com",
+      }),
+    ).toEqual({
       accessCode: "x",
       perIpPerHour: 5,
       dailyLimit: 0,
+      allowedOrigins: ["capacitor://localhost", "https://example.com"],
     });
     expect(configFromEnv({ SCANS_PER_IP_PER_HOUR: "lots" }).perIpPerHour).toBe(30);
   });

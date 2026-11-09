@@ -1,3 +1,4 @@
+import { isNative } from "../lib/native.ts";
 import Sheet from "./Sheet.tsx";
 
 /** Shown before the first photo is sent to the AI service. App stores require this disclosure. */
@@ -12,7 +13,7 @@ export default function Consent({ onAccept, onClose }: { onAccept: () => void; o
         <li>Estimates are approximate and aren't medical advice.</li>
       </ul>
       <p className="muted small">
-        Read the full <a href="/privacy.html" target="_blank" rel="noreferrer">privacy policy</a>. You can still log food manually without scanning.
+        Read the full <a href="/privacy.html" target={isNative ? undefined : "_blank"} rel="noreferrer">privacy policy</a>. You can still log food manually without scanning.
       </p>
       <div className="row gap">
         <button className="btn" onClick={onClose}>

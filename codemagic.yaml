@@ -1,0 +1,54 @@
+# Cloud build for the iPhone app: builds on a Mac at Codemagic and uploads to App Store Connect (TestFlight).
+# Setup steps are in docs/APP_STORE.md. Fill in the three values marked FILL IN before your first build.
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      # The name you gave your App Store Connect API key in Codemagic (Team settings → Integrations).
+      app_store_connect: FoodTrack ASC key # FILL IN if you used a different name
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.lewrichard.foodtrack
+      vars:
+        # The https:// address of your online FoodTrack server (e.g. from Render), no trailing slash.
+        VITE_API_URL: https://YOUR-SERVER.onrender.com # FILL IN
+        # The app's Apple ID: App Store Connect → your app → App Information → Apple ID (a number).
+        APP_STORE_APPLE_ID: 0000000000 # FILL IN
+      node: 22
+      xcode: latest
+    scripts:
+      - name: Check settings
+        script: |
+          case "$VITE_API_URL" in
+            https://*) ;;
+            *) echo "Set VITE_API_URL in codemagic.yaml to your server's https:// address"; exit 1 ;;
+          esac
+          case "$VITE_API_URL" in
+            *YOUR-SERVER*) echo "VITE_API_URL is still the placeholder; set it to your server's address"; exit 1 ;;
+          esac
+      - name: Install dependencies
+        script: npm ci
+      - name: Build web app and copy it into the iOS project
+        script: |
+          npm run build
+          npx cap sync ios
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Increment build number
+        script: |
+          cd ios/App
+          LATEST=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || true)
+          agvtool new-version -all $(( ${LATEST:-0} + 1 ))
+      - name: Build .ipa
+        # This project uses Swift Package Manager, so there's an .xcodeproj and no .xcworkspace.
+        script: xcode-project build-ipa --project ios/App/App.xcodeproj --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true

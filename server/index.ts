@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { AnalysisError, analyzeFoodImage, MODEL, type ImageMediaType } from "./analyze.ts";
-import { codeMatches, configFromEnv, limitScans, requireAccessCode, ScanLimiter } from "./guard.ts";
+import { codeMatches, configFromEnv, cors, limitScans, requireAccessCode, ScanLimiter } from "./guard.ts";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // Claude's per-image limit
@@ -17,6 +17,7 @@ app.disable("x-powered-by");
 // Hosting platforms (Render, Railway, Fly.io) put one proxy in front of the app;
 // trusting it makes req.ip the visitor's address, which the rate limit relies on.
 app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1));
+app.use("/api", cors(guard));
 app.use(express.json({ limit: "8mb" }));
 
 app.get("/api/health", (_req, res) => {

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import { isNative } from "./lib/native.ts";
 import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -9,6 +10,6 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>,
 );
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+if ("serviceWorker" in navigator && import.meta.env.PROD && !isNative) {
   window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js"));
 }

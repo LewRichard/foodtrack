@@ -11,7 +11,12 @@ export interface GuardConfig {
   accessCode: string;
   perIpPerHour: number;
   dailyLimit: number;
+  allowedOrigins: string[];
 }
+
+// The iPhone app (Capacitor) loads its pages from capacitor://localhost, a different origin
+// from the server, so the browser engine needs CORS permission to call the API.
+const DEFAULT_ORIGINS = ["capacitor://localhost"];
 
 export function configFromEnv(env: NodeJS.ProcessEnv = process.env): GuardConfig {
   const int = (value: string | undefined, fallback: number) => {
@@ -22,6 +27,10 @@ export function configFromEnv(env: NodeJS.ProcessEnv = process.env): GuardConfig
     accessCode: (env.APP_ACCESS_CODE ?? "").trim(),
     perIpPerHour: int(env.SCANS_PER_IP_PER_HOUR, 30),
     dailyLimit: int(env.DAILY_SCAN_LIMIT, 300),
+    allowedOrigins: (env.ALLOWED_ORIGINS ?? DEFAULT_ORIGINS.join(","))
+      .split(",")
+      .map((o) => o.trim())
+      .filter(Boolean),
   };
 }
 
@@ -90,5 +99,26 @@ export function limitScans(limiter: ScanLimiter): RequestHandler {
     } else {
       next();
     }
+  };
+}
+
+/** Lets the listed origins (the iPhone app) call the API. Same-origin web requests need nothing. */
+export function cors(config: GuardConfig): RequestHandler {
+  return (req, res, next) => {
+    const origin = req.get("origin");
+    if (origin && config.allowedOrigins.includes(origin)) {
+      res.set({
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, X-Access-Code",
+        "Access-Control-Max-Age": "86400",
+        Vary: "Origin",
+      });
+    }
+    if (req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
+    next();
   };
 }

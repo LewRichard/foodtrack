@@ -3,6 +3,10 @@ import type { PreparedImage } from "./image.ts";
 
 const CODE_KEY = "foodtrack:accessCode";
 
+// Where the API lives. Empty in the browser build (same server as the page). The iPhone app runs from
+// files bundled inside it, so it must be built with VITE_API_URL set to your online server.
+export const API_BASE = (import.meta.env.VITE_API_URL ?? "").trim().replace(/\/+$/, "");
+
 /** An error from the API, with the server's machine-readable code when it sent one. */
 export class ApiError extends Error {
   constructor(
@@ -32,7 +36,7 @@ export function setAccessCode(code: string) {
 }
 
 async function request<T>(path: string, init: RequestInit, code = getAccessCode()): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...(code ? { "x-access-code": code } : {}) },
   });

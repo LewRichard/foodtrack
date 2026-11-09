@@ -77,9 +77,16 @@ Build command `npm ci && npm run build`, start command `npm start`, and set the 
 | `DAILY_SCAN_LIMIT` | 300 | Scans the whole server allows per day, UTC (`0` = unlimited). |
 | `PORT` | 8787 | Port to listen on (hosts usually set this for you). |
 | `TRUST_PROXY` | 1 | Proxies in front of the server, so the rate limit sees real visitor IPs. |
+| `ALLOWED_ORIGINS` | `capacitor://localhost` | Other origins allowed to call the API (the iPhone app). |
 
 Also set a monthly spend limit in the [Anthropic Console](https://console.anthropic.com) as a final safety net.
 The scan limits are kept in memory, so they reset when the server restarts. Run a single instance.
+
+## iPhone app (App Store)
+
+The `ios/` folder holds a native iPhone app (Capacitor) that wraps this web app and uses the phone's
+camera. It's built in the cloud with Codemagic, so no Mac is needed. Step-by-step guide:
+**[docs/APP_STORE.md](docs/APP_STORE.md)**.
 
 ### Before publishing publicly
 

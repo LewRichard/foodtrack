@@ -595,6 +595,18 @@ const pt: Messages = {
   "coach.placeholder": "Pergunte qualquer coisa para Lew…",
   "coach.stop": "Parar",
   "coach.disclaimer": "Lew é uma IA e pode errar. Não é orientação médica. Seu diário recente é enviado à IA para personalizar as respostas.",
+  "appleHealth.title": "Apple Saúde",
+  "appleHealth.subtitle": "Passos, calorias de exercício e pesagens do seu iPhone e Apple Watch",
+  "appleHealth.connect": "Conectar o Apple Saúde",
+  "appleHealth.syncNow": "Sincronizar agora",
+  "appleHealth.disconnect": "Desconectar",
+  "appleHealth.disconnected": "O FoodTrack parou de ler o Apple Saúde. Para remover também o acesso: Ajustes → Saúde → Acesso a Dados e Dispositivos → FoodTrack.",
+  "appleHealth.lastSync": "Atualizado {time}",
+  "appleHealth.onlyApp": "Disponível no app FoodTrack para iPhone. Navegadores não conseguem ler o Apple Saúde nem o Google Fit.",
+  "appleHealth.unavailable": "O Apple Saúde não está disponível neste aparelho.",
+  "appleHealth.how": "O FoodTrack só lê passos, calorias ativas e peso, e nunca grava no Apple Saúde. Dá para mudar o acesso a qualquer momento em Ajustes → Saúde → Acesso a Dados e Dispositivos.",
+  "today.steps": "Passos",
+  "burned.fromHealth": "Preenchido pelo Apple Saúde. Se você digitar um número maior, o seu é mantido.",
 };
 
 export default pt;

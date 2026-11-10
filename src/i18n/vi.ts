@@ -594,6 +594,18 @@ const vi: Messages = {
   "coach.placeholder": "Hỏi Lew bất cứ điều gì…",
   "coach.stop": "Dừng",
   "coach.disclaimer": "Lew là AI và có thể sai. Không thay thế lời khuyên y tế. Nhật ký gần đây của bạn được gửi tới AI để trả lời sát với bạn.",
+  "appleHealth.title": "Apple Health",
+  "appleHealth.subtitle": "Số bước, calo tập luyện và cân nặng từ iPhone và Apple Watch",
+  "appleHealth.connect": "Kết nối Apple Health",
+  "appleHealth.syncNow": "Đồng bộ ngay",
+  "appleHealth.disconnect": "Ngắt kết nối",
+  "appleHealth.disconnected": "FoodTrack đã ngừng đọc Apple Health. Để gỡ hẳn quyền truy cập: Cài đặt → Sức khỏe → Truy cập dữ liệu & thiết bị → FoodTrack.",
+  "appleHealth.lastSync": "Cập nhật {time}",
+  "appleHealth.onlyApp": "Có trong app FoodTrack trên iPhone. Trình duyệt không đọc được Apple Health hay Google Fit.",
+  "appleHealth.unavailable": "Thiết bị này không có Apple Health.",
+  "appleHealth.how": "FoodTrack chỉ đọc số bước, calo vận động và cân nặng, không ghi gì vào Apple Health. Bạn có thể đổi quyền bất cứ lúc nào trong Cài đặt → Sức khỏe → Truy cập dữ liệu & thiết bị.",
+  "today.steps": "Số bước",
+  "burned.fromHealth": "Lấy tự động từ Apple Health. Nếu bạn nhập số lớn hơn thì số của bạn được giữ.",
 };
 
 export default vi;

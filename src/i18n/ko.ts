@@ -589,6 +589,18 @@ const ko: Messages = {
   "coach.placeholder": "Lew에게 무엇이든 물어보세요…",
   "coach.stop": "중지",
   "coach.disclaimer": "Lew는 AI라서 틀릴 수 있어요. 의료 조언이 아니에요. 맞춤 답변을 위해 최근 식단 기록이 AI로 전송돼요.",
+  "appleHealth.title": "Apple 건강",
+  "appleHealth.subtitle": "iPhone과 Apple Watch의 걸음 수, 운동 칼로리, 체중",
+  "appleHealth.connect": "Apple 건강 연결",
+  "appleHealth.syncNow": "지금 동기화",
+  "appleHealth.disconnect": "연결 해제",
+  "appleHealth.disconnected": "FoodTrack이 Apple 건강 읽기를 중단했습니다. 접근 권한도 없애려면: 설정 → 건강 → 데이터 접근 및 기기 → FoodTrack.",
+  "appleHealth.lastSync": "업데이트: {time}",
+  "appleHealth.onlyApp": "FoodTrack iPhone 앱에서 사용할 수 있습니다. 브라우저에서는 Apple 건강이나 Google Fit을 읽을 수 없습니다.",
+  "appleHealth.unavailable": "이 기기에서는 Apple 건강을 사용할 수 없습니다.",
+  "appleHealth.how": "FoodTrack은 걸음 수, 활동 칼로리, 체중만 읽고 Apple 건강에 아무것도 쓰지 않습니다. 설정 → 건강 → 데이터 접근 및 기기에서 언제든 권한을 바꿀 수 있습니다.",
+  "today.steps": "걸음 수",
+  "burned.fromHealth": "Apple 건강에서 자동으로 채웠습니다. 더 큰 숫자를 입력하면 그 값이 유지됩니다.",
 };
 
 export default ko;

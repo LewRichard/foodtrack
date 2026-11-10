@@ -589,6 +589,18 @@ const ja: Messages = {
   "coach.placeholder": "Lewに何でも質問…",
   "coach.stop": "停止",
   "coach.disclaimer": "LewはAIのため間違うことがあります。医療アドバイスではありません。回答をあなた向けにするため、最近の記録がAIに送信されます。",
+  "appleHealth.title": "Apple ヘルスケア",
+  "appleHealth.subtitle": "iPhone と Apple Watch の歩数・運動カロリー・体重",
+  "appleHealth.connect": "ヘルスケアと連携",
+  "appleHealth.syncNow": "今すぐ同期",
+  "appleHealth.disconnect": "連携を解除",
+  "appleHealth.disconnected": "FoodTrack はヘルスケアの読み取りを停止しました。アクセス権も削除するには：設定 → ヘルスケア → データアクセスとデバイス → FoodTrack。",
+  "appleHealth.lastSync": "更新：{time}",
+  "appleHealth.onlyApp": "FoodTrack の iPhone アプリで利用できます。ブラウザからはヘルスケアや Google Fit を読み取れません。",
+  "appleHealth.unavailable": "このデバイスではヘルスケアを利用できません。",
+  "appleHealth.how": "FoodTrack は歩数・アクティブカロリー・体重を読み取るだけで、ヘルスケアには書き込みません。アクセス権は 設定 → ヘルスケア → データアクセスとデバイス でいつでも変更できます。",
+  "today.steps": "歩数",
+  "burned.fromHealth": "ヘルスケアから自動入力されました。より大きい数を入力すると、その値が保たれます。",
 };
 
 export default ja;

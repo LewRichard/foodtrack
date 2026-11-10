@@ -10,6 +10,7 @@ import Account from "./Account.tsx";
 import { AchievementsCard } from "./Achievements.tsx";
 import AvatarCropper from "./AvatarCropper.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
+import HealthSync from "./HealthSync.tsx";
 import Reminders from "./Reminders.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
@@ -120,6 +121,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
       <AchievementsCard />
 
       {cloudEnabled && <Account />}
+
+      <HealthSync />
 
       <Reminders />
 

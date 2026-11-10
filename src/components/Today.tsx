@@ -50,6 +50,7 @@ export default function Today({
   const dayScore = averageHealthScore(entries);
   const burned = state.burned[date] ?? 0;
   const water = state.water[date] ?? 0;
+  const steps = state.health.connected ? state.steps[date] : undefined;
   const [adding, setAdding] = useState<MealType | null>(null);
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [editingBurned, setEditingBurned] = useState(false);
@@ -107,6 +108,7 @@ export default function Today({
           <Stat icon="🎯" label={t("today.goal")} value={goals.calories} />
           <Stat icon="🍽️" label={t("today.eaten")} value={Math.round(total.calories)} />
           <Stat icon="🔥" label={t("today.burned")} value={burned} onClick={() => setEditingBurned(true)} />
+          {steps !== undefined && <Stat icon="👟" label={t("today.steps")} value={steps} />}
         </div>
       </section>
 
@@ -267,11 +269,13 @@ function Stat({ icon, label, value, onClick }: { icon: string; label: string; va
 function BurnedSheet({ date, value, onClose }: { date: string; value: number; onClose: () => void }) {
   const i18n = useI18n();
   const { t } = i18n;
+  const { health } = useAppState();
   const [kcal, setKcal] = useState(value ? String(value) : "");
   const add = (n: number) => setKcal(String((Number(kcal) || 0) + n));
   return (
     <Sheet title={t("burned.title")} onClose={onClose}>
       <p className="muted small">{t("burned.help", { date: formatLongDate(date, i18n) })}</p>
+      {health.connected && <p className="muted small">❤️ {t("burned.fromHealth")}</p>}
       <input
         type="number"
         inputMode="numeric"

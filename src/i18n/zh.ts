@@ -590,6 +590,18 @@ const zh: Messages = {
   "coach.placeholder": "向 Lew 提问…",
   "coach.stop": "停止",
   "coach.disclaimer": "Lew 是 AI，可能会出错，不能替代医疗建议。为了给出个性化回答，你最近的饮食日记会发送给 AI。",
+  "appleHealth.title": "Apple 健康",
+  "appleHealth.subtitle": "来自 iPhone 和 Apple Watch 的步数、运动卡路里和体重",
+  "appleHealth.connect": "连接 Apple 健康",
+  "appleHealth.syncNow": "立即同步",
+  "appleHealth.disconnect": "断开连接",
+  "appleHealth.disconnected": "FoodTrack 已停止读取 Apple 健康。如需同时移除访问权限：设置 → 健康 → 数据访问与设备 → FoodTrack。",
+  "appleHealth.lastSync": "更新于 {time}",
+  "appleHealth.onlyApp": "仅在 FoodTrack iPhone App 中可用。浏览器无法读取 Apple 健康或 Google Fit。",
+  "appleHealth.unavailable": "此设备不支持 Apple 健康。",
+  "appleHealth.how": "FoodTrack 只读取步数、活动卡路里和体重，绝不写入 Apple 健康。你可以随时在 设置 → 健康 → 数据访问与设备 中更改权限。",
+  "today.steps": "步数",
+  "burned.fromHealth": "已从 Apple 健康自动填入。如果你输入更大的数字，将保留你的数字。",
 };
 
 export default zh;

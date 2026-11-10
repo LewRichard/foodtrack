@@ -38,6 +38,15 @@ export interface AppState {
   onboardingSkipped: boolean; // chose "skip" on the welcome questions (this device)
   seenBadges: string[] | null; // badges already celebrated on this device (null = not set up yet)
   coachChat: CoachMessage[]; // conversation with Lew, the AI nutritionist (this device)
+  health: { connected: boolean; lastSync: number | null }; // Apple Health link (iPhone app, this device)
+  steps: Record<string, number>; // date -> steps, read from Apple Health (this device only)
+}
+
+/** One day of data read from Apple Health. */
+export interface HealthDay {
+  steps?: number;
+  activeKcal?: number;
+  weightKg?: number;
 }
 
 export interface CoachMessage {
@@ -77,6 +86,8 @@ export const INITIAL_STATE: AppState = {
   onboardingSkipped: false,
   seenBadges: null,
   coachChat: [],
+  health: { connected: false, lastSync: null },
+  steps: {},
 };
 
 function load(): AppState {
@@ -161,6 +172,40 @@ export function withEntries(s: AppState, added: LogEntry[]): AppState {
   return { ...s, entries: [...s.entries, ...added], recents: recents.slice(0, MAX_RECENTS) };
 }
 
+const STEP_DAYS_KEPT = 60;
+
+/**
+ * Merges days read from Apple Health. Steps are copied as they are. Exercise calories only ever go
+ * up (Health's number replaces a smaller one typed in by hand), and a weigh-in from Health fills a
+ * day that has none, never overwriting one entered in FoodTrack.
+ */
+export function withHealth(s: AppState, days: Record<string, HealthDay>, now: number): AppState {
+  let next: AppState = { ...s, steps: { ...s.steps }, burned: { ...s.burned }, weights: { ...s.weights } };
+  let newWeight = false;
+  for (const [date, day] of Object.entries(days)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    if (day.steps !== undefined && Number.isFinite(day.steps) && day.steps >= 0) next.steps[date] = Math.round(day.steps);
+    const kcal = Math.round(day.activeKcal ?? 0);
+    if (Number.isFinite(kcal) && kcal > (next.burned[date] ?? 0)) {
+      next.burned[date] = kcal;
+      next = markDayChanged(next, date, now);
+    }
+    const kg = day.weightKg;
+    if (kg !== undefined && kg >= 20 && kg <= 400 && next.weights[date] === undefined) {
+      next.weights[date] = Math.round(kg * 10) / 10;
+      next = markDayChanged(next, date, now);
+      newWeight = true;
+    }
+  }
+  const keptSteps = Object.keys(next.steps).sort().slice(-STEP_DAYS_KEPT);
+  next.steps = Object.fromEntries(keptSteps.map((d) => [d, next.steps[d]]));
+  const latest = latestWeight(next.weights);
+  if (newWeight && latest && next.profile && next.profile.weightKg !== latest.kg) {
+    next = markSettingsChanged({ ...next, profile: { ...next.profile, weightKg: latest.kg } }, now);
+  }
+  return { ...next, health: { ...next.health, lastSync: now } };
+}
+
 export function entriesForDate(s: AppState, date: string): LogEntry[] {
   return s.entries.filter((e) => e.date === date).sort((a, b) => a.loggedAt - b.loggedAt);
 }
@@ -202,6 +247,12 @@ export const actions = {
   },
   setCommunityPush(communityPush: boolean) {
     setState({ ...state, communityPush });
+  },
+  setHealthConnected(connected: boolean) {
+    setState({ ...state, health: { connected, lastSync: connected ? state.health.lastSync : null }, steps: connected ? state.steps : {} });
+  },
+  importHealth(days: Record<string, HealthDay>) {
+    setState(withHealth(state, days, Date.now()));
   },
   setCoachChat(coachChat: CoachMessage[]) {
     setState({ ...state, coachChat: coachChat.slice(-80) });
@@ -303,8 +354,9 @@ export function latestWeight(weights: Record<string, number>): { date: string; k
 }
 
 /** Choices that belong to this device, not the diary: kept when someone signs in or out. */
-export function devicePrefs(): Pick<AppState, "aiConsent" | "language" | "theme"> {
-  return { aiConsent: state.aiConsent, language: state.language, theme: state.theme };
+export function devicePrefs(): Pick<AppState, "aiConsent" | "language" | "theme" | "health"> {
+  // Apple Health stays linked; it's re-read into whichever account signs in next.
+  return { aiConsent: state.aiConsent, language: state.language, theme: state.theme, health: { connected: state.health.connected, lastSync: null } };
 }
 
 /** Runs `listener` whenever the state changes (used to trigger uploads). */

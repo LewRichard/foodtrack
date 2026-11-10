@@ -606,6 +606,18 @@ const en = {
   "coach.placeholder": "Ask Lew anything…",
   "coach.stop": "Stop",
   "coach.disclaimer": "Lew is an AI and can make mistakes. Not medical advice. Your recent diary is sent to the AI to personalise answers.",
+  "appleHealth.title": "Apple Health",
+  "appleHealth.subtitle": "Steps, exercise calories and weigh-ins from your iPhone and Apple Watch",
+  "appleHealth.connect": "Connect Apple Health",
+  "appleHealth.syncNow": "Sync now",
+  "appleHealth.disconnect": "Disconnect",
+  "appleHealth.disconnected": "FoodTrack stopped reading Apple Health. To remove its access too: Settings → Health → Data Access & Devices → FoodTrack.",
+  "appleHealth.lastSync": "Updated {time}",
+  "appleHealth.onlyApp": "Available in the FoodTrack iPhone app. Browsers can't read Apple Health or Google Fit.",
+  "appleHealth.unavailable": "Apple Health isn't available on this device.",
+  "appleHealth.how": "FoodTrack only reads steps, active calories and weight, and never writes to Apple Health. You can change access any time in Settings → Health → Data Access & Devices.",
+  "today.steps": "Steps",
+  "burned.fromHealth": "Filled in from Apple Health. If you type a bigger number, yours is kept.",
 };
 
 export default en;

@@ -13,70 +13,110 @@
       h2 { font-size: 18px; margin-top: 28px; }
       .muted { color: var(--muted); }
       a { color: var(--accent); }
+      ul { padding-left: 20px; }
+      li + li { margin-top: 6px; }
     </style>
   </head>
   <body>
     <main>
       <p><a href="/">← Back to FoodTrack</a></p>
       <h1>Privacy Policy</h1>
-      <!-- Before publishing: replace the bracketed placeholders and the date. -->
-      <p class="muted">Last updated: [DATE] · Operated by [YOUR NAME OR COMPANY]</p>
+      <p class="muted">Last updated: 10 November 2026 · Operated by Lew Zi Qian</p>
 
       <h2>Summary</h2>
       <p>
-        FoodTrack keeps your food diary on your device. If you choose to create an account, your diary is also stored
-        online so you can use it on several devices. When you scan a meal, the photo is sent to our server and on to an
-        AI service to estimate its nutrition. We don't sell your data or show ads, and an account is optional.
+        FoodTrack is a food diary. You sign in with an email address or a Google account, and your diary is stored in
+        your account so it works on all your devices. When you use an AI feature (meal photos, describing a meal, the
+        weekly check-in, the meal planner or chatting with Lew), the data that feature needs is sent to our server and
+        on to Anthropic's Claude AI. If you join Community, what you post is shown to the people you choose. We don't
+        sell your data, show ads or use it for advertising.
       </p>
 
-      <h2>Data stored on your device</h2>
+      <h2>Your account</h2>
       <p>
-        Your diary entries, small meal thumbnails, goals, profile (age, sex, height, weight, activity level), water log
-        and access code are stored in your browser's or app's local storage. They stay on your device unless you
-        export a backup or create an account (below). Deleting the app, clearing site data, or using "Reset all" in the Goals tab removes them.
+        To use FoodTrack you sign in with your email address and a password (stored only as a secure hash), or with
+        Google. With Google, we receive your email address and the basic profile details Google shares (such as your
+        name); we never see your Google password. Accounts are run by our database provider,
+        <a href="https://supabase.com/privacy" target="_blank" rel="noreferrer">Supabase</a>.
       </p>
 
-      <h2>If you create an account</h2>
+      <h2>Your diary</h2>
       <p>
-        Your email address, a securely hashed password, and your diary (logged foods with their nutrition values and
-        small meal thumbnails, water, exercise calories, name, goals and body details) are stored with our database
-        provider, <a href="https://supabase.com/privacy" target="_blank" rel="noreferrer">Supabase</a>, so they can be
-        synced to your devices. Only you can access them when signed in. You can delete your account and all of this
-        data at any time in the Profile tab ("Delete account"); deletion is immediate and permanent.
+        Your diary is stored in your account and on your device so the app also works offline. It includes the foods you
+        log with their nutrition values, health scores and small meal thumbnails, water, exercise calories, weigh-ins,
+        your name, goals, goal weight, language, and the body details you give when you start (sex, age, height, weight,
+        activity level and goal). Only you can access it when signed in.
+      </p>
+      <p>
+        Some things stay only on your device and are never uploaded: your conversations with Lew, your AI weekly
+        check-ins and meal plans, your theme, and (in the iPhone app) step counts from Apple Health.
       </p>
 
-      <h2>Meal reminders</h2>
+      <h2>AI features</h2>
       <p>
-        If you turn on reminders, we store your chosen reminder times, your time zone, and a push address for each
-        device you allow, so our server can send notifications. Turning reminders off, signing out, or deleting your
-        account removes the device's push address.
+        These features send data to our server, which forwards it to Anthropic's Claude API and returns the result. Our
+        server does not store what you send or what comes back. Anthropic processes requests under its
+        <a href="https://www.anthropic.com/legal/commercial-terms" target="_blank" rel="noreferrer">commercial terms</a>
+        and <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noreferrer">privacy policy</a>.
+      </p>
+      <ul>
+        <li><strong>Meal photos:</strong> the photo (resized) and any note you type. You're asked for consent before the first photo is sent, and you can withdraw it in Profile → Photo scanning.</li>
+        <li><strong>Describing a meal:</strong> the text you type or dictate. If you use the microphone button, your browser's own speech recognition turns your voice into text (in some browsers this is done by the browser maker's service, such as Google or Apple); FoodTrack never receives audio.</li>
+        <li><strong>Weekly check-in:</strong> a summary of your last 7 days (daily totals, the names and scores of logged meals, water, exercise calories, weigh-ins) and your goals.</li>
+        <li><strong>Chat with Lew:</strong> your messages, your name, your body details and goals, and the same 7-day summary, so the answers fit you.</li>
+        <li><strong>Meal planner:</strong> your goals, body details, the preferences you type, and the names of foods you log most often.</li>
+      </ul>
+      <p>AI answers are estimates and general wellness information, not medical advice.</p>
+
+      <h2>Barcode scanning</h2>
+      <p>
+        When you scan a barcode, only the barcode number is sent to our server, which looks it up in the public
+        <a href="https://world.openfoodfacts.org/privacy" target="_blank" rel="noreferrer">Open Food Facts</a> database.
+        The camera image stays on your device.
+      </p>
+
+      <h2>Community</h2>
+      <p>
+        Community is optional. If you join, we store your username, display name, profile photo, and what you create:
+        posts (with an optional photo), comments, likes, messages, friend requests, blocks and reports.
+      </p>
+      <ul>
+        <li>Your username, display name and profile photo can be seen by other FoodTrack users.</li>
+        <li>Each post is shown either to your friends or to everyone signed in, as you choose when you write it. Its comments and likes are shown to the same people.</li>
+        <li>Messages can be read only by you and the person you send them to.</li>
+        <li>Blocked people can't see your posts or message you. Reports are seen only by us, to review content that may break the community rules.</li>
+      </ul>
+      <p>You can delete your posts and comments at any time.</p>
+
+      <h2>Notifications</h2>
+      <p>
+        If you turn on meal reminders or Community notifications, we store your reminder times, your time zone and a
+        push address for each device you allow, so our server can send notifications through your browser's or phone's
+        push service. Turning notifications off, signing out or deleting your account removes the device's push address.
       </p>
 
       <h2>Apple Health</h2>
       <p>
-        In the iPhone app you can choose to connect Apple Health. FoodTrack then reads your step count, active
-        (exercise) calories and body weight. Steps stay on your device. Exercise calories and weigh-ins are added to
-        your diary, which is backed up to your account like any other diary data if you are signed in. FoodTrack never
-        writes to Apple Health, never uses Health data for advertising or marketing, and never sells it or shares it
-        with third parties. You can stop it any time in the Profile tab, and remove access in Settings → Health →
-        Data Access &amp; Devices.
-      </p>
-
-      <h2>Meal photos</h2>
-      <p>
-        When you choose to scan, the app sends the photo (resized) and any note you type to our server. The server
-        forwards them to Anthropic's Claude API, which returns the estimated foods and nutrients. Our server does not
-        store photos or results after replying. Anthropic processes the request under its
-        <a href="https://www.anthropic.com/legal/commercial-terms" target="_blank" rel="noreferrer">commercial terms</a>
-        and <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noreferrer">privacy policy</a>.
-        You're asked for consent before the first photo is sent, and you can withdraw it in the Goals tab.
+        Where the iPhone app offers it, you can choose to connect Apple Health. FoodTrack then reads your step count,
+        active (exercise) calories and body weight. Steps stay on your device. Exercise calories and weigh-ins are added
+        to your diary like any other diary data. FoodTrack never writes to Apple Health, never uses Health data for
+        advertising or marketing, and never sells it or shares it with third parties. You can stop it any time in
+        Profile, and remove access in Settings → Health → Data Access &amp; Devices.
       </p>
 
       <h2>Technical data</h2>
       <p>
         Like any website, our server and hosting provider receive your IP address with each request. We use it in memory
-        only to limit how many scans one visitor can make per hour, and do not keep it. Our hosting provider may keep
-        standard access logs.
+        only to limit how many AI requests one visitor can make per hour, and do not keep it. Our hosting provider may
+        keep standard access logs.
+      </p>
+
+      <h2>Your choices and deleting your data</h2>
+      <p>
+        You can export a copy of your diary at any time in Profile → Your data. You can delete your account in Profile →
+        Account ("Delete account"): this immediately and permanently deletes your diary, Community profile, posts,
+        comments, likes, messages, photos and notification settings. Data kept only on your device is removed when you
+        sign out, delete the app or clear the site's data.
       </p>
 
       <h2>Children</h2>
@@ -84,14 +124,14 @@
 
       <h2>Health disclaimer</h2>
       <p>
-        Nutrition estimates are approximate and are not medical advice. Talk to a healthcare professional before making
-        major changes to your diet.
+        Nutrition estimates and AI answers are approximate and are not medical advice. Talk to a healthcare professional
+        before making major changes to your diet, especially if you have a medical condition.
       </p>
 
       <h2>Changes and contact</h2>
       <p>
         We'll update this page if our practices change. Questions or requests:
-        <a href="mailto:[CONTACT EMAIL]">[CONTACT EMAIL]</a>.
+        <a href="mailto:richardlew2412@gmail.com">richardlew2412@gmail.com</a>.
       </p>
     </main>
   </body>

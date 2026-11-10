@@ -74,6 +74,69 @@ export function fetchWeeklyReport(week: unknown, language: Lang, signal?: AbortS
   return request<WeeklyReport>("/api/report/weekly", { method: "POST", body: JSON.stringify({ week, language }), signal });
 }
 
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/**
+ * Sends the conversation to Lew and calls `onText` with each piece of the reply as it arrives
+ * (Server-Sent Events). Resolves when the reply is complete.
+ */
+export async function streamCoach(
+  messages: ChatTurn[],
+  context: unknown,
+  language: Lang,
+  onText: (text: string) => void,
+  signal?: AbortSignal,
+): Promise<{ truncated: boolean }> {
+  const token = await accessToken().catch(() => null);
+  const code = getAccessCode();
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/api/coach/chat`, {
+      method: "POST",
+      signal,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        ...(code ? { "x-access-code": code } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ messages, context, language }),
+    });
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    throw new ApiError(t("err.network"), 0, "network");
+  }
+  if (!res.ok || !res.body) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(body?.error ?? t("common.requestFailed", { status: res.status }), res.status, body?.code);
+  }
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += value;
+    let end: number;
+    while ((end = buffer.indexOf("\n\n")) >= 0) {
+      const chunk = buffer.slice(0, end);
+      buffer = buffer.slice(end + 2);
+      const line = chunk.split("\n").find((l) => l.startsWith("data: "));
+      if (!line) continue;
+      const event = JSON.parse(line.slice(6)) as { type: string; text?: string; code?: string; truncated?: boolean };
+      if (event.type === "text" && event.text) onText(event.text);
+      else if (event.type === "done") return { truncated: Boolean(event.truncated) };
+      else if (event.type === "error") {
+        const code = event.code ?? "ai_error";
+        throw new ApiError(ERROR_MESSAGES[code] ? t(ERROR_MESSAGES[code]) : t("err.aiService"), 200, code);
+      }
+    }
+  }
+  return { truncated: true }; // the connection ended before the reply finished
+}
+
 // Server error codes → messages in the app's language. Anything else shows the server's own text.
 const ERROR_MESSAGES: Record<string, MessageKey> = {
   access_code_required: "err.accessCodeWrong",

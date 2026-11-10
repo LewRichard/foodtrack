@@ -580,6 +580,20 @@ const vi: Messages = {
   "badge.lost_5.desc": "Giảm 5 kg so với lần cân đầu",
   "badge.goal_weight": "Chạm mục tiêu",
   "badge.goal_weight.desc": "Đạt cân nặng mục tiêu",
+  "coach.bannerTitle": "Hỏi Lew – chuyên gia dinh dưỡng AI",
+  "coach.bannerBody": "Hỏi về món ăn, mục tiêu hay nên ăn gì tiếp theo",
+  "coach.role": "Chuyên gia dinh dưỡng AI",
+  "coach.typing": "đang trả lời…",
+  "coach.clear": "Xóa",
+  "coach.clearConfirm": "Xóa cuộc trò chuyện này?",
+  "coach.welcome": "Chào bạn, mình là Lew 🥑 chuyên gia dinh dưỡng của bạn. Mình xem được nhật ký ăn uống của bạn, nên cứ hỏi nhé: tối nay ăn gì, làm sao ăn đủ đạm, hay tuần qua bạn ăn uống thế nào.",
+  "coach.ask1": "Tối nay mình nên ăn gì?",
+  "coach.ask2": "Làm sao để ăn đủ đạm mỗi ngày?",
+  "coach.ask3": "Tuần này mình ăn uống thế nào?",
+  "coach.ask4": "Gợi ý bữa sáng dưới 400 kcal",
+  "coach.placeholder": "Hỏi Lew bất cứ điều gì…",
+  "coach.stop": "Dừng",
+  "coach.disclaimer": "Lew là AI và có thể sai. Không thay thế lời khuyên y tế. Nhật ký gần đây của bạn được gửi tới AI để trả lời sát với bạn.",
 };
 
 export default vi;

@@ -37,6 +37,14 @@ export interface AppState {
   reports: Record<string, SavedReport>; // AI weekly check-ins on this device, by the week's last day
   onboardingSkipped: boolean; // chose "skip" on the welcome questions (this device)
   seenBadges: string[] | null; // badges already celebrated on this device (null = not set up yet)
+  coachChat: CoachMessage[]; // conversation with Lew, the AI nutritionist (this device)
+}
+
+export interface CoachMessage {
+  role: "user" | "assistant";
+  content: string;
+  at: number;
+  failed?: boolean; // the reply didn't arrive (not sent to the AI again)
 }
 
 export interface SavedReport {
@@ -68,6 +76,7 @@ export const INITIAL_STATE: AppState = {
   reports: {},
   onboardingSkipped: false,
   seenBadges: null,
+  coachChat: [],
 };
 
 function load(): AppState {
@@ -193,6 +202,9 @@ export const actions = {
   },
   setCommunityPush(communityPush: boolean) {
     setState({ ...state, communityPush });
+  },
+  setCoachChat(coachChat: CoachMessage[]) {
+    setState({ ...state, coachChat: coachChat.slice(-80) });
   },
   markBadgesSeen(ids: string[]) {
     setState({ ...state, seenBadges: [...new Set([...(state.seenBadges ?? []), ...ids])] });

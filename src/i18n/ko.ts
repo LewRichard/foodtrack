@@ -575,6 +575,20 @@ const ko: Messages = {
   "badge.lost_5.desc": "첫 기록보다 5kg 감량",
   "badge.goal_weight": "목표 달성",
   "badge.goal_weight.desc": "목표 체중 도달",
+  "coach.bannerTitle": "AI 영양사 Lew에게 물어보기",
+  "coach.bannerBody": "음식, 목표, 다음에 뭘 먹을지 궁금한 점",
+  "coach.role": "AI 영양사",
+  "coach.typing": "입력 중…",
+  "coach.clear": "지우기",
+  "coach.clearConfirm": "이 대화를 삭제할까요?",
+  "coach.welcome": "안녕하세요, 영양사 Lew예요 🥑 식단 기록을 볼 수 있으니 무엇이든 물어보세요. 오늘 저녁 메뉴, 단백질 늘리는 법, 이번 주 식단 평가 등.",
+  "coach.ask1": "오늘 저녁 뭐 먹을까요?",
+  "coach.ask2": "매일 단백질을 더 먹으려면?",
+  "coach.ask3": "이번 주 식단은 어땠나요?",
+  "coach.ask4": "400 kcal 이하 아침 메뉴 추천해 주세요",
+  "coach.placeholder": "Lew에게 무엇이든 물어보세요…",
+  "coach.stop": "중지",
+  "coach.disclaimer": "Lew는 AI라서 틀릴 수 있어요. 의료 조언이 아니에요. 맞춤 답변을 위해 최근 식단 기록이 AI로 전송돼요.",
 };
 
 export default ko;

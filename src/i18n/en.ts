@@ -592,6 +592,20 @@ const en = {
   "badge.lost_5.desc": "Lose 5 kg from your first weigh-in",
   "badge.goal_weight": "Goal reached",
   "badge.goal_weight.desc": "Reach your goal weight",
+  "coach.bannerTitle": "Ask Lew, your AI nutritionist",
+  "coach.bannerBody": "Questions about food, your goals or what to eat next",
+  "coach.role": "AI nutritionist",
+  "coach.typing": "typing…",
+  "coach.clear": "Clear",
+  "coach.clearConfirm": "Delete this conversation?",
+  "coach.welcome": "Hi, I'm Lew 🥑 your nutritionist. I can see your diary, so ask me anything: what to eat tonight, how to get more protein, or how your week went.",
+  "coach.ask1": "What should I eat for dinner tonight?",
+  "coach.ask2": "How can I get more protein each day?",
+  "coach.ask3": "How did my eating go this week?",
+  "coach.ask4": "Give me a breakfast idea under 400 kcal",
+  "coach.placeholder": "Ask Lew anything…",
+  "coach.stop": "Stop",
+  "coach.disclaimer": "Lew is an AI and can make mistakes. Not medical advice. Your recent diary is sent to the AI to personalise answers.",
 };
 
 export default en;

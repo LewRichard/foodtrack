@@ -575,6 +575,20 @@ const ja: Messages = {
   "badge.lost_5.desc": "最初の計測から5 kg減",
   "badge.goal_weight": "目標達成",
   "badge.goal_weight.desc": "目標体重に到達",
+  "coach.bannerTitle": "AI栄養士のLewに相談",
+  "coach.bannerBody": "食事や目標、次に何を食べるかの質問に",
+  "coach.role": "AI栄養士",
+  "coach.typing": "入力中…",
+  "coach.clear": "クリア",
+  "coach.clearConfirm": "この会話を削除しますか？",
+  "coach.welcome": "こんにちは、栄養士のLewです🥑 あなたの記録を見られるので、気軽に聞いてください。今夜何を食べるか、たんぱく質の増やし方、今週の振り返りなど。",
+  "coach.ask1": "今夜の夕食は何がいい？",
+  "coach.ask2": "毎日たんぱく質を増やすには？",
+  "coach.ask3": "今週の食事はどうだった？",
+  "coach.ask4": "400 kcal以下の朝食アイデアを教えて",
+  "coach.placeholder": "Lewに何でも質問…",
+  "coach.stop": "停止",
+  "coach.disclaimer": "LewはAIのため間違うことがあります。医療アドバイスではありません。回答をあなた向けにするため、最近の記録がAIに送信されます。",
 };
 
 export default ja;

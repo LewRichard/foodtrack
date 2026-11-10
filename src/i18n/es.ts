@@ -580,6 +580,20 @@ const es: Messages = {
   "badge.lost_5.desc": "Pierde 5 kg desde tu primer pesaje",
   "badge.goal_weight": "Meta alcanzada",
   "badge.goal_weight.desc": "Llega a tu peso objetivo",
+  "coach.bannerTitle": "Pregunta a Lew, tu nutricionista con IA",
+  "coach.bannerBody": "Dudas sobre comida, tus objetivos o qué comer",
+  "coach.role": "Nutricionista con IA",
+  "coach.typing": "escribiendo…",
+  "coach.clear": "Borrar",
+  "coach.clearConfirm": "¿Borrar esta conversación?",
+  "coach.welcome": "Hola, soy Lew 🥑 tu nutricionista. Veo tu diario, así que pregúntame lo que quieras: qué cenar hoy, cómo comer más proteína o cómo fue tu semana.",
+  "coach.ask1": "¿Qué debería cenar hoy?",
+  "coach.ask2": "¿Cómo puedo comer más proteína cada día?",
+  "coach.ask3": "¿Cómo fue mi alimentación esta semana?",
+  "coach.ask4": "Dame una idea de desayuno de menos de 400 kcal",
+  "coach.placeholder": "Pregunta a Lew lo que quieras…",
+  "coach.stop": "Detener",
+  "coach.disclaimer": "Lew es una IA y puede equivocarse. No es consejo médico. Tu diario reciente se envía a la IA para personalizar las respuestas.",
 };
 
 export default es;

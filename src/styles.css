@@ -2880,3 +2880,206 @@ img.avatar {
 .celebrate .btn {
   width: 100%;
 }
+
+/* ---- Lew, the AI nutritionist ---- */
+.coach-banner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 14px 16px;
+}
+
+.coach-banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.coach-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  background: var(--accent-soft);
+}
+
+.coach {
+  min-height: calc(100dvh - 120px);
+}
+
+.coach-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  padding: 4px 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.coach-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.coach-log {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coach-bubble {
+  max-width: 86%;
+  padding: 10px 14px;
+  border-radius: 20px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.coach-bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.coach-bubble p + p,
+.coach-bubble p + ul,
+.coach-bubble p + ol,
+.coach-bubble ul + p,
+.coach-bubble ol + p {
+  margin-top: 8px;
+}
+
+.coach-bubble ul,
+.coach-bubble ol {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+}
+
+.coach-bubble.mine {
+  margin-left: auto;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-bottom-right-radius: 6px;
+}
+
+.coach-bubble.theirs {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 6px;
+}
+
+.coach-bubble.failed {
+  opacity: 0.6;
+}
+
+.coach-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coach-suggestions .chip-btn {
+  white-space: normal;
+  text-align: left;
+  font-weight: 600;
+}
+
+.coach-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.coach-error p {
+  margin: 0;
+}
+
+.coach-form {
+  position: sticky;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  background: var(--bg);
+  padding: 8px 0;
+}
+
+.coach-form textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  max-height: 140px;
+  field-sizing: content;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 20px;
+  padding: 11px 14px;
+  font: inherit;
+}
+
+.coach-send {
+  border-radius: 20px;
+}
+
+.coach-note {
+  margin: -6px 0 0;
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-2);
+  animation: typing 1s infinite ease-in-out;
+}
+
+.typing-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-dots i {
+    animation: none;
+  }
+}

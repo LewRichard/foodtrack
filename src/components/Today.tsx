@@ -30,12 +30,14 @@ export default function Today({
   onScan,
   onOpenProfile,
   onSeeAll,
+  onOpenCoach,
 }: {
   date: string;
   onDateChange: (d: string) => void;
   onScan: () => void;
   onOpenProfile: () => void;
   onSeeAll: () => void;
+  onOpenCoach: () => void;
 }) {
   const state = useAppState();
   const i18n = useI18n();
@@ -124,6 +126,19 @@ export default function Today({
         </span>
         <span className="scan-banner-go" aria-hidden="true">
           →
+        </span>
+      </button>
+
+      <button className="card coach-banner" onClick={onOpenCoach}>
+        <span className="coach-avatar" aria-hidden="true">
+          🥑
+        </span>
+        <span className="coach-banner-text">
+          <strong>{t("coach.bannerTitle")}</strong>
+          <span className="muted small">{t("coach.bannerBody")}</span>
+        </span>
+        <span className="muted" aria-hidden="true">
+          ›
         </span>
       </button>
 

@@ -580,6 +580,20 @@ const de: Messages = {
   "badge.lost_5.desc": "5 kg seit dem ersten Wiegen abnehmen",
   "badge.goal_weight": "Ziel erreicht",
   "badge.goal_weight.desc": "Dein Zielgewicht erreichen",
+  "coach.bannerTitle": "Frag Lew, deinen KI-Ernährungscoach",
+  "coach.bannerBody": "Fragen zu Essen, Zielen oder was du als Nächstes isst",
+  "coach.role": "KI-Ernährungscoach",
+  "coach.typing": "schreibt…",
+  "coach.clear": "Löschen",
+  "coach.clearConfirm": "Diese Unterhaltung löschen?",
+  "coach.welcome": "Hallo, ich bin Lew 🥑 dein Ernährungscoach. Ich sehe dein Tagebuch, also frag mich alles: was du heute Abend essen kannst, wie du mehr Eiweiß bekommst oder wie deine Woche lief.",
+  "coach.ask1": "Was soll ich heute Abend essen?",
+  "coach.ask2": "Wie bekomme ich jeden Tag mehr Eiweiß?",
+  "coach.ask3": "Wie lief meine Ernährung diese Woche?",
+  "coach.ask4": "Eine Frühstücksidee unter 400 kcal",
+  "coach.placeholder": "Frag Lew irgendetwas…",
+  "coach.stop": "Stopp",
+  "coach.disclaimer": "Lew ist eine KI und kann sich irren. Keine ärztliche Beratung. Dein aktuelles Tagebuch wird an die KI gesendet, um persönlich zu antworten.",
 };
 
 export default de;

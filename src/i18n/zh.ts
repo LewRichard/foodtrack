@@ -576,6 +576,20 @@ const zh: Messages = {
   "badge.lost_5.desc": "比第一次称重减少 5 kg",
   "badge.goal_weight": "达成目标",
   "badge.goal_weight.desc": "达到目标体重",
+  "coach.bannerTitle": "问问 Lew——你的 AI 营养师",
+  "coach.bannerBody": "关于食物、目标或下一餐吃什么的问题",
+  "coach.role": "AI 营养师",
+  "coach.typing": "正在输入…",
+  "coach.clear": "清除",
+  "coach.clearConfirm": "删除这段对话？",
+  "coach.welcome": "你好，我是 Lew 🥑 你的营养师。我能看到你的饮食日记，有问题尽管问：今晚吃什么、怎样多吃蛋白质，或者这周吃得怎么样。",
+  "coach.ask1": "我今晚应该吃什么？",
+  "coach.ask2": "怎样每天摄入更多蛋白质？",
+  "coach.ask3": "我这周的饮食怎么样？",
+  "coach.ask4": "给我一个 400 千卡以内的早餐建议",
+  "coach.placeholder": "向 Lew 提问…",
+  "coach.stop": "停止",
+  "coach.disclaimer": "Lew 是 AI，可能会出错，不能替代医疗建议。为了给出个性化回答，你最近的饮食日记会发送给 AI。",
 };
 
 export default zh;

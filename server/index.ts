@@ -11,6 +11,7 @@ import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
 import { testReminderText } from "../shared/reminders.ts";
 import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from "./communityPush.ts";
+import { CoachRequestSchema, streamCoachReply } from "./coach.ts";
 import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
@@ -217,6 +218,18 @@ app.post("/api/report/weekly", requireScanAccess(guard, verifyUser), limitScans(
   }
 });
 
+// Chat with Lew, the AI nutritionist (streams the reply). Its own, looser limits than photo scans.
+const chatLimiter = new ScanLimiter(60, 3000);
+app.post("/api/coach/chat", requireScanAccess(guard, verifyUser), limitScans(chatLimiter), async (req, res) => {
+  const parsed = CoachRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "The chat request isn't in the expected format.", code: "bad_report" });
+    return;
+  }
+  const language = isLang(req.body?.language) ? req.body.language : "en";
+  await streamCoachReply(parsed.data, language, res);
+});
+
 // Packaged food by barcode (Open Food Facts). Free, so no sign-in needed; just rate-limited.
 app.get("/api/barcode/:code", async (req, res) => {
   const code = normalizeBarcode(String(req.params.code));
@@ -242,6 +255,16 @@ app.get("/api/barcode/:code", async (req, res) => {
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "Not found." });
 });
+
+// Anything unexpected: a plain JSON error, never a stack trace.
+app.use(((error, _req, res, _next) => {
+  console.error(error);
+  if (res.headersSent) return res.end();
+  const status = (error as { status?: number }).status;
+  res
+    .status(status && status >= 400 && status < 500 ? status : 500)
+    .json({ error: status && status < 500 ? "Bad request." : "Unexpected server error.", code: "server_error" });
+}) as express.ErrorRequestHandler);
 
 // Serve the built web app (after `npm run build`) from the same origin as the API.
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../dist");

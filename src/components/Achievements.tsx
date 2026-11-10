@@ -85,17 +85,6 @@ export function AchievementsPanel() {
   );
 }
 
-/** Card for the Profile tab. */
-export function AchievementsCard() {
-  const { t } = useI18n();
-  return (
-    <section className="card">
-      <h2 className="title">🏆 {t("streak.achievements")}</h2>
-      <AchievementsPanel />
-    </section>
-  );
-}
-
 /**
  * Celebrates badges the moment they're earned. The first time it runs on a device it just notes
  * what's already earned, so people who've used the app for months don't get twenty pop-ups.

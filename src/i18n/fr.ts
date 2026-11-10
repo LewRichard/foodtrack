@@ -644,6 +644,18 @@ const fr: Messages = {
   "describe.analyzing": "Calcul des calories…",
   "describe.noFood": "Cela ne ressemble pas à de la nourriture ni à une boisson. Décrivez ce que vous avez mangé ou bu.",
   "describe.edit": "Modifier la description",
+  "profile.groupProgress": "Progrès",
+  "profile.groupAccount": "Compte",
+  "profile.groupSettings": "Réglages",
+  "profile.groupPrivacy": "Confidentialité et données",
+  "profile.badgesSummary": "{n}/{total} badges",
+  "profile.goalsBody": "Objectifs et corps",
+  "profile.bodyMissing": "Indiquez vos mesures pour des objectifs adaptés",
+  "profile.on": "Activé",
+  "profile.off": "Désactivé",
+  "profile.consentShortYes": "Autorisé",
+  "profile.consentShortNo": "Pas encore",
+  "profile.dataSummary": "Sauvegarder, restaurer ou effacer",
 };
 
 export default fr;

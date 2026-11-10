@@ -644,6 +644,18 @@ const vi: Messages = {
   "describe.analyzing": "Đang tính calo…",
   "describe.noFood": "Có vẻ đây không phải đồ ăn hay đồ uống. Hãy mô tả bạn đã ăn hoặc uống gì nhé.",
   "describe.edit": "Sửa mô tả",
+  "profile.groupProgress": "Tiến độ",
+  "profile.groupAccount": "Tài khoản",
+  "profile.groupSettings": "Cài đặt",
+  "profile.groupPrivacy": "Quyền riêng tư & dữ liệu",
+  "profile.badgesSummary": "{n}/{total} huy hiệu",
+  "profile.goalsBody": "Mục tiêu & cơ thể",
+  "profile.bodyMissing": "Nhập chỉ số cơ thể để có mục tiêu hợp với bạn",
+  "profile.on": "Bật",
+  "profile.off": "Tắt",
+  "profile.consentShortYes": "Đã đồng ý",
+  "profile.consentShortNo": "Chưa",
+  "profile.dataSummary": "Sao lưu, khôi phục hoặc xoá",
 };
 
 export default vi;

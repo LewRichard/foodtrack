@@ -639,6 +639,18 @@ const ja: Messages = {
   "describe.analyzing": "カロリーを計算中…",
   "describe.noFood": "食べ物や飲み物ではないようです。食べたもの・飲んだものを書いてください。",
   "describe.edit": "説明を編集",
+  "profile.groupProgress": "進捗",
+  "profile.groupAccount": "アカウント",
+  "profile.groupSettings": "設定",
+  "profile.groupPrivacy": "プライバシーとデータ",
+  "profile.badgesSummary": "バッジ {n}/{total}",
+  "profile.goalsBody": "目標と体のデータ",
+  "profile.bodyMissing": "体のデータを入れると目標が合わせられます",
+  "profile.on": "オン",
+  "profile.off": "オフ",
+  "profile.consentShortYes": "許可済み",
+  "profile.consentShortNo": "未許可",
+  "profile.dataSummary": "バックアップ・復元・消去",
 };
 
 export default ja;

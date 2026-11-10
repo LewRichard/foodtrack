@@ -644,6 +644,18 @@ const es: Messages = {
   "describe.analyzing": "Calculando calorías…",
   "describe.noFood": "Eso no parece comida ni bebida. Describe lo que comiste o bebiste.",
   "describe.edit": "Editar descripción",
+  "profile.groupProgress": "Progreso",
+  "profile.groupAccount": "Cuenta",
+  "profile.groupSettings": "Ajustes",
+  "profile.groupPrivacy": "Privacidad y datos",
+  "profile.badgesSummary": "{n}/{total} insignias",
+  "profile.goalsBody": "Metas y cuerpo",
+  "profile.bodyMissing": "Añade tus datos para metas a tu medida",
+  "profile.on": "Sí",
+  "profile.off": "No",
+  "profile.consentShortYes": "Permitido",
+  "profile.consentShortNo": "Aún no",
+  "profile.dataSummary": "Copia, restaura o borra",
 };
 
 export default es;

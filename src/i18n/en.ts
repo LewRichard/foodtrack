@@ -656,6 +656,18 @@ const en = {
   "describe.analyzing": "Working out the calories…",
   "describe.noFood": "That doesn't sound like food or drink. Try describing what you ate or drank.",
   "describe.edit": "Edit description",
+  "profile.groupProgress": "Progress",
+  "profile.groupAccount": "Account",
+  "profile.groupSettings": "Settings",
+  "profile.groupPrivacy": "Privacy & data",
+  "profile.badgesSummary": "{n}/{total} badges",
+  "profile.goalsBody": "Goals & body",
+  "profile.bodyMissing": "Set your body details for tailored goals",
+  "profile.on": "On",
+  "profile.off": "Off",
+  "profile.consentShortYes": "Allowed",
+  "profile.consentShortNo": "Not yet",
+  "profile.dataSummary": "Back up, restore or clear",
 };
 
 export default en;

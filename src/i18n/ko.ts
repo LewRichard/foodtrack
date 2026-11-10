@@ -639,6 +639,18 @@ const ko: Messages = {
   "describe.analyzing": "칼로리 계산 중…",
   "describe.noFood": "음식이나 음료가 아닌 것 같아요. 먹거나 마신 것을 적어 주세요.",
   "describe.edit": "설명 수정",
+  "profile.groupProgress": "진행 상황",
+  "profile.groupAccount": "계정",
+  "profile.groupSettings": "설정",
+  "profile.groupPrivacy": "개인정보 및 데이터",
+  "profile.badgesSummary": "배지 {n}/{total}",
+  "profile.goalsBody": "목표 및 신체 정보",
+  "profile.bodyMissing": "신체 정보를 입력하면 맞춤 목표를 받을 수 있어요",
+  "profile.on": "켜짐",
+  "profile.off": "꺼짐",
+  "profile.consentShortYes": "허용됨",
+  "profile.consentShortNo": "아직",
+  "profile.dataSummary": "백업, 복원 또는 삭제",
 };
 
 export default ko;

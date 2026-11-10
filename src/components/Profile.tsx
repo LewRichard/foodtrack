@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { deviceLanguage, LANGUAGES, useI18n, type LanguagePref } from "../i18n/index.ts";
 import { errorMessage, getAccessCode, setAccessCode, unlock } from "../lib/api.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
@@ -7,14 +7,21 @@ import { setAvatar, syncNotificationLanguage, useMyProfile } from "../lib/commun
 import { enableReminders } from "../lib/reminders.ts";
 import { THEME_PREFS } from "../lib/theme.ts";
 import Account from "./Account.tsx";
-import { AchievementsCard } from "./Achievements.tsx";
+import { AchievementsPanel } from "./Achievements.tsx";
+import Sheet from "./Sheet.tsx";
+import { badges, streak } from "../lib/achievements.ts";
+import { APPLE_HEALTH_ENABLED } from "../lib/health.ts";
 import AvatarCropper from "./AvatarCropper.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import HealthSync from "./HealthSync.tsx";
 import Reminders from "./Reminders.tsx";
 
 export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
-  const { name, profile, goals, entries, aiConsent, language, theme } = useAppState();
+  const state = useAppState();
+  const { name, profile, goals, entries, aiConsent, language, theme, reminders, health } = state;
+  const [open, setOpen] = useState<
+    null | "achievements" | "account" | "reminders" | "health" | "name" | "language" | "theme" | "scanning" | "data"
+  >(null);
   const { t, tp, num } = useI18n();
   const deviceLang = LANGUAGES.find((l) => l.code === deviceLanguage())!;
   const session = useSession();
@@ -72,6 +79,14 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
     }
   }
 
+  function setLanguage(next: LanguagePref) {
+    actions.setLanguage(next);
+    // Reminders already on: resend them so notifications come in the new language.
+    const { reminders } = getState();
+    if (reminders.enabled) void enableReminders(reminders.times).catch(() => {});
+    if (session) void syncNotificationLanguage().catch(() => {});
+  }
+
   function exportData() {
     const blob = new Blob([JSON.stringify(getState(), null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -98,6 +113,12 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
     }
   }
 
+  const s = streak(state);
+  const allBadges = useMemo(() => badges(state), [state]);
+  const earnedBadges = allBadges.filter((b) => b.earned);
+  const langName = language === "auto" ? t("profile.languageAuto", { name: deviceLang.name }) : (LANGUAGES.find((l) => l.code === language)?.name ?? "");
+  const close = () => setOpen(null);
+
   return (
     <div className="page">
       <section className="profile-hero">
@@ -118,149 +139,242 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
         <p className="muted">{tp("profile.stats", daysLogged, { kcal: num(goals.calories) })}</p>
       </section>
 
-      <AchievementsCard />
+      <Group title={t("profile.groupProgress")}>
+        <Row
+          icon="🏆"
+          title={t("streak.achievements")}
+          sub={`${t("profile.badgesSummary", { n: earnedBadges.length, total: allBadges.length })} · 🔥 ${s.current}`}
+          value={
+            <span className="settings-badges" aria-hidden="true">
+              {earnedBadges.slice(-3).map((b) => (
+                <span key={b.id}>{b.icon}</span>
+              ))}
+            </span>
+          }
+          onClick={() => setOpen("achievements")}
+        />
+        <Row
+          icon="🎯"
+          title={t("profile.goalsBody")}
+          sub={
+            profile
+              ? t("profile.bodySummary", {
+                  sex: profile.sex === "male" ? t("goals.male") : t("goals.female"),
+                  age: profile.age,
+                  height: profile.heightCm,
+                  weight: profile.weightKg,
+                })
+              : t("profile.bodyMissing")
+          }
+          value={`${num(goals.calories)} kcal`}
+          onClick={onEditGoals}
+        />
+      </Group>
 
-      {cloudEnabled && <Account />}
+      <Group title={t("profile.groupAccount")}>
+        {cloudEnabled && <Row icon="☁️" title={t("account.title")} sub={session?.user.email ?? undefined} onClick={() => setOpen("account")} />}
+        <Row icon="👤" title={t("profile.name")} value={name.trim() || "—"} onClick={() => setOpen("name")} />
+      </Group>
 
-      <HealthSync />
+      <Group title={t("profile.groupSettings")}>
+        <Row icon="🔔" title={t("rem.title")} value={reminders.enabled ? t("profile.on") : t("profile.off")} onClick={() => setOpen("reminders")} />
+        {APPLE_HEALTH_ENABLED && (
+          <Row icon="❤️" title={t("appleHealth.title")} value={health.connected ? t("profile.on") : t("profile.off")} onClick={() => setOpen("health")} />
+        )}
+        <Row icon="🌐" title={t("profile.language")} value={langName} onClick={() => setOpen("language")} />
+        <Row icon="🌓" title={t("profile.theme")} value={t(`theme.${theme}`)} onClick={() => setOpen("theme")} />
+      </Group>
 
-      <Reminders />
+      <Group title={t("profile.groupPrivacy")}>
+        <Row icon="📸" title={t("profile.scanning")} value={aiConsent ? t("profile.consentShortYes") : t("profile.consentShortNo")} onClick={() => setOpen("scanning")} />
+        <Row icon="💾" title={t("profile.data")} sub={t("profile.dataSummary")} onClick={() => setOpen("data")} />
+        <a className="settings-row" href="/privacy.html" target="_blank" rel="noreferrer">
+          <span className="settings-icon" aria-hidden="true">
+            🔒
+          </span>
+          <span className="settings-text">{t("profile.privacy")}</span>
+          <span className="settings-chev" aria-hidden="true">
+            ›
+          </span>
+        </a>
+      </Group>
 
-      <section className="card">
-        <label className="stack">
-          <h2 className="title">{t("profile.language")}</h2>
-          <select
-            value={language}
-            onChange={(e) => {
-              actions.setLanguage(e.target.value as LanguagePref);
-              // Reminders already on: resend them so notifications come in the new language.
-              const { reminders } = getState();
-              if (reminders.enabled) void enableReminders(reminders.times).catch(() => {});
-              if (session) void syncNotificationLanguage().catch(() => {});
+      <p className="muted small center disclaimer">{t("profile.disclaimer")}</p>
+
+      {open === "achievements" && (
+        <Sheet title={`🏆 ${t("streak.achievements")}`} onClose={close}>
+          <AchievementsPanel />
+        </Sheet>
+      )}
+
+      {open === "account" && (
+        <Sheet title={t("account.title")} onClose={close}>
+          <div className="settings-sheet">
+            <Account />
+          </div>
+        </Sheet>
+      )}
+
+      {open === "reminders" && (
+        <Sheet title={t("rem.title")} onClose={close}>
+          <div className="settings-sheet">
+            <Reminders />
+          </div>
+        </Sheet>
+      )}
+
+      {open === "health" && (
+        <Sheet title={t("appleHealth.title")} onClose={close}>
+          <div className="settings-sheet">
+            <HealthSync />
+          </div>
+        </Sheet>
+      )}
+
+      {open === "name" && (
+        <Sheet title={t("profile.name")} onClose={close}>
+          <form
+            className="stack"
+            onSubmit={(e) => {
+              e.preventDefault();
+              actions.setName(nameDraft.trim());
+              close();
             }}
           >
-            <option value="auto">{t("profile.languageAuto", { name: deviceLang.name })}</option>
-            {LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </section>
-
-      <section className="card">
-        <h2 className="title" id="theme-title">{t("profile.theme")}</h2>
-        <div className="segmented" role="radiogroup" aria-labelledby="theme-title">
-          {THEME_PREFS.map((option) => (
-            <button
-              key={option}
-              role="radio"
-              aria-checked={theme === option}
-              className={theme === option ? "active" : ""}
-              onClick={() => actions.setTheme(option)}
-            >
-              {t(`theme.${option}`)}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="card">
-        <h2 className="title">{t("profile.name")}</h2>
-        <div className="row gap">
-          <input
-            value={nameDraft}
-            onChange={(e) => setNameDraft(e.target.value)}
-            placeholder={t("profile.namePlaceholder")}
-            maxLength={40}
-            autoComplete="given-name"
-          />
-          <button className="btn primary" disabled={nameDraft.trim() === name} onClick={() => actions.setName(nameDraft.trim())}>
-            {t("common.save")}
-          </button>
-        </div>
-      </section>
-
-      <section className="card">
-        <div className="row between">
-          <h2 className="title">{t("profile.body")}</h2>
-          <button className="link" onClick={onEditGoals}>
-            {t("common.edit")}
-          </button>
-        </div>
-        {profile ? (
-          <p className="muted">
-            {t("profile.bodySummary", {
-              sex: profile.sex === "male" ? t("goals.male") : t("goals.female"),
-              age: profile.age,
-              height: profile.heightCm,
-              weight: profile.weightKg,
-            })}
-          </p>
-        ) : (
-          <p className="muted">{t("profile.bodyEmpty")}</p>
-        )}
-        <button className="btn goals-link" onClick={onEditGoals}>
-          <span>🎯 {t("goals.title")}</span>
-          <span className="muted">{num(goals.calories)} kcal ›</span>
-        </button>
-      </section>
-
-      <section className="card">
-        <h2 className="title">{t("profile.scanning")}</h2>
-        <label className="stack">
-          <span className="muted small">{session ? t("profile.accessCodeSignedIn") : t("profile.accessCode")}</span>
-          <div className="row gap">
-            <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" autoCapitalize="off" />
-            <button className="btn" onClick={saveCode}>
+            <input
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              placeholder={t("profile.namePlaceholder")}
+              maxLength={40}
+              autoComplete="given-name"
+              autoFocus
+            />
+            <button className="btn primary" disabled={nameDraft.trim() === name}>
               {t("common.save")}
             </button>
+          </form>
+        </Sheet>
+      )}
+
+      {open === "language" && (
+        <Sheet title={t("profile.language")} onClose={close}>
+          <div className="choice-list" role="radiogroup">
+            {[{ code: "auto" as LanguagePref, name: t("profile.languageAuto", { name: deviceLang.name }) }, ...LANGUAGES].map((l) => (
+              <button
+                key={l.code}
+                role="radio"
+                aria-checked={language === l.code}
+                className={`choice ${language === l.code ? "active" : ""}`}
+                onClick={() => {
+                  setLanguage(l.code);
+                  close();
+                }}
+              >
+                <span>{l.name}</span>
+                {language === l.code && <span aria-hidden="true">✓</span>}
+              </button>
+            ))}
           </div>
-        </label>
-        {codeStatus && <p className="muted small">{codeStatus}</p>}
-        <div className="row between">
-          <span className="small">
-            {aiConsent ? t("profile.consentYes") : t("profile.consentNo")}
-          </span>
-          {aiConsent && (
-            <button className="btn" onClick={() => actions.setAiConsent(false)}>
-              {t("profile.withdraw")}
-            </button>
-          )}
-        </div>
-      </section>
+        </Sheet>
+      )}
 
-      <section className="card">
-        <h2 className="title">{t("profile.data")}</h2>
-        <p className="muted small">{session ? t("profile.dataAccount") : t("profile.dataDevice")}</p>
-        <div className="row gap wrap">
-          <button className="btn" onClick={exportData}>
-            {t("profile.export")}
-          </button>
-          <button className="btn" onClick={() => fileRef.current?.click()}>
-            {t("profile.import")}
-          </button>
-          {!session && (
-            <button
-              className="btn danger"
-              onClick={() => {
-                if (confirm(t("profile.resetConfirm"))) {
-                  actions.reset();
-                  setNameDraft("");
-                }
-              }}
-            >
-              {t("profile.reset")}
-            </button>
-          )}
-        </div>
-        <input ref={fileRef} type="file" accept="application/json" hidden onChange={importData} />
-      </section>
+      {open === "theme" && (
+        <Sheet title={t("profile.theme")} onClose={close}>
+          <div className="choice-list" role="radiogroup">
+            {THEME_PREFS.map((option) => (
+              <button
+                key={option}
+                role="radio"
+                aria-checked={theme === option}
+                className={`choice ${theme === option ? "active" : ""}`}
+                onClick={() => actions.setTheme(option)}
+              >
+                <span>{t(`theme.${option}`)}</span>
+                {theme === option && <span aria-hidden="true">✓</span>}
+              </button>
+            ))}
+          </div>
+        </Sheet>
+      )}
 
-      <p className="muted small center disclaimer">
-        {t("profile.disclaimer")} <a href="/privacy.html">{t("profile.privacy")}</a>
-      </p>
+      {open === "scanning" && (
+        <Sheet title={t("profile.scanning")} onClose={close}>
+          <label className="stack">
+            <span className="muted small">{session ? t("profile.accessCodeSignedIn") : t("profile.accessCode")}</span>
+            <div className="row gap">
+              <input value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" autoCapitalize="off" />
+              <button className="btn" onClick={saveCode}>
+                {t("common.save")}
+              </button>
+            </div>
+          </label>
+          {codeStatus && <p className="muted small">{codeStatus}</p>}
+          <div className="row between gap">
+            <span className="small">{aiConsent ? t("profile.consentYes") : t("profile.consentNo")}</span>
+            {aiConsent && (
+              <button className="btn" onClick={() => actions.setAiConsent(false)}>
+                {t("profile.withdraw")}
+              </button>
+            )}
+          </div>
+        </Sheet>
+      )}
+
+      {open === "data" && (
+        <Sheet title={t("profile.data")} onClose={close}>
+          <p className="muted small">{session ? t("profile.dataAccount") : t("profile.dataDevice")}</p>
+          <div className="stack">
+            <button className="btn" onClick={exportData}>
+              {t("profile.export")}
+            </button>
+            <button className="btn" onClick={() => fileRef.current?.click()}>
+              {t("profile.import")}
+            </button>
+            {!session && (
+              <button
+                className="btn danger"
+                onClick={() => {
+                  if (confirm(t("profile.resetConfirm"))) {
+                    actions.reset();
+                    setNameDraft("");
+                    close();
+                  }
+                }}
+              >
+                {t("profile.reset")}
+              </button>
+            )}
+          </div>
+        </Sheet>
+      )}
+      <input ref={fileRef} type="file" accept="application/json" hidden onChange={importData} />
     </div>
+  );
+}
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="settings-group">
+      <h2 className="settings-heading">{title}</h2>
+      <div className="card settings-list">{children}</div>
+    </section>
+  );
+}
+
+function Row({ icon, title, sub, value, onClick }: { icon: string; title: string; sub?: string; value?: ReactNode; onClick: () => void }) {
+  return (
+    <button className="settings-row" onClick={onClick}>
+      <span className="settings-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="settings-text">
+        <span>{title}</span>
+        {sub && <span className="muted small">{sub}</span>}
+      </span>
+      {value !== undefined && <span className="muted settings-value">{value}</span>}
+      <span className="settings-chev" aria-hidden="true">
+        ›
+      </span>
+    </button>
   );
 }

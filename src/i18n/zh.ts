@@ -640,6 +640,18 @@ const zh: Messages = {
   "describe.analyzing": "正在计算热量…",
   "describe.noFood": "这似乎不是食物或饮品。请描述你吃了或喝了什么。",
   "describe.edit": "修改描述",
+  "profile.groupProgress": "进度",
+  "profile.groupAccount": "账户",
+  "profile.groupSettings": "设置",
+  "profile.groupPrivacy": "隐私与数据",
+  "profile.badgesSummary": "{n}/{total} 枚徽章",
+  "profile.goalsBody": "目标与身体数据",
+  "profile.bodyMissing": "填写身体数据以获得合适的目标",
+  "profile.on": "开",
+  "profile.off": "关",
+  "profile.consentShortYes": "已同意",
+  "profile.consentShortNo": "尚未",
+  "profile.dataSummary": "备份、恢复或清除",
 };
 
 export default zh;

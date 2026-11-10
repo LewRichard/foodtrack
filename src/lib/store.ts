@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
 import { isLang, type Lang } from "../../shared/languages.ts";
+import type { MealPlan, PlanLength } from "../../shared/mealplan.ts";
 import type { WeeklyReport } from "../../shared/report.ts";
 import { isThemePref, type ThemePref } from "./theme.ts";
 import { DEFAULT_REMINDER_TIMES, type ReminderTimes } from "../../shared/reminders.ts";
@@ -40,6 +41,16 @@ export interface AppState {
   coachChat: CoachMessage[]; // conversation with Lew, the AI nutritionist (this device)
   health: { connected: boolean; lastSync: number | null }; // Apple Health link (iPhone app, this device)
   steps: Record<string, number>; // date -> steps, read from Apple Health (this device only)
+  mealPlan: SavedPlan | null; // the latest AI meal plan (this device)
+}
+
+export interface SavedPlan {
+  createdAt: number;
+  length: PlanLength;
+  preferences: string;
+  plan: MealPlan;
+  checked: string[]; // shopping items ticked off ("group:item" indexes)
+  added: string[]; // meals added to the diary ("day:meal" indexes)
 }
 
 /** One day of data read from Apple Health. */
@@ -88,6 +99,7 @@ export const INITIAL_STATE: AppState = {
   coachChat: [],
   health: { connected: false, lastSync: null },
   steps: {},
+  mealPlan: null,
 };
 
 function load(): AppState {
@@ -253,6 +265,18 @@ export const actions = {
   },
   importHealth(days: Record<string, HealthDay>) {
     setState(withHealth(state, days, Date.now()));
+  },
+  setMealPlan(mealPlan: SavedPlan | null) {
+    setState({ ...state, mealPlan });
+  },
+  /** Ticks a shopping item, or marks a planned meal as added to the diary. */
+  togglePlanMark(list: "checked" | "added", key: string, on: boolean) {
+    const plan = state.mealPlan;
+    if (!plan) return;
+    const keys = new Set(plan[list]);
+    if (on) keys.add(key);
+    else keys.delete(key);
+    setState({ ...state, mealPlan: { ...plan, [list]: [...keys] } });
   },
   setCoachChat(coachChat: CoachMessage[]) {
     setState({ ...state, coachChat: coachChat.slice(-80) });

@@ -32,6 +32,7 @@ export default function Today({
   onOpenProfile,
   onSeeAll,
   onOpenCoach,
+  onOpenPlan,
 }: {
   date: string;
   onDateChange: (d: string) => void;
@@ -39,6 +40,7 @@ export default function Today({
   onOpenProfile: () => void;
   onSeeAll: () => void;
   onOpenCoach: () => void;
+  onOpenPlan: () => void;
 }) {
   const state = useAppState();
   const i18n = useI18n();
@@ -139,6 +141,19 @@ export default function Today({
         <span className="coach-banner-text">
           <strong>{t("coach.bannerTitle")}</strong>
           <span className="muted small">{t("coach.bannerBody")}</span>
+        </span>
+        <span className="muted" aria-hidden="true">
+          ›
+        </span>
+      </button>
+
+      <button className="card coach-banner" onClick={onOpenPlan}>
+        <span className="coach-avatar" aria-hidden="true">
+          🗓️
+        </span>
+        <span className="coach-banner-text">
+          <strong>{t("plan.bannerTitle")}</strong>
+          <span className="muted small">{state.mealPlan ? t("plan.bannerOpen") : t("plan.bannerBody")}</span>
         </span>
         <span className="muted" aria-hidden="true">
           ›

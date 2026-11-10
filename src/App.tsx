@@ -16,11 +16,12 @@ import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
 import { watchTheme } from "./lib/theme.ts";
 
-type Tab = "today" | "history" | "scan" | "community" | "goals" | "profile" | "coach";
+type Tab = "today" | "history" | "scan" | "community" | "goals" | "profile" | "coach" | "plan";
 
 // Loaded when first opened, so the rest of the app starts faster.
 const Community = lazy(() => import("./components/Community.tsx"));
 const Coach = lazy(() => import("./components/Coach.tsx"));
+const MealPlan = lazy(() => import("./components/MealPlan.tsx"));
 
 // Goals is opened from Profile, so the bar has room for Community.
 const TABS: { id: Exclude<Tab, "scan" | "goals">; label: MessageKey; icon: string }[] = [
@@ -34,7 +35,7 @@ const TABS: { id: Exclude<Tab, "scan" | "goals">; label: MessageKey; icon: strin
   { id: "profile", label: "tab.profile", icon: "M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0" },
 ];
 
-const TAB_IDS: Tab[] = ["today", "history", "scan", "community", "goals", "profile", "coach"];
+const TAB_IDS: Tab[] = ["today", "history", "scan", "community", "goals", "profile", "coach", "plan"];
 
 /** A notification can open the app on a given tab, e.g. /?tab=scan. */
 function tabFromUrl(): Tab {
@@ -134,6 +135,7 @@ export default function App() {
             onOpenProfile={() => setTab("profile")}
             onSeeAll={() => setTab("history")}
             onOpenCoach={() => setTab("coach")}
+            onOpenPlan={() => setTab("plan")}
           />
         )}
         {tab === "scan" && (
@@ -161,6 +163,11 @@ export default function App() {
         {tab === "coach" && (
           <Suspense fallback={<div className="page center-page"><div className="spinner dark" /></div>}>
             <Coach onBack={() => setTab("today")} onSignIn={() => setTab("profile")} />
+          </Suspense>
+        )}
+        {tab === "plan" && (
+          <Suspense fallback={<div className="page center-page"><div className="spinner dark" /></div>}>
+            <MealPlan onBack={() => setTab("today")} onSignIn={() => setTab("profile")} />
           </Suspense>
         )}
         {tab === "profile" && <Profile onEditGoals={() => setTab("goals")} />}

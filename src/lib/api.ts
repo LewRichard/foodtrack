@@ -1,5 +1,6 @@
 import type { Lang } from "../../shared/languages.ts";
 import type { AnalysisResult } from "../../shared/nutrition.ts";
+import type { MealPlan, PlanLength } from "../../shared/mealplan.ts";
 import type { WeeklyReport } from "../../shared/report.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
@@ -72,6 +73,19 @@ export function analyzeImage(image: PreparedImage, note: string, language: Lang,
 /** Asks the AI for a check-in on the past week (see src/lib/report.ts for what's sent). */
 export function fetchWeeklyReport(week: unknown, language: Lang, signal?: AbortSignal): Promise<WeeklyReport> {
   return request<WeeklyReport>("/api/report/weekly", { method: "POST", body: JSON.stringify({ week, language }), signal });
+}
+
+export interface PlanRequest {
+  days: PlanLength;
+  preferences: string;
+  goals: unknown;
+  profile: unknown;
+  usualFoods: string[];
+}
+
+/** Asks the AI for a meal plan and shopping list. Can take a minute. */
+export function fetchMealPlan(body: PlanRequest, language: Lang, signal?: AbortSignal): Promise<MealPlan> {
+  return request<MealPlan>("/api/mealplan", { method: "POST", body: JSON.stringify({ ...body, language }), signal });
 }
 
 export interface ChatTurn {

@@ -13,6 +13,7 @@ import { testReminderText } from "../shared/reminders.ts";
 import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from "./communityPush.ts";
 import { CoachRequestSchema, streamCoachReply } from "./coach.ts";
 import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
+import { PlanRequestSchema, writeMealPlan } from "./mealplan.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -213,6 +214,21 @@ app.post("/api/report/weekly", requireScanAccess(guard, verifyUser), limitScans(
   const language = isLang(req.body?.language) ? req.body.language : "en";
   try {
     res.json(await writeWeeklyReport(parsed.data, language));
+  } catch (error) {
+    sendAiError(res, error);
+  }
+});
+
+// AI meal plan + shopping list. Costs about as much as a scan or two, so it shares the scan limits.
+app.post("/api/mealplan", requireScanAccess(guard, verifyUser), limitScans(limiter), async (req, res) => {
+  const parsed = PlanRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "The meal plan request isn't in the expected format.", code: "bad_report" });
+    return;
+  }
+  const language = isLang(req.body?.language) ? req.body.language : "en";
+  try {
+    res.json(await writeMealPlan(parsed.data, language));
   } catch (error) {
     sendAiError(res, error);
   }

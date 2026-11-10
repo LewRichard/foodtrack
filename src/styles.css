@@ -3083,3 +3083,118 @@ img.avatar {
     animation: none;
   }
 }
+
+/* ---- AI meal plan ---- */
+.plan {
+  gap: 12px;
+}
+
+.plan-summary h2 {
+  margin: 0;
+}
+
+.plan-summary .link {
+  align-self: flex-start;
+}
+
+.plan-days {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.plan-days .chip-btn {
+  flex-shrink: 0;
+}
+
+.plan-total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plan-total strong {
+  font-size: 1.6rem;
+}
+
+.plan-total .btn {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.plan-meal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-meal h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.plan-meal p {
+  margin: 0;
+}
+
+.plan-meal .btn {
+  align-self: flex-start;
+}
+
+.plan-kcal {
+  white-space: nowrap;
+}
+
+.plan-tips {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.plan-shop {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-shop h2 {
+  margin: 0;
+}
+
+.plan-item {
+  align-items: center;
+}
+
+.plan-item-name {
+  flex: 1;
+}
+
+.plan-item.done .plan-item-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.plan-writing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.plan textarea {
+  resize: vertical;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 11px 14px;
+  font: inherit;
+}
+
+.plan textarea:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}

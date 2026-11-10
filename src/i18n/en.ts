@@ -642,6 +642,20 @@ const en = {
   "plan.bought": "{done}/{total} bought",
   "plan.copy": "Copy list",
   "plan.copied": "Copied",
+  "describe.title": "Describe your meal",
+  "describe.subtitle": "Type or say what you ate",
+  "describe.open": "Describe it instead",
+  "describe.short": "Describe",
+  "describe.label": "What did you eat?",
+  "describe.placeholder": "e.g. lunch: a bowl of beef noodle soup and an iced tea",
+  "describe.speak": "Speak",
+  "describe.stopListening": "Stop",
+  "describe.keyboardMic": "Tip: tap the microphone on your keyboard to dictate.",
+  "describe.micBlocked": "Microphone access is blocked. Allow it in your browser settings, or type instead.",
+  "describe.analyze": "Work out calories",
+  "describe.analyzing": "Working out the calories…",
+  "describe.noFood": "That doesn't sound like food or drink. Try describing what you ate or drank.",
+  "describe.edit": "Edit description",
 };
 
 export default en;

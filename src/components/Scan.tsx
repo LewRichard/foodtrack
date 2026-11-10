@@ -9,6 +9,7 @@ import { actions, getState, newId } from "../lib/store.ts";
 import { MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
 import AddFood from "./AddFood.tsx";
 import Consent from "./Consent.tsx";
+import DescribeMeal from "./DescribeMeal.tsx";
 import { HealthScoreCard } from "./HealthScore.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 
@@ -35,6 +36,7 @@ export default function Scan({
   const [meal, setMeal] = useState<MealType>(mealForTime());
   const [awaitingConsent, setAwaitingConsent] = useState<PreparedImage | null>(null);
   const [barcode, setBarcode] = useState(false);
+  const [describe, setDescribe] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const i18n = useI18n();
   const { t, tp, num } = i18n;
@@ -87,10 +89,22 @@ export default function Scan({
     return <AddFood date={date} meal={mealForTime()} startWithBarcode onClose={() => setBarcode(false)} onAdded={onLogged} />;
   }
 
+  if (phase.kind === "capture" && describe) {
+    // The camera is closed meanwhile.
+    return <DescribeMeal date={date} onClose={() => setDescribe(false)} onLogged={onLogged} onSignIn={onSignIn} />;
+  }
+
   if (phase.kind === "capture") {
     return (
       <>
-        <Capture note={note} onNoteChange={setNote} onImage={analyze} onCancel={onCancel} onBarcode={() => setBarcode(true)} />
+        <Capture
+          note={note}
+          onNoteChange={setNote}
+          onImage={analyze}
+          onCancel={onCancel}
+          onBarcode={() => setBarcode(true)}
+          onDescribe={() => setDescribe(true)}
+        />
         {awaitingConsent && (
           <Consent
             onClose={() => setAwaitingConsent(null)}
@@ -254,12 +268,14 @@ function Capture({
   onImage,
   onCancel,
   onBarcode,
+  onDescribe,
 }: {
   note: string;
   onNoteChange: (s: string) => void;
   onImage: (img: PreparedImage) => void;
   onCancel: () => void;
   onBarcode: () => void;
+  onDescribe: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -372,6 +388,9 @@ function Capture({
           {t("scan.barcode")}
         </button>
       </div>
+      <button className="btn describe-open" onClick={onDescribe}>
+        ✍️ {t("describe.open")}
+      </button>
       {pickError && <p className="error small center">{pickError}</p>}
       <p className="muted small center">{t("scan.tip")}</p>
 

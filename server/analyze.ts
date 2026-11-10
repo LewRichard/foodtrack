@@ -29,6 +29,14 @@ export const AnalysisSchema = z.object({
   healthReason: z.string().describe("One short, friendly sentence explaining the score, naming what helped or hurt it"),
 });
 
+const HEALTH_RUBRIC = `Also give the whole meal a health score from 1 to 10:
+- 9–10: mostly whole foods, plenty of vegetables or fruit, lean protein or legumes, whole grains; steamed, boiled, grilled or raw; little added fat, sugar or salt (e.g. grilled fish with vegetables and brown rice, a fresh salad with eggs, fruit with plain yoghurt).
+- 7–8: balanced with some refined carbs or a moderate amount of oil, sauce or salt (e.g. phở with herbs, chicken rice with vegetables, a turkey sandwich on wholemeal).
+- 5–6: average: large refined-carb portions, few vegetables, noticeable oil or sugar (e.g. fried rice, a white-bread sandwich with processed meat, sweetened milk tea).
+- 3–4: fried or oily, heavily processed, very salty or sugary (e.g. fried chicken with fries, instant noodles, pastries, a large bubble tea).
+- 1–2: mostly deep-fried or ultra-processed food together with sugary drinks or desserts, little nutritional value.
+Judge the cooking method, oil, vegetables, portion size and drinks. Be fair and encouraging in healthReason, and mention one easy improvement when the score is below 8.`;
+
 const SYSTEM_PROMPT = `You are a registered dietitian estimating the nutrition of food from photos for a calorie-tracking app.
 
 For each photo:
@@ -42,13 +50,7 @@ For each photo:
 
 Numbers must be for the whole visible portion, not per 100 g. Round calories and sodium to whole numbers and macros to one decimal.
 
-Also give the whole meal a health score from 1 to 10:
-- 9–10: mostly whole foods, plenty of vegetables or fruit, lean protein or legumes, whole grains; steamed, boiled, grilled or raw; little added fat, sugar or salt (e.g. grilled fish with vegetables and brown rice, a fresh salad with eggs, fruit with plain yoghurt).
-- 7–8: balanced with some refined carbs or a moderate amount of oil, sauce or salt (e.g. phở with herbs, chicken rice with vegetables, a turkey sandwich on wholemeal).
-- 5–6: average: large refined-carb portions, few vegetables, noticeable oil or sugar (e.g. fried rice, a white-bread sandwich with processed meat, sweetened milk tea).
-- 3–4: fried or oily, heavily processed, very salty or sugary (e.g. fried chicken with fries, instant noodles, pastries, a large bubble tea).
-- 1–2: mostly deep-fried or ultra-processed food together with sugary drinks or desserts, little nutritional value.
-Judge what you see: cooking method, visible oil, vegetables, portion size and drinks. Be fair and encouraging in healthReason, and mention one easy improvement when the score is below 8.`;
+${HEALTH_RUBRIC}`;
 
 const client = new Anthropic();
 
@@ -107,4 +109,58 @@ export async function analyzeFoodImage(
   }
   const result = response.parsed_output;
   return { ...result, healthScore: result.isFood ? (clampHealthScore(result.healthScore) ?? 5) : 0 };
+}
+
+// ---- From a description ("trưa nay ăn 1 tô bún bò với ly trà đá") ---------------------------------
+
+export const TextAnalysisSchema = AnalysisSchema.extend({
+  isFood: z.boolean().describe("false if the text doesn't describe anything eaten or drunk"),
+  meal: z
+    .enum(["breakfast", "lunch", "dinner", "snack", "unknown"])
+    .describe("The meal the text names (e.g. 'this morning' = breakfast, 'trưa' = lunch); unknown if it doesn't say"),
+});
+
+const TEXT_PROMPT = `You are a registered dietitian turning a short description of what someone ate into diary entries for a calorie-tracking app. The text may be typed or dictated, in any language, with typos or missing accents.
+
+- List every food and drink mentioned as its own item. Keep a dish that is normally logged as one item together (e.g. "bún bò", "a burrito"); split separate things ("rice and fried egg" → two items).
+- Use the amounts given ("2 bowls", "half a pizza", "a large milk tea"); otherwise assume one typical portion for that food where it is usually eaten. Describe the portion in household units and estimate grams.
+- Estimate calories and nutrients for each portion with standard reference values, including typical cooking oil, sauces and sugar for how the dish is usually made (e.g. Vietnamese iced coffee with condensed milk, trà đá as unsweetened tea).
+- Set confidence to "low" when the description is vague (e.g. "some snacks").
+- mealName is a short title for everything listed. notes says, in one or two sentences, what you assumed about portions or preparation.
+- If the text isn't about food or drink they had, set isFood to false and return no items.
+
+Numbers are for the whole portion, not per 100 g. Round calories and sodium to whole numbers and macros to one decimal.
+
+${HEALTH_RUBRIC}`;
+
+export type TextAnalysis = AnalysisResult & { meal: "breakfast" | "lunch" | "dinner" | "snack" | null };
+
+export async function analyzeFoodText(text: string, language: Lang = "en"): Promise<TextAnalysis> {
+  const languageNote =
+    language === "en"
+      ? ""
+      : ` Write mealName, each item's name and portion, notes and healthReason in ${AI_LANGUAGE_NAMES[language]}, using the names people there usually call these foods.`;
+  const response = await client.beta.messages.parse({
+    model: MODEL,
+    max_tokens: 16000,
+    system: TEXT_PROMPT,
+    output_config: { effort: "low", format: betaZodOutputFormat(TextAnalysisSchema) },
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    messages: [{ role: "user", content: `What I ate:${languageNote}\n\n<description>\n${text.trim()}\n</description>` }],
+  });
+
+  if (response.stop_reason === "refusal") {
+    throw new AnalysisError("The model declined to read this description.", 422, "ai_refused");
+  }
+  if (response.stop_reason === "max_tokens" || !response.parsed_output) {
+    throw new AnalysisError("Could not read a nutrition estimate from the model response.", 502, "ai_unreadable");
+  }
+  const { meal, ...result } = response.parsed_output;
+  return {
+    ...result,
+    items: result.isFood ? result.items : [],
+    healthScore: result.isFood ? (clampHealthScore(result.healthScore) ?? 5) : 0,
+    meal: meal === "unknown" ? null : meal,
+  };
 }

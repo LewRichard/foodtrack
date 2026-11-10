@@ -630,6 +630,20 @@ const de: Messages = {
   "plan.bought": "{done}/{total} gekauft",
   "plan.copy": "Liste kopieren",
   "plan.copied": "Kopiert",
+  "describe.title": "Mahlzeit beschreiben",
+  "describe.subtitle": "Schreib oder sag, was du gegessen hast",
+  "describe.open": "Stattdessen beschreiben",
+  "describe.short": "Beschreiben",
+  "describe.label": "Was hast du gegessen?",
+  "describe.placeholder": "z. B. Mittag: eine Schüssel Rindfleisch-Nudelsuppe und ein Eistee",
+  "describe.speak": "Sprechen",
+  "describe.stopListening": "Stopp",
+  "describe.keyboardMic": "Tipp: Tippe auf das Mikrofon der Tastatur, um zu diktieren.",
+  "describe.micBlocked": "Das Mikrofon ist blockiert. Erlaube es in den Browser-Einstellungen oder tippe.",
+  "describe.analyze": "Kalorien berechnen",
+  "describe.analyzing": "Kalorien werden berechnet …",
+  "describe.noFood": "Das klingt nicht nach Essen oder Trinken. Beschreib, was du gegessen oder getrunken hast.",
+  "describe.edit": "Beschreibung ändern",
 };
 
 export default de;

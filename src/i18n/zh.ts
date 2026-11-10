@@ -626,6 +626,20 @@ const zh: Messages = {
   "plan.bought": "已买 {done}/{total}",
   "plan.copy": "复制清单",
   "plan.copied": "已复制",
+  "describe.title": "描述你的餐食",
+  "describe.subtitle": "输入或说出你吃了什么",
+  "describe.open": "改为文字描述",
+  "describe.short": "文字描述",
+  "describe.label": "你吃了什么？",
+  "describe.placeholder": "例如：午饭吃了一碗牛肉粉和一杯冰茶",
+  "describe.speak": "说话",
+  "describe.stopListening": "停止",
+  "describe.keyboardMic": "提示：点按键盘上的麦克风即可语音输入。",
+  "describe.micBlocked": "麦克风已被阻止。请在浏览器设置中允许，或直接输入。",
+  "describe.analyze": "计算热量",
+  "describe.analyzing": "正在计算热量…",
+  "describe.noFood": "这似乎不是食物或饮品。请描述你吃了或喝了什么。",
+  "describe.edit": "修改描述",
 };
 
 export default zh;

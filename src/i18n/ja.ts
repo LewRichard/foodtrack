@@ -625,6 +625,20 @@ const ja: Messages = {
   "plan.bought": "{done}/{total} 購入済み",
   "plan.copy": "リストをコピー",
   "plan.copied": "コピーしました",
+  "describe.title": "食事を説明",
+  "describe.subtitle": "食べたものを入力または話す",
+  "describe.open": "文章で記録する",
+  "describe.short": "文章で記録",
+  "describe.label": "何を食べましたか？",
+  "describe.placeholder": "例：昼にビーフヌードル1杯とアイスティー",
+  "describe.speak": "話す",
+  "describe.stopListening": "停止",
+  "describe.keyboardMic": "ヒント：キーボードのマイクをタップすると音声入力できます。",
+  "describe.micBlocked": "マイクがブロックされています。ブラウザの設定で許可するか、入力してください。",
+  "describe.analyze": "カロリーを計算",
+  "describe.analyzing": "カロリーを計算中…",
+  "describe.noFood": "食べ物や飲み物ではないようです。食べたもの・飲んだものを書いてください。",
+  "describe.edit": "説明を編集",
 };
 
 export default ja;

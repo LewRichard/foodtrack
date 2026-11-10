@@ -625,6 +625,20 @@ const ko: Messages = {
   "plan.bought": "{done}/{total} 구매",
   "plan.copy": "목록 복사",
   "plan.copied": "복사됨",
+  "describe.title": "식사 설명하기",
+  "describe.subtitle": "먹은 음식을 입력하거나 말해 보세요",
+  "describe.open": "사진 대신 글로 기록",
+  "describe.short": "글로 기록",
+  "describe.label": "무엇을 드셨나요?",
+  "describe.placeholder": "예: 점심에 소고기 쌀국수 한 그릇과 아이스티",
+  "describe.speak": "말하기",
+  "describe.stopListening": "중지",
+  "describe.keyboardMic": "팁: 키보드의 마이크를 누르면 음성으로 입력할 수 있어요.",
+  "describe.micBlocked": "마이크가 차단되어 있어요. 브라우저 설정에서 허용하거나 직접 입력하세요.",
+  "describe.analyze": "칼로리 계산",
+  "describe.analyzing": "칼로리 계산 중…",
+  "describe.noFood": "음식이나 음료가 아닌 것 같아요. 먹거나 마신 것을 적어 주세요.",
+  "describe.edit": "설명 수정",
 };
 
 export default ko;

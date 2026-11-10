@@ -630,6 +630,20 @@ const es: Messages = {
   "plan.bought": "{done}/{total} comprados",
   "plan.copy": "Copiar lista",
   "plan.copied": "Copiada",
+  "describe.title": "Describe tu comida",
+  "describe.subtitle": "Escribe o di lo que comiste",
+  "describe.open": "Descríbelo en su lugar",
+  "describe.short": "Describir",
+  "describe.label": "¿Qué comiste?",
+  "describe.placeholder": "p. ej. almuerzo: un plato de sopa de fideos con carne y un té helado",
+  "describe.speak": "Hablar",
+  "describe.stopListening": "Detener",
+  "describe.keyboardMic": "Consejo: toca el micrófono del teclado para dictar.",
+  "describe.micBlocked": "El micrófono está bloqueado. Permítelo en los ajustes del navegador o escribe.",
+  "describe.analyze": "Calcular calorías",
+  "describe.analyzing": "Calculando calorías…",
+  "describe.noFood": "Eso no parece comida ni bebida. Describe lo que comiste o bebiste.",
+  "describe.edit": "Editar descripción",
 };
 
 export default es;

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { isLang } from "../shared/languages.ts";
 import { normalizeBarcode } from "../shared/barcode.ts";
 import { BarcodeLookup, BarcodeLookupError } from "./barcode.ts";
-import { AnalysisError, analyzeFoodImage, MODEL, type ImageMediaType } from "./analyze.ts";
+import { AnalysisError, analyzeFoodImage, analyzeFoodText, MODEL, type ImageMediaType } from "./analyze.ts";
 import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
 import { testReminderText } from "../shared/reminders.ts";
@@ -199,6 +199,21 @@ app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, l
       isLang(language) ? language : "en",
     );
     res.json(result);
+  } catch (error) {
+    sendAiError(res, error);
+  }
+});
+
+// Log a meal by describing it ("trưa nay ăn 1 tô bún bò với ly trà đá"). Shares the scan limits.
+app.post("/api/analyze-text", requireScanAccess(guard, verifyUser), limitScans(limiter), async (req, res) => {
+  const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
+  if (!text || text.length > 500) {
+    res.status(400).json({ error: "Describe what you ate in up to 500 characters.", code: "bad_text" });
+    return;
+  }
+  const language = isLang(req.body?.language) ? req.body.language : "en";
+  try {
+    res.json(await analyzeFoodText(text, language));
   } catch (error) {
     sendAiError(res, error);
   }

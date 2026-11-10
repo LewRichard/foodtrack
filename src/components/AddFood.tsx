@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FoodItem } from "../../shared/nutrition.ts";
 import type { BarcodeProduct } from "../lib/barcode.ts";
+import DescribeMeal from "./DescribeMeal.tsx";
 import { searchFoods } from "../lib/foods.ts";
 import { actions, newId, useAppState } from "../lib/store.ts";
 import { useI18n } from "../i18n/index.ts";
@@ -42,6 +43,7 @@ export default function AddFood({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [source, setSource] = useState<"manual" | "quick">("quick");
   const [scanning, setScanning] = useState(startWithBarcode);
+  const [describing, setDescribing] = useState(false);
   const [product, setProduct] = useState<BarcodeProduct | null>(null);
 
   const q = query.trim().toLowerCase();
@@ -113,9 +115,15 @@ export default function AddFood({
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
           />
-          <button className="btn barcode-open" onClick={() => setScanning(true)}>
-            {t("add.barcode")}
-          </button>
+          <div className="row gap add-ways">
+            <button className="btn barcode-open" onClick={() => setScanning(true)}>
+              {t("add.barcode")}
+            </button>
+            <button className="btn barcode-open" onClick={() => setDescribing(true)}>
+              ✍️ {t("describe.short")}
+            </button>
+          </div>
+          {describing && <DescribeMeal date={date} meal={meal} onClose={() => setDescribing(false)} onLogged={onAdded} />}
           <button className="link" onClick={() => pick({ ...BLANK, name: query.trim(), portion: t("common.oneServing") }, "manual")}>
             {query.trim() ? t("add.customNamed", { name: query.trim() }) : t("add.custom")}
           </button>

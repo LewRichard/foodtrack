@@ -5,6 +5,7 @@ import type { WeeklyReport } from "../../shared/report.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
 import type { PreparedImage } from "./image.ts";
+import type { MealType } from "./types.ts";
 
 const CODE_KEY = "foodtrack:accessCode";
 
@@ -68,6 +69,13 @@ export function analyzeImage(image: PreparedImage, note: string, language: Lang,
     body: JSON.stringify({ image: image.base64, mediaType: image.mediaType, note, language }),
     signal,
   });
+}
+
+export type TextAnalysis = AnalysisResult & { meal: MealType | null };
+
+/** Turns a typed or dictated description of a meal into diary items. */
+export function analyzeText(text: string, language: Lang, signal?: AbortSignal): Promise<TextAnalysis> {
+  return request<TextAnalysis>("/api/analyze-text", { method: "POST", body: JSON.stringify({ text, language }), signal });
 }
 
 /** Asks the AI for a check-in on the past week (see src/lib/report.ts for what's sent). */

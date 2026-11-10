@@ -630,6 +630,20 @@ const vi: Messages = {
   "plan.bought": "Đã mua {done}/{total}",
   "plan.copy": "Sao chép danh sách",
   "plan.copied": "Đã sao chép",
+  "describe.title": "Mô tả bữa ăn",
+  "describe.subtitle": "Gõ hoặc nói bạn đã ăn gì",
+  "describe.open": "Mô tả bằng lời thay vì chụp",
+  "describe.short": "Mô tả bằng lời",
+  "describe.label": "Bạn đã ăn gì?",
+  "describe.placeholder": "ví dụ: trưa nay ăn 1 tô bún bò với ly trà đá",
+  "describe.speak": "Nói",
+  "describe.stopListening": "Dừng",
+  "describe.keyboardMic": "Mẹo: bấm biểu tượng micro trên bàn phím để nói thay vì gõ.",
+  "describe.micBlocked": "Micro đang bị chặn. Hãy cho phép trong cài đặt trình duyệt, hoặc gõ chữ.",
+  "describe.analyze": "Tính calo",
+  "describe.analyzing": "Đang tính calo…",
+  "describe.noFood": "Có vẻ đây không phải đồ ăn hay đồ uống. Hãy mô tả bạn đã ăn hoặc uống gì nhé.",
+  "describe.edit": "Sửa mô tả",
 };
 
 export default vi;

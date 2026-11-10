@@ -2722,3 +2722,161 @@ img.avatar {
   padding: 16px;
   font-size: 17px;
 }
+
+/* ---- Streaks & badges ---- */
+.hello-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.streak-chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 16px;
+  background: #fff1e0;
+  color: #9a3412;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme="dark"] .streak-chip {
+  background: #3b2412;
+  color: #fdba74;
+}
+
+/* Logged yesterday but not yet today: a gentle nudge to keep it going. */
+.streak-chip.at-risk {
+  box-shadow: inset 0 0 0 2px #fb923c;
+}
+
+.streak-chip.cold {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.streak-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff7ed;
+  border-radius: 20px;
+  padding: 14px 16px;
+}
+
+:root[data-theme="dark"] .streak-hero {
+  background: #2a1a0e;
+}
+
+.streak-hero > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.streak-hero strong {
+  font-size: 22px;
+}
+
+.streak-flame {
+  font-size: 40px;
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(98px, 1fr));
+  gap: 10px;
+}
+
+.badge-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  padding: 12px 8px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.badge-tile.earned {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.badge-icon {
+  font-size: 32px;
+  line-height: 1.1;
+}
+
+.badge-tile.locked .badge-icon {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.badge-progress {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.badge-progress div {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.badge-done {
+  color: var(--accent-strong);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.celebrate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.celebrate p {
+  margin: 2px 0 0;
+}
+
+.celebrate-icons {
+  font-size: 64px;
+  display: flex;
+  gap: 8px;
+  animation: pop 0.45s ease-out;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-icons {
+    animation: none;
+  }
+}
+
+.celebrate .btn {
+  width: 100%;
+}

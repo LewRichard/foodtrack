@@ -8,6 +8,7 @@ import { useI18n, type MessageKey } from "./i18n/index.ts";
 import { cloudEnabled, useAuthState, usePasswordRecovery, useSession } from "./lib/cloud.ts";
 import { useSyncStatus } from "./lib/sync.ts";
 import AuthScreen from "./components/AuthScreen.tsx";
+import { BadgeCelebration } from "./components/Achievements.tsx";
 import Onboarding from "./components/Onboarding.tsx";
 import { refreshAlerts, useCommunityAlerts } from "./lib/community.ts";
 import { todayKey } from "./lib/dates.ts";
@@ -120,6 +121,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <BadgeCelebration />
       <main className="content">
         {tab === "today" && (
           <Today

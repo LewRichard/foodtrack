@@ -17,6 +17,7 @@ import { CalorieRing, MacroCard, NutrientBar } from "./Progress.tsx";
 import Sheet from "./Sheet.tsx";
 import { HealthChip, ScoreRing, tierLabel } from "./HealthScore.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
+import { StreakChip } from "./Achievements.tsx";
 import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
 
@@ -73,9 +74,12 @@ export default function Today({
             <span aria-hidden="true">👋</span>
           </h1>
         </div>
-        <button className="avatar" onClick={onOpenProfile} aria-label={t("tab.profile")}>
-          <ProfilePhoto fallback={firstName ? firstName[0].toUpperCase() : <PersonIcon />} />
-        </button>
+        <div className="hello-actions">
+          <StreakChip />
+          <button className="avatar" onClick={onOpenProfile} aria-label={t("tab.profile")}>
+            <ProfilePhoto fallback={firstName ? firstName[0].toUpperCase() : <PersonIcon />} />
+          </button>
+        </div>
       </header>
 
       {saveFailed && (

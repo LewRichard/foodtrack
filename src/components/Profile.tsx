@@ -7,6 +7,7 @@ import { setAvatar, syncNotificationLanguage, useMyProfile } from "../lib/commun
 import { enableReminders } from "../lib/reminders.ts";
 import { THEME_PREFS } from "../lib/theme.ts";
 import Account from "./Account.tsx";
+import { AchievementsCard } from "./Achievements.tsx";
 import AvatarCropper from "./AvatarCropper.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import Reminders from "./Reminders.tsx";
@@ -115,6 +116,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
         <h1>{name.trim() || t("profile.yourProfile")}</h1>
         <p className="muted">{tp("profile.stats", daysLogged, { kcal: num(goals.calories) })}</p>
       </section>
+
+      <AchievementsCard />
 
       {cloudEnabled && <Account />}
 

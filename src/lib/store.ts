@@ -36,6 +36,7 @@ export interface AppState {
   communityPush: boolean; // this device gets Community notifications (reset on sign-out)
   reports: Record<string, SavedReport>; // AI weekly check-ins on this device, by the week's last day
   onboardingSkipped: boolean; // chose "skip" on the welcome questions (this device)
+  seenBadges: string[] | null; // badges already celebrated on this device (null = not set up yet)
 }
 
 export interface SavedReport {
@@ -66,6 +67,7 @@ export const INITIAL_STATE: AppState = {
   communityPush: false,
   reports: {},
   onboardingSkipped: false,
+  seenBadges: null,
 };
 
 function load(): AppState {
@@ -191,6 +193,9 @@ export const actions = {
   },
   setCommunityPush(communityPush: boolean) {
     setState({ ...state, communityPush });
+  },
+  markBadgesSeen(ids: string[]) {
+    setState({ ...state, seenBadges: [...new Set([...(state.seenBadges ?? []), ...ids])] });
   },
   skipOnboarding() {
     setState({ ...state, onboardingSkipped: true });

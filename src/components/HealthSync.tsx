@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "../i18n/index.ts";
 import { timeAgo } from "../lib/dates.ts";
-import { connectHealth, disconnectHealth, healthAvailable, syncHealth } from "../lib/health.ts";
+import { APPLE_HEALTH_ENABLED, connectHealth, disconnectHealth, healthAvailable, syncHealth } from "../lib/health.ts";
 import { isNative } from "../lib/native.ts";
 import { useAppState } from "../lib/store.ts";
 
-/** Profile card for linking Apple Health (iPhone app). */
+/** Profile card for linking Apple Health (iPhone app). Hidden while the feature is switched off. */
 export default function HealthSync() {
+  return APPLE_HEALTH_ENABLED ? <HealthCard /> : null;
+}
+
+function HealthCard() {
   const { t, locale } = useI18n();
   const { health } = useAppState();
   const [available, setAvailable] = useState<boolean | null>(isNative ? null : false);

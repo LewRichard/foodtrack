@@ -4,6 +4,12 @@ The iPhone app can read **steps**, **active (exercise) calories** and **weight**
 It never writes to Apple Health. In a browser, or the home-screen web app, the Profile card only explains
 that this needs the iPhone app: web pages can't reach Apple Health.
 
+> **Currently switched off.** The code is in place but hidden, and the plugin is left out of the iPhone
+> build, so builds work without HealthKit set up. To switch it on: do the Apple setup below, then set
+> `APPLE_HEALTH_ENABLED = true` in `src/lib/health.ts`, remove `includePlugins` from `capacitor.config.ts`,
+> and add `CODE_SIGN_ENTITLEMENTS = App/App.entitlements;` back to the Debug and Release build settings of
+> the App target in `ios/App/App.xcodeproj/project.pbxproj`.
+
 ## What happens to the data
 
 - **Steps** show as a fourth number on the diary ("Steps"). They stay on the phone (not backed up).

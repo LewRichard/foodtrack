@@ -3,6 +3,7 @@ import { averageHealthScore, sumNutrients } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
 import { formatLongDate, greetingKey, todayKey } from "../lib/dates.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
+import { APPLE_HEALTH_ENABLED } from "../lib/health.ts";
 import { actions, entriesForDate, useAppState, useSaveFailed } from "../lib/store.ts";
 import {
   MEAL_ICONS,
@@ -50,7 +51,7 @@ export default function Today({
   const dayScore = averageHealthScore(entries);
   const burned = state.burned[date] ?? 0;
   const water = state.water[date] ?? 0;
-  const steps = state.health.connected ? state.steps[date] : undefined;
+  const steps = APPLE_HEALTH_ENABLED && state.health.connected ? state.steps[date] : undefined;
   const [adding, setAdding] = useState<MealType | null>(null);
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [editingBurned, setEditingBurned] = useState(false);
@@ -275,7 +276,7 @@ function BurnedSheet({ date, value, onClose }: { date: string; value: number; on
   return (
     <Sheet title={t("burned.title")} onClose={onClose}>
       <p className="muted small">{t("burned.help", { date: formatLongDate(date, i18n) })}</p>
-      {health.connected && <p className="muted small">❤️ {t("burned.fromHealth")}</p>}
+      {APPLE_HEALTH_ENABLED && health.connected && <p className="muted small">❤️ {t("burned.fromHealth")}</p>}
       <input
         type="number"
         inputMode="numeric"

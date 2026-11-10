@@ -6,6 +6,9 @@ const config: CapacitorConfig = {
   appId: "com.lewrichard.foodtrack",
   appName: "FoodTrack",
   webDir: "dist",
+  // Apple Health (@capgo/capacitor-health) is left out of the iPhone build until HealthKit is turned on
+  // for the app ID; see docs/APPLE_HEALTH.md. Remove this list to include every installed plugin again.
+  includePlugins: ["@capacitor/camera", "@capacitor/local-notifications", "@capacitor/status-bar"],
   ios: {
     contentInset: "never",
     backgroundColor: "#f4f5f2",

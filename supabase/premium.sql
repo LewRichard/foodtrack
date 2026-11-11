@@ -11,6 +11,10 @@ create table if not exists public.premium (
   updated_at timestamptz not null default now()
 );
 
+-- Added for Paddle: which subscription and customer this Premium comes from (safe to run again).
+alter table public.premium add column if not exists subscription_id text check (char_length(subscription_id) <= 100);
+alter table public.premium add column if not exists customer_id text check (char_length(customer_id) <= 100);
+
 alter table public.premium enable row level security;
 drop policy if exists "premium: read own" on public.premium;
 create policy "premium: read own" on public.premium for select to authenticated using (user_id = (select auth.uid()));

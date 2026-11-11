@@ -16,6 +16,10 @@ const subscribe = (l: () => void) => {
 
 export type PaywallReason = "limit" | "feature" | "info";
 
+export function getPlan(): PlanInfo | null {
+  return plan;
+}
+
 export function usePlan(): PlanInfo | null {
   return useSyncExternalStore(subscribe, () => plan);
 }

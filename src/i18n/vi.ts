@@ -695,6 +695,14 @@ const vi: Messages = {
   "premium.coachBody": "Nhận tư vấn riêng từ chuyên gia dinh dưỡng AI hiểu rõ nhật ký của bạn.",
   "premium.planTitle": "Thực đơn AI là tính năng Premium",
   "premium.planBody": "Lew lên thực đơn theo mục tiêu của bạn, kèm danh sách đi chợ.",
+  "legal.terms": "Điều khoản sử dụng",
+  "legal.refund": "Chính sách hoàn tiền",
+  "premium.monthly": "Theo tháng",
+  "premium.yearly": "Theo năm",
+  "premium.bestValue": "Tiết kiệm nhất",
+  "premium.manage": "Quản lý gói đăng ký",
+  "premium.noSubscription": "Premium này không được mua qua đây, nên không có gì để quản lý.",
+  "premium.notInApp": "Hiện chưa mua được Premium trong app iPhone.",
 };
 
 export default vi;

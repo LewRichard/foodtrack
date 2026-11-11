@@ -14,6 +14,7 @@ import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from
 import { CoachRequestSchema, streamCoachReply } from "./coach.ts";
 import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
 import { PlanRequestSchema, writeMealPlan } from "./mealplan.ts";
+import { handlePaddleEvent, paddleConfigFromEnv, portalLink, verifyPaddleSignature } from "./paddle.ts";
 import { limitFreeScans, planConfigFromEnv, requirePremium, supabasePlanStore, usageDay } from "./plans.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
@@ -25,6 +26,7 @@ const limiter = new ScanLimiter(guard.perIpPerHour, guard.dailyLimit);
 const verifyUser = supabaseVerifier();
 const plans = supabasePlanStore();
 const planConfig = planConfigFromEnv();
+const paddle = paddleConfigFromEnv();
 const push = pushConfigFromEnv();
 const barcodes = new BarcodeLookup();
 // Lookups are free for us but shouldn't let one visitor hammer Open Food Facts through this server.
@@ -36,6 +38,28 @@ app.disable("x-powered-by");
 // trusting it makes req.ip the visitor's address, which the rate limit relies on.
 app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1));
 app.use("/api", cors(guard));
+// Paddle's payment notifications. Needs the exact bytes Paddle sent to check the signature, so it
+// comes before the JSON parser.
+app.post("/api/paddle/webhook", express.raw({ type: "*/*", limit: "1mb" }), async (req, res) => {
+  const raw = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
+  if (!paddle?.webhookSecret || !plans) {
+    res.status(503).json({ error: "Payments aren't set up on this server.", code: "server_error" });
+    return;
+  }
+  if (!verifyPaddleSignature(req.get("paddle-signature"), raw, paddle.webhookSecret)) {
+    res.status(401).json({ error: "Bad signature.", code: "bad_signature" });
+    return;
+  }
+  try {
+    const outcome = await handlePaddleEvent(JSON.parse(raw), plans);
+    console.log("Paddle:", outcome);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("Paddle webhook failed:", e);
+    res.status(500).json({ error: "Couldn't apply the payment.", code: "server_error" }); // Paddle retries
+  }
+});
+
 app.use(express.json({ limit: "8mb" }));
 
 app.get("/api/health", (_req, res) => {
@@ -244,6 +268,37 @@ app.get("/api/me/plan", async (req, res) => {
   } catch (e) {
     console.error("Plan lookup failed:", e);
     res.status(503).json({ error: "Couldn't load your plan.", code: "busy" });
+  }
+});
+
+// What the app needs to open Paddle's checkout (all public values).
+app.get("/api/billing/config", (_req, res) => {
+  res.json(
+    paddle
+      ? { provider: "paddle", environment: paddle.environment, clientToken: paddle.clientToken, prices: paddle.prices, portal: Boolean(paddle.apiKey) }
+      : { provider: null },
+  );
+});
+
+// A link to Paddle's page where the person can update payment details or cancel.
+app.post("/api/billing/portal", async (req, res) => {
+  const token = /^Bearer\s+(.+)$/i.exec(req.get("authorization") ?? "")?.[1];
+  const userId = token && verifyUser ? await verifyUser(token) : null;
+  if (!userId) {
+    res.status(401).json({ error: "Sign in first.", code: "sign_in_required" });
+    return;
+  }
+  try {
+    const customer = paddle && plans ? await plans.customer(userId) : null;
+    const url = customer && paddle ? await portalLink(paddle, customer.customerId, customer.subscriptionId) : null;
+    if (!url) {
+      res.status(404).json({ error: "No subscription to manage here.", code: "no_subscription" });
+      return;
+    }
+    res.json({ url });
+  } catch (e) {
+    console.error("Paddle portal failed:", e);
+    res.status(502).json({ error: "Couldn't open the subscription page. Try again later.", code: "busy" });
   }
 });
 

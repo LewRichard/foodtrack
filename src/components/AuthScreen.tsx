@@ -59,9 +59,15 @@ export default function AuthScreen() {
 
         <footer className="auth-footer">
           <LanguagePicker />
-          <a href="/privacy.html" target="_blank" rel="noreferrer" className="muted small">
-            {t("welcome.privacy")}
-          </a>
+          <span className="muted small auth-legal">
+            <a href="/terms.html" target="_blank" rel="noreferrer">
+              {t("legal.terms")}
+            </a>
+            {" · "}
+            <a href="/privacy.html" target="_blank" rel="noreferrer">
+              {t("welcome.privacy")}
+            </a>
+          </span>
         </footer>
       </div>
     </div>

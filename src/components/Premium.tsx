@@ -1,15 +1,14 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { useSession } from "../lib/cloud.ts";
+import { localPrices, openCheckout, openPortal, useBillingConfig } from "../lib/billing.ts";
+import { errorMessage } from "../lib/api.ts";
+import { isNative } from "../lib/native.ts";
 import { formatLongDate } from "../lib/dates.ts";
 import { closePaywall, openPaywall, usePaywall, usePlan, type PaywallReason } from "../lib/plan.ts";
 import { Icon, type IconName } from "./Icon.tsx";
 import Sheet from "./Sheet.tsx";
 
-// Where "Upgrade" goes: a hosted checkout page (Stripe Payment Link, Paddle, Lemon Squeezy…).
-// Until one is set up, the screen says Premium is coming soon.
-const CHECKOUT_URL = (import.meta.env.VITE_PREMIUM_CHECKOUT_URL ?? "").trim();
-const PRICE = (import.meta.env.VITE_PREMIUM_PRICE ?? "").trim();
 
 const BENEFITS: { icon: IconName; key: MessageKey }[] = [
   { icon: "camera", key: "premium.b.unlimited" },
@@ -22,14 +21,6 @@ const BENEFITS: { icon: IconName; key: MessageKey }[] = [
 export function PaywallHost() {
   const reason = usePaywall();
   return reason ? <PremiumSheet reason={reason} onClose={closePaywall} /> : null;
-}
-
-function checkoutLink(userId: string, email: string | undefined): string {
-  // Stripe Payment Links read these two; other providers ignore unknown parameters.
-  const url = new URL(CHECKOUT_URL);
-  url.searchParams.set("client_reference_id", userId);
-  if (email) url.searchParams.set("prefilled_email", email);
-  return url.toString();
 }
 
 function PremiumSheet({ reason, onClose }: { reason: PaywallReason; onClose: () => void }) {
@@ -75,24 +66,27 @@ function PremiumSheet({ reason, onClose }: { reason: PaywallReason; onClose: () 
           ))}
         </ul>
 
-        {!premium && (
+        {premium ? (
+          <ManageButton />
+        ) : (
           <div className="stack premium-cta">
-            {PRICE && <p className="premium-price">{PRICE}</p>}
-            {CHECKOUT_URL && session ? (
-              <a className="btn primary" href={checkoutLink(session.user.id, session.user.email)} target="_blank" rel="noreferrer">
-                {t("premium.upgrade")}
-              </a>
-            ) : (
-              <>
-                <button className="btn primary" disabled>
-                  {t("premium.soon")}
-                </button>
-                <p className="muted small center">{t("premium.soonBody", { n: plan?.limit ?? 5 })}</p>
-              </>
-            )}
+            <Checkout limit={plan?.limit ?? 5} userId={session?.user.id ?? null} email={session?.user.email} />
             <button className="btn" onClick={onClose}>
               {t("premium.later")}
             </button>
+            <p className="muted tiny center premium-legal">
+              <a href="/terms.html" target="_blank" rel="noreferrer">
+                {t("legal.terms")}
+              </a>
+              {" · "}
+              <a href="/refund.html" target="_blank" rel="noreferrer">
+                {t("legal.refund")}
+              </a>
+              {" · "}
+              <a href="/privacy.html" target="_blank" rel="noreferrer">
+                {t("profile.privacy")}
+              </a>
+            </p>
           </div>
         )}
       </div>
@@ -120,4 +114,90 @@ export function PremiumLock({ title, body }: { title: string; body: string }) {
 /** Small "Premium" tag for locked entry points. */
 export function PremiumTag(): ReactNode {
   return <span className="premium-tag">Premium</span>;
+}
+
+/** Monthly / yearly choice with prices in the buyer's currency, and the button that opens Paddle. */
+function Checkout({ limit, userId, email }: { limit: number; userId: string | null; email?: string }) {
+  const { t, lang } = useI18n();
+  const config = useBillingConfig();
+  const [prices, setPrices] = useState<Record<string, string>>({});
+  const [period, setPeriod] = useState<"yearly" | "monthly">("yearly");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const ids = config?.prices;
+  const options = (["yearly", "monthly"] as const).filter((p) => ids?.[p]);
+  const chosen = options.includes(period) ? period : options[0];
+
+  useEffect(() => {
+    if (config?.provider === "paddle" && !isNative) localPrices(config).then(setPrices, () => {});
+  }, [config]);
+
+  // Apple only allows its own in-app purchases for subscriptions inside the iPhone app.
+  if (isNative) return <p className="muted small center">{t("premium.notInApp")}</p>;
+  if (config === null) return <div className="spinner dark center-spinner" />;
+  if (config.provider !== "paddle" || !chosen || !ids || !userId) {
+    return (
+      <>
+        <button className="btn primary" disabled>
+          {t("premium.soon")}
+        </button>
+        <p className="muted small center">{t("premium.soonBody", { n: limit })}</p>
+      </>
+    );
+  }
+
+  async function buy() {
+    setBusy(true);
+    setError("");
+    try {
+      await openCheckout(config!, ids![chosen!], { id: userId!, email }, lang);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      {options.length > 1 && (
+        <div className="premium-periods" role="radiogroup">
+          {options.map((p) => (
+            <button key={p} role="radio" aria-checked={chosen === p} className={`premium-period ${chosen === p ? "active" : ""}`} onClick={() => setPeriod(p)}>
+              <span>{t(p === "yearly" ? "premium.yearly" : "premium.monthly")}</span>
+              <strong>{prices[ids[p]] ?? "…"}</strong>
+              {p === "yearly" && <span className="premium-save">{t("premium.bestValue")}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+      {options.length === 1 && prices[ids[chosen]] && <p className="premium-price">{prices[ids[chosen]]}</p>}
+      <button className="btn primary" disabled={busy} onClick={() => void buy()}>
+        {busy ? t("common.pleaseWait") : t("premium.upgrade")}
+      </button>
+      {error && <p className="error small center">{error}</p>}
+    </>
+  );
+}
+
+/** For Premium bought through Paddle: a link to update the card or cancel. */
+function ManageButton() {
+  const { t } = useI18n();
+  const config = useBillingConfig();
+  const [error, setError] = useState("");
+  if (!config?.portal || isNative) return null;
+  return (
+    <div className="stack">
+      <button
+        className="btn"
+        onClick={() => {
+          setError("");
+          openPortal().catch((e) => setError(e.code === "no_subscription" ? t("premium.noSubscription") : errorMessage(e)));
+        }}
+      >
+        {t("premium.manage")}
+      </button>
+      {error && <p className="muted small center">{error}</p>}
+    </div>
+  );
 }

@@ -691,6 +691,14 @@ const zh: Messages = {
   "premium.coachBody": "获得了解你饮食日记的 AI 营养师的个性化建议。",
   "premium.planTitle": "膳食计划是 Premium 功能",
   "premium.planBody": "Lew 会根据你的目标安排饮食，并提供购物清单。",
+  "legal.terms": "服务条款",
+  "legal.refund": "退款政策",
+  "premium.monthly": "按月",
+  "premium.yearly": "按年",
+  "premium.bestValue": "最划算",
+  "premium.manage": "管理订阅",
+  "premium.noSubscription": "此 Premium 不是在这里购买的，无需管理。",
+  "premium.notInApp": "暂时无法在 iPhone App 中购买 Premium。",
 };
 
 export default zh;

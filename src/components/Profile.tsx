@@ -211,6 +211,13 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
           <span className="settings-text">{t("profile.privacy")}</span>
           <Icon name="chevron-right" size={18} className="settings-chev" />
         </a>
+        <a className="settings-row" href="/terms.html" target="_blank" rel="noreferrer">
+          <span className="settings-icon" aria-hidden="true">
+            <Icon name="list-checks" size={18} />
+          </span>
+          <span className="settings-text">{t("legal.terms")}</span>
+          <Icon name="chevron-right" size={18} className="settings-chev" />
+        </a>
       </Group>
 
       <p className="muted small center disclaimer">{t("profile.disclaimer")}</p>

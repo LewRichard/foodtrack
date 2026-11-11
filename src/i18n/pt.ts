@@ -696,6 +696,14 @@ const pt: Messages = {
   "premium.coachBody": "Receba conselhos personalizados de um nutricionista com IA que conhece seu diário.",
   "premium.planTitle": "Planos alimentares são um recurso Premium",
   "premium.planBody": "Lew planeja refeições para suas metas e monta a lista de compras.",
+  "legal.terms": "Termos de uso",
+  "legal.refund": "Política de reembolso",
+  "premium.monthly": "Mensal",
+  "premium.yearly": "Anual",
+  "premium.bestValue": "Melhor preço",
+  "premium.manage": "Gerenciar assinatura",
+  "premium.noSubscription": "Este Premium não foi comprado aqui, então não há nada para gerenciar.",
+  "premium.notInApp": "Ainda não é possível comprar o Premium no app para iPhone.",
 };
 
 export default pt;

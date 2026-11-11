@@ -707,6 +707,14 @@ const en = {
   "premium.coachBody": "Get personal advice from an AI nutritionist who knows your diary.",
   "premium.planTitle": "Meal plans are a Premium feature",
   "premium.planBody": "Lew plans meals around your goals and gives you a shopping list.",
+  "legal.terms": "Terms of Service",
+  "legal.refund": "Refund policy",
+  "premium.monthly": "Monthly",
+  "premium.yearly": "Yearly",
+  "premium.bestValue": "Best value",
+  "premium.manage": "Manage subscription",
+  "premium.noSubscription": "This Premium wasn't bought here, so there's nothing to manage.",
+  "premium.notInApp": "Premium can't be bought in the iPhone app yet.",
 };
 
 export default en;

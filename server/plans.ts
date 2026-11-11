@@ -16,6 +16,19 @@ export interface PlanStore {
   /** Undoes a take() whose AI call failed. */
   giveBack(userId: string, day: string): Promise<void>;
   used(userId: string, day: string): Promise<number>;
+  /** Grants or extends Premium from a purchase (until null = no end date). */
+  grant(userId: string, grant: PremiumGrant): Promise<void>;
+  /** Ends Premium that came from this subscription (manual grants are left alone). */
+  revoke(userId: string, subscriptionId: string): Promise<void>;
+  /** The payment provider's customer id behind someone's Premium, if any. */
+  customer(userId: string): Promise<{ customerId: string; subscriptionId: string | null } | null>;
+}
+
+export interface PremiumGrant {
+  until: string | null;
+  source: string;
+  subscriptionId: string | null;
+  customerId: string | null;
 }
 
 export interface PlanConfig {
@@ -63,6 +76,25 @@ export function supabasePlanStore(env: NodeJS.ProcessEnv = process.env): PlanSto
     async giveBack(userId, day) {
       await db.rpc("give_back_ai_scan", { p_user: userId, p_day: day });
     },
+    async grant(userId, g) {
+      cache.delete(userId);
+      const { error } = await db.from("premium").upsert(
+        { user_id: userId, until: g.until, source: g.source, subscription_id: g.subscriptionId, customer_id: g.customerId, updated_at: new Date().toISOString() },
+        { onConflict: "user_id" },
+      );
+      if (error) throw new Error(error.message);
+    },
+    async revoke(userId, subscriptionId) {
+      cache.delete(userId);
+      const { error } = await db.from("premium").delete().eq("user_id", userId).eq("subscription_id", subscriptionId);
+      if (error) throw new Error(error.message);
+    },
+    async customer(userId) {
+      const { data, error } = await db.from("premium").select("customer_id, subscription_id").eq("user_id", userId).maybeSingle();
+      if (error) throw new Error(error.message);
+      const row = data as { customer_id: string | null; subscription_id: string | null } | null;
+      return row?.customer_id ? { customerId: row.customer_id, subscriptionId: row.subscription_id } : null;
+    },
     async used(userId, day) {
       const { data, error } = await db.from("ai_usage").select("scans").eq("user_id", userId).eq("day", day).maybeSingle();
       if (error) throw new Error(error.message);
@@ -72,11 +104,27 @@ export function supabasePlanStore(env: NodeJS.ProcessEnv = process.env): PlanSto
 }
 
 /** In-memory store for tests. */
-export function memoryPlanStore(premium: Record<string, string | null> = {}): PlanStore & { usage: Map<string, number> } {
+export function memoryPlanStore(premium: Record<string, string | null> = {}): PlanStore & { usage: Map<string, number>; grants: Map<string, PremiumGrant> } {
   const usage = new Map<string, number>();
+  const grants = new Map<string, PremiumGrant>();
   const key = (u: string, d: string) => `${u}|${d}`;
   return {
     usage,
+    grants,
+    async grant(userId, g) {
+      grants.set(userId, g);
+      premium[userId] = g.until;
+    },
+    async revoke(userId, subscriptionId) {
+      if (grants.get(userId)?.subscriptionId === subscriptionId) {
+        grants.delete(userId);
+        delete premium[userId];
+      }
+    },
+    async customer(userId) {
+      const g = grants.get(userId);
+      return g?.customerId ? { customerId: g.customerId, subscriptionId: g.subscriptionId } : null;
+    },
     async premiumUntil(userId) {
       if (!(userId in premium)) return undefined;
       const u = premium[userId];

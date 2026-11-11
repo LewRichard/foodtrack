@@ -690,6 +690,14 @@ const ja: Messages = {
   "premium.coachBody": "あなたの記録を知る AI 栄養士から、あなた専用のアドバイスを。",
   "premium.planTitle": "献立は Premium 機能です",
   "premium.planBody": "Lew が目標に合わせて献立を作り、買い物リストも用意します。",
+  "legal.terms": "利用規約",
+  "legal.refund": "返金ポリシー",
+  "premium.monthly": "月額",
+  "premium.yearly": "年額",
+  "premium.bestValue": "いちばんお得",
+  "premium.manage": "サブスクリプションを管理",
+  "premium.noSubscription": "この Premium はここで購入されていないため、管理する項目はありません。",
+  "premium.notInApp": "iPhone アプリではまだ Premium を購入できません。",
 };
 
 export default ja;

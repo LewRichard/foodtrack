@@ -4077,3 +4077,64 @@ strong {
 .free-left {
   font-family: inherit;
 }
+
+.premium-periods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.premium-period {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.premium-period span:first-child {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.premium-period strong {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.premium-period.active {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.premium-save {
+  position: absolute;
+  top: -9px;
+  right: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--good);
+  color: #121110;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.premium-legal a {
+  color: var(--text-2);
+}
+
+.center-spinner {
+  margin: 8px auto;
+}
+
+.auth-legal a {
+  color: var(--text-2);
+}

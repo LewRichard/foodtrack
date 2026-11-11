@@ -38,11 +38,6 @@ The app picks it up the next time it's opened or brought to the front.
 
 ## Selling Premium
 
-Set **VITE_PREMIUM_CHECKOUT_URL** on Render to a hosted checkout page and **VITE_PREMIUM_PRICE** to the
-price text to show (for example `79.000đ / tháng` or `$4.99 / month`), then redeploy. Without a checkout
-URL, the upgrade screen says Premium is coming soon.
-
-The "Upgrade" button adds `client_reference_id=<user id>` and `prefilled_email=<email>` to the link
-(Stripe Payment Links read both). After payment, the provider must tell the server who paid, so it can
-add a row to `public.premium`. That webhook is the next step once you've picked a provider
-(Stripe, Paddle or Lemon Squeezy on the web; Apple In-App Purchase in the iPhone app).
+Premium is sold through Paddle; setup is in [PADDLE.md](PADDLE.md). Until Paddle is set up, the upgrade
+screen says Premium is coming soon. In the iPhone app the buy button is hidden (Apple only allows its own
+in-app purchase for subscriptions); people who bought on the web still get Premium there.

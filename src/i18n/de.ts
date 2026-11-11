@@ -695,6 +695,14 @@ const de: Messages = {
   "premium.coachBody": "Hol dir persönliche Tipps von einem KI-Ernährungscoach, der dein Tagebuch kennt.",
   "premium.planTitle": "Essenspläne sind eine Premium-Funktion",
   "premium.planBody": "Lew plant Mahlzeiten passend zu deinen Zielen und erstellt die Einkaufsliste.",
+  "legal.terms": "Nutzungsbedingungen",
+  "legal.refund": "Rückerstattung",
+  "premium.monthly": "Monatlich",
+  "premium.yearly": "Jährlich",
+  "premium.bestValue": "Bester Preis",
+  "premium.manage": "Abo verwalten",
+  "premium.noSubscription": "Dieses Premium wurde nicht hier gekauft, daher gibt es nichts zu verwalten.",
+  "premium.notInApp": "Premium kann in der iPhone-App noch nicht gekauft werden.",
 };
 
 export default de;

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FoodTrack Pricing</title>
+    <style>
+      :root { color-scheme: light dark; --bg: #f3eee8; --text: #171513; --muted: #7b736b; --accent: #171513; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #121110; --text: #f3eee8; --muted: #a49b91; --accent: #f3eee8; } }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      main { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+      h1 { font-size: 26px; margin-bottom: 4px; }
+      h2 { font-size: 18px; margin-top: 28px; }
+      .muted { color: var(--muted); }
+      a { color: var(--accent); }
+      .plans { display: grid; gap: 14px; margin: 24px 0; }
+      @media (min-width: 620px) { .plans { grid-template-columns: 1fr 1fr; } }
+      .plan { border: 1px solid color-mix(in srgb, var(--text) 15%, transparent); border-radius: 20px; padding: 18px; }
+      .plan.featured { border: 2px solid var(--text); }
+      .plan h2 { margin: 0; }
+      .price { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 18px; margin: 6px 0 0; }
+      .plan ul { padding-left: 20px; }
+      ul { padding-left: 20px; }
+      li + li { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">← Back to FoodTrack</a></p>
+      <h1>Pricing</h1>
+      <p class="muted">Simple plans. Cancel any time.</p>
+
+      <div class="plans">
+        <section class="plan">
+          <h2>Free</h2>
+          <p class="price">$0</p>
+          <ul>
+            <li>5 AI meal logs a day (photo or description)</li>
+            <li>Unlimited barcode scanning and manual logging</li>
+            <li>Water, weight and progress tracking</li>
+            <li>Streaks, badges and the streak leaderboard</li>
+            <li>Community: friends, posts and chat</li>
+          </ul>
+        </section>
+        <section class="plan featured">
+          <h2>Premium</h2>
+          <p class="price" id="premium-price">Shown at checkout in your currency</p>
+          <ul>
+            <li>Everything in Free</li>
+            <li>Unlimited AI meal logs</li>
+            <li>Chat with Lew, your AI nutritionist</li>
+            <li>AI meal plans with a shopping list</li>
+            <li>AI weekly reports on your eating</li>
+          </ul>
+        </section>
+      </div>
+
+      <p>
+        Premium is billed monthly or yearly and renews automatically until you cancel. Prices include applicable taxes.
+        Payments are handled by our reseller Paddle.com, the Merchant of Record. See our
+        <a href="/terms.html">Terms of Service</a>, <a href="/refund.html">Refund Policy</a> (14-day money-back
+        guarantee) and <a href="/privacy.html">Privacy Policy</a>.
+      </p>
+      <p>To upgrade, sign in to FoodTrack and open Profile → Your plan.</p>
+
+      <script>
+        // Fill in prices in the visitor's currency when payments are set up.
+        fetch("/api/billing/config")
+          .then((r) => r.json())
+          .then((c) => {
+            if (c.provider !== "paddle") return;
+            const s = document.createElement("script");
+            s.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+            s.onload = () => {
+              if (c.environment === "sandbox") Paddle.Environment.set("sandbox");
+              Paddle.Initialize({ token: c.clientToken });
+              const ids = [c.prices.monthly, c.prices.yearly].filter(Boolean);
+              Paddle.PricePreview({ items: ids.map((priceId) => ({ priceId, quantity: 1 })) }).then((res) => {
+                const byId = Object.fromEntries(res.data.details.lineItems.map((li) => [li.price.id, li.formattedTotals.total]));
+                const parts = [];
+                if (c.prices.monthly && byId[c.prices.monthly]) parts.push(byId[c.prices.monthly] + " / month");
+                if (c.prices.yearly && byId[c.prices.yearly]) parts.push(byId[c.prices.yearly] + " / year");
+                if (parts.length) document.getElementById("premium-price").textContent = parts.join(" or ");
+              });
+            };
+            document.head.appendChild(s);
+          })
+          .catch(() => {});
+      </script>
+    </main>
+  </body>
+</html>

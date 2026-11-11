@@ -43,8 +43,14 @@ services:
       # and supabase/premium.sql; without them nothing is limited. See docs/PREMIUM.md.
       - key: FREE_SCANS_PER_DAY
         value: "5"
-      # Optional: a hosted checkout page for Premium (e.g. a Stripe Payment Link) and the price to show.
-      - key: VITE_PREMIUM_CHECKOUT_URL
+      # Selling Premium with Paddle (see docs/PADDLE.md). Leave empty until Paddle has approved you.
+      - key: PADDLE_CLIENT_TOKEN
         sync: false
-      - key: VITE_PREMIUM_PRICE
+      - key: PADDLE_PRICE_MONTHLY
+        sync: false
+      - key: PADDLE_PRICE_YEARLY
+        sync: false
+      - key: PADDLE_WEBHOOK_SECRET
+        sync: false
+      - key: PADDLE_API_KEY
         sync: false

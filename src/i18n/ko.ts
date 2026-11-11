@@ -690,6 +690,14 @@ const ko: Messages = {
   "premium.coachBody": "식단 기록을 아는 AI 영양사에게 맞춤 조언을 받아 보세요.",
   "premium.planTitle": "AI 식단은 Premium 기능이에요",
   "premium.planBody": "Lew가 목표에 맞춰 식단을 짜고 장보기 목록도 만들어 줘요.",
+  "legal.terms": "이용약관",
+  "legal.refund": "환불 정책",
+  "premium.monthly": "월간",
+  "premium.yearly": "연간",
+  "premium.bestValue": "가장 저렴",
+  "premium.manage": "구독 관리",
+  "premium.noSubscription": "이 Premium은 여기서 구매하지 않아 관리할 내용이 없어요.",
+  "premium.notInApp": "아직 iPhone 앱에서는 Premium을 구매할 수 없어요.",
 };
 
 export default ko;

@@ -695,6 +695,14 @@ const fr: Messages = {
   "premium.coachBody": "Recevez des conseils personnalisés d'un nutritionniste IA qui connaît votre journal.",
   "premium.planTitle": "Les menus sont une fonction Premium",
   "premium.planBody": "Lew prépare des repas selon vos objectifs et vous donne la liste de courses.",
+  "legal.terms": "Conditions d'utilisation",
+  "legal.refund": "Politique de remboursement",
+  "premium.monthly": "Mensuel",
+  "premium.yearly": "Annuel",
+  "premium.bestValue": "Meilleur prix",
+  "premium.manage": "Gérer l'abonnement",
+  "premium.noSubscription": "Ce Premium n'a pas été acheté ici, il n'y a donc rien à gérer.",
+  "premium.notInApp": "Premium ne peut pas encore être acheté dans l'app iPhone.",
 };
 
 export default fr;

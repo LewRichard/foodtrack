@@ -651,6 +651,19 @@ const ja: Messages = {
   "profile.consentShortYes": "許可済み",
   "profile.consentShortNo": "未許可",
   "profile.dataSummary": "バックアップ・復元・消去",
+  "lb.tab": "ランキング",
+  "lb.best": "最長：{n}日",
+  "lb.friends": "フレンド",
+  "lb.global": "全体",
+  "lb.joinGlobal": "全体ランキングに表示する",
+  "lb.joinGlobalHelp": "FoodTrack の全ユーザーにあなたの名前と連続記録が表示されます。フレンドには常に表示されます。",
+  "lb.emptyFriends": "フレンドを追加して連続記録を競おう！",
+  "lb.emptyGlobal": "全体ランキングにはまだ誰もいません。一番乗りしよう！",
+  "lb.notJoined": "上のオプションをオンにすると全体ランキングに参加できます。",
+  "lb.noStreak": "今日食事を記録すると連続記録が始まり、ランキングに載ります。",
+  "lb.yourRank": "あなたの順位：{n}位",
+  "lb.you": "あなた",
+  "lb.open": "連続記録ランキング",
 };
 
 export default ja;

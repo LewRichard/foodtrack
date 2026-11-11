@@ -657,6 +657,19 @@ const pt: Messages = {
   "profile.consentShortYes": "Permitido",
   "profile.consentShortNo": "Ainda não",
   "profile.dataSummary": "Backup, restaurar ou apagar",
+  "lb.tab": "Ranking",
+  "lb.best": "Recorde: {n} dias",
+  "lb.friends": "Amigos",
+  "lb.global": "Todos",
+  "lb.joinGlobal": "Mostrar meu nome no ranking global",
+  "lb.joinGlobalHelp": "Qualquer pessoa no FoodTrack verá seu nome e sua sequência. Amigos sempre veem.",
+  "lb.emptyFriends": "Adicione amigos para disputar sequências juntos!",
+  "lb.emptyGlobal": "Ninguém está no ranking global ainda. Seja o primeiro!",
+  "lb.notJoined": "Ative a opção acima para entrar no ranking global.",
+  "lb.noStreak": "Registre uma refeição hoje para começar uma sequência e entrar no ranking.",
+  "lb.yourRank": "Sua posição: #{n}",
+  "lb.you": "você",
+  "lb.open": "Ranking de sequências",
 };
 
 export default pt;

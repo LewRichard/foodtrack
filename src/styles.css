@@ -3384,3 +3384,86 @@ img.avatar {
   font-weight: 700;
   color: var(--accent);
 }
+
+/* ---- Streak leaderboard ---- */
+.lb-me .row {
+  align-items: center;
+}
+
+.lb-flame {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.lb-me-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.lb-me-text strong {
+  font-size: 1.3rem;
+}
+
+.lb-public > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lb-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  gap: 0;
+}
+
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+}
+
+.lb-row + .lb-row {
+  border-top: 1px solid var(--border);
+}
+
+.lb-row.me {
+  background: var(--accent-soft);
+}
+
+.lb-rank {
+  width: 28px;
+  flex-shrink: 0;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-2);
+}
+
+.lb-row .person-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lb-row .person-name strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-you {
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.lb-days {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.lb-open {
+  align-self: stretch;
+}

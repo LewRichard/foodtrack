@@ -652,6 +652,19 @@ const zh: Messages = {
   "profile.consentShortYes": "已同意",
   "profile.consentShortNo": "尚未",
   "profile.dataSummary": "备份、恢复或清除",
+  "lb.tab": "排行",
+  "lb.best": "最长：{n} 天",
+  "lb.friends": "好友",
+  "lb.global": "全球",
+  "lb.joinGlobal": "在全球排行榜上显示我",
+  "lb.joinGlobalHelp": "所有 FoodTrack 用户都能看到你的名字和连续天数。好友始终可以看到。",
+  "lb.emptyFriends": "添加好友，一起比拼连续打卡！",
+  "lb.emptyGlobal": "全球排行榜还没有人，快来当第一名！",
+  "lb.notJoined": "打开上方选项即可加入全球排行榜。",
+  "lb.noStreak": "今天记录一餐即可开始连续打卡并参与排名。",
+  "lb.yourRank": "你的排名：第 {n} 名",
+  "lb.you": "你",
+  "lb.open": "连续打卡排行榜",
 };
 
 export default zh;

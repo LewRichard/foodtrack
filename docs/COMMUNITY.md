@@ -65,3 +65,16 @@ the Community badge updates instead.
 Works on Android and desktop browsers, and on iPhone when FoodTrack is added to the Home Screen
 (iOS 16.4+). The native iPhone app would need Apple Push Notification service (APNs) set up
 first; until then it shows the red badge on the Community tab.
+
+## Streak leaderboard
+
+Community → **Ranks** (Xếp hạng) shows how many days in a row people have logged a meal.
+
+- **Friends:** you and your friends, always visible to each other.
+- **Everyone:** the top 50 among people who turned on "Show me on the global board" (off by default).
+- The app publishes your own streak to the `streaks` table whenever your diary changes. A streak whose last
+  logged day is before yesterday counts as 0. Equal streaks share a place.
+- The database only lets people write their own row, and only shows a row to its owner, their friends, or
+  everyone if it's public, never to someone blocked.
+
+After updating the app, run `supabase/community.sql` again so the `streaks` table exists.

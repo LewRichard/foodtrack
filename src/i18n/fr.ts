@@ -656,6 +656,19 @@ const fr: Messages = {
   "profile.consentShortYes": "Autorisé",
   "profile.consentShortNo": "Pas encore",
   "profile.dataSummary": "Sauvegarder, restaurer ou effacer",
+  "lb.tab": "Classement",
+  "lb.best": "Record : {n} jours",
+  "lb.friends": "Amis",
+  "lb.global": "Tout le monde",
+  "lb.joinGlobal": "M'afficher dans le classement mondial",
+  "lb.joinGlobalHelp": "Tout le monde sur FoodTrack verra votre nom et votre série. Vos amis la voient toujours.",
+  "lb.emptyFriends": "Ajoutez des amis pour comparer vos séries !",
+  "lb.emptyGlobal": "Personne n'est encore dans le classement mondial. Soyez le premier !",
+  "lb.notJoined": "Activez l'option ci-dessus pour rejoindre le classement mondial.",
+  "lb.noStreak": "Notez un repas aujourd'hui pour lancer une série et être classé.",
+  "lb.yourRank": "Votre rang : #{n}",
+  "lb.you": "vous",
+  "lb.open": "Classement des séries",
 };
 
 export default fr;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { badges, newBadges, streak, type Badge } from "../lib/achievements.ts";
 import { actions, useAppState } from "../lib/store.ts";
+import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import Sheet from "./Sheet.tsx";
 
 const name = (b: Badge) => `badge.${b.id}` as MessageKey;
@@ -38,6 +39,7 @@ export function AchievementsPanel() {
   const s = streak(state);
   const all = useMemo(() => badges(state), [state]);
   const earned = all.filter((b) => b.earned).length;
+  const session = useSession();
 
   return (
     <div className="stack achievements">
@@ -57,6 +59,22 @@ export function AchievementsPanel() {
           <span className="muted small">{t("streak.longest", { n: s.longest })}</span>
         </div>
       </div>
+
+      {cloudEnabled && session && (
+        <button
+          className="btn lb-open"
+          onClick={() => {
+            try {
+              sessionStorage.setItem("foodtrack:communitySection", "leaderboard");
+            } catch {
+              // storage unavailable: Community opens on its feed
+            }
+            window.dispatchEvent(new CustomEvent("foodtrack:navigate", { detail: "community" }));
+          }}
+        >
+          🏆 {t("lb.open")}
+        </button>
+      )}
 
       <p className="label">{t("streak.badges", { n: earned, total: all.length })}</p>
       <div className="badge-grid">

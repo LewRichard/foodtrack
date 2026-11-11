@@ -17,6 +17,13 @@ import {
   loadConnections,
   loadConversations,
   loadFeed,
+  loadLeaderboard,
+  loadMyStreak,
+  myGlobalRank,
+  myStreakSnapshot,
+  publishStreak,
+  rankStreaks,
+  setStreakPublic,
   loadMessages,
   markRead,
   removeAvatar,
@@ -43,6 +50,7 @@ import {
   type Post,
   type Profile,
   type ReportTarget,
+  type StreakRow,
   type Visibility,
 } from "../lib/community.ts";
 import { timeAgo, todayKey } from "../lib/dates.ts";
@@ -51,7 +59,7 @@ import { entriesForDate, getState, useAppState } from "../lib/store.ts";
 import AvatarCropper from "./AvatarCropper.tsx";
 import Sheet from "./Sheet.tsx";
 
-type Section = "feed" | "chats" | "friends";
+type Section = "feed" | "chats" | "friends" | "leaderboard";
 type Person = Pick<Profile, "id" | "username" | "display_name" | "avatar_path">;
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -189,13 +197,13 @@ function Setup() {
 
 // ---- Signed in with a profile -----------------------------------------------------------------------
 
-const SECTION_KEY = "foodtrack:communitySection"; // set when a notification opens the app
+export const SECTION_KEY = "foodtrack:communitySection"; // set when a notification (or a link elsewhere) opens a section
 
 function initialSection(): Section {
   try {
     const saved = sessionStorage.getItem(SECTION_KEY);
     sessionStorage.removeItem(SECTION_KEY);
-    if (saved === "chats" || saved === "friends") return saved;
+    if (saved === "chats" || saved === "friends" || saved === "leaderboard") return saved;
   } catch {
     // storage unavailable
   }
@@ -241,6 +249,7 @@ function Home({ profile, alerts }: { profile: Profile; alerts: { messages: numbe
     { id: "feed", label: t("community.feed"), badge: 0 },
     { id: "chats", label: t("community.chats"), badge: alerts.messages },
     { id: "friends", label: t("community.friends"), badge: alerts.requests },
+    { id: "leaderboard", label: t("lb.tab"), badge: 0 },
   ];
 
   return (
@@ -277,6 +286,7 @@ function Home({ profile, alerts }: { profile: Profile; alerts: { messages: numbe
       {section === "friends" && (
         <Friends me={profile} connections={connections} reload={reloadConnections} onChat={setChatWith} />
       )}
+      {section === "leaderboard" && <Leaderboard me={profile} friendIds={friends.map((f) => f.id)} onFindFriends={() => setSection("friends")} />}
     </div>
   );
 }
@@ -1324,5 +1334,157 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
       </form>
       {reporting && <ReportSheet target="user" id={other.id} onClose={() => setReporting(false)} />}
     </div>
+  );
+}
+
+// ---- Streak leaderboard ----------------------------------------------------------------------------
+
+type Ranked = ReturnType<typeof rankStreaks<StreakRow>>[number];
+
+function Leaderboard({ me, friendIds, onFindFriends }: { me: Profile; friendIds: string[]; onFindFriends: () => void }) {
+  const { t, tp, num } = useI18n();
+  const state = useAppState();
+  const [board, setBoard] = useState<"friends" | "global">("friends");
+  const [rows, setRows] = useState<Ranked[] | null>(null);
+  const [mine, setMine] = useState<StreakRow | null | undefined>(undefined);
+  const [myRank, setMyRank] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [optimistic, setOptimistic] = useState<boolean | null>(null); // the switch moves at once, before the save finishes
+  const snapshot = myStreakSnapshot();
+  const friendKey = friendIds.join(",");
+
+  const load = useCallback(async () => {
+    setError("");
+    try {
+      await publishStreak();
+      const [list, own] = await Promise.all([loadLeaderboard(board, friendKey ? friendKey.split(",") : []), loadMyStreak()]);
+      setRows(rankStreaks(list));
+      setMine(own);
+      setMyRank(board === "global" && own?.public && snapshot.current_days > 0 ? await myGlobalRank(snapshot.current_days) : null);
+    } catch (e) {
+      setError(message(e));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board, friendKey, snapshot.current_days, state.entries.length]);
+
+  useEffect(() => {
+    setRows(null);
+    void load();
+  }, [load]);
+
+  async function togglePublic(on: boolean) {
+    setBusy(true);
+    setOptimistic(on);
+    try {
+      await setStreakPublic(on);
+      await load();
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setOptimistic(null);
+      setBusy(false);
+    }
+  }
+
+  const listed = rows?.some((r) => r.user_id === me.id) ?? false;
+
+  return (
+    <>
+      <section className="card lb-me">
+        <div className="row gap">
+          <span className="lb-flame" aria-hidden="true">
+            🔥
+          </span>
+          <div className="lb-me-text">
+            <strong>{tp("streak.days", snapshot.current_days)}</strong>
+            <span className="muted small">{t("lb.best", { n: num(snapshot.longest_days) })}</span>
+          </div>
+        </div>
+        <label className="check lb-public">
+          <input
+            type="checkbox"
+            checked={optimistic ?? Boolean(mine?.public)}
+            disabled={busy || mine === undefined}
+            onChange={(e) => void togglePublic(e.target.checked)}
+          />
+          <span>
+            <span>{t("lb.joinGlobal")}</span>
+            <span className="muted small">{t("lb.joinGlobalHelp")}</span>
+          </span>
+        </label>
+      </section>
+
+      <div className="segmented" role="tablist">
+        <button role="tab" aria-selected={board === "friends"} className={board === "friends" ? "active" : ""} onClick={() => setBoard("friends")}>
+          👥 {t("lb.friends")}
+        </button>
+        <button role="tab" aria-selected={board === "global"} className={board === "global" ? "active" : ""} onClick={() => setBoard("global")}>
+          🌏 {t("lb.global")}
+        </button>
+      </div>
+
+      {error && (
+        <div className="card">
+          <p className="error small">{error}</p>
+          <button className="btn" onClick={() => void load()}>
+            {t("community.retry")}
+          </button>
+        </div>
+      )}
+
+      {rows === null && !error ? (
+        <div className="center-page">
+          <div className="spinner dark" />
+        </div>
+      ) : (
+        rows && (
+          <>
+            {rows.length > 0 && (
+              <ol className="card lb-list">
+                {rows.map((r) => (
+                  <LeaderRow key={r.user_id} row={r} isMe={r.user_id === me.id} />
+                ))}
+              </ol>
+            )}
+            {board === "friends" && friendIds.length === 0 && (
+              <section className="card community-intro">
+                <p className="muted">{t("lb.emptyFriends")}</p>
+                <button className="btn primary" onClick={onFindFriends}>
+                  {t("community.findFriends")}
+                </button>
+              </section>
+            )}
+            {board === "global" && rows.length === 0 && <p className="muted small center">{t("lb.emptyGlobal")}</p>}
+            {board === "global" && !listed && (
+              <p className="muted small center">
+                {!mine?.public ? t("lb.notJoined") : snapshot.current_days === 0 ? t("lb.noStreak") : myRank ? t("lb.yourRank", { n: num(myRank) }) : ""}
+              </p>
+            )}
+          </>
+        )
+      )}
+    </>
+  );
+}
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function LeaderRow({ row, isMe }: { row: Ranked; isMe: boolean }) {
+  const { t, num } = useI18n();
+  const p = row.profiles;
+  return (
+    <li className={`lb-row ${isMe ? "me" : ""}`}>
+      <span className="lb-rank">{row.live > 0 && row.rank <= 3 ? MEDALS[row.rank - 1] : row.live > 0 ? row.rank : "–"}</span>
+      <Avatar name={p.display_name || p.username} path={p.avatar_path} size="sm" />
+      <span className="person-name">
+        <strong>
+          {p.display_name || p.username}
+          {isMe && <span className="lb-you"> · {t("lb.you")}</span>}
+        </strong>
+        <span className="muted small">{t("lb.best", { n: num(row.longest_days) })}</span>
+      </span>
+      <span className={`lb-days ${row.live === 0 ? "muted" : ""}`}>🔥 {num(row.live)}</span>
+    </li>
   );
 }

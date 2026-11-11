@@ -656,6 +656,19 @@ const vi: Messages = {
   "profile.consentShortYes": "Đã đồng ý",
   "profile.consentShortNo": "Chưa",
   "profile.dataSummary": "Sao lưu, khôi phục hoặc xoá",
+  "lb.tab": "Xếp hạng",
+  "lb.best": "Kỷ lục: {n} ngày",
+  "lb.friends": "Bạn bè",
+  "lb.global": "Toàn cầu",
+  "lb.joinGlobal": "Hiện tôi trên bảng toàn cầu",
+  "lb.joinGlobalHelp": "Mọi người dùng FoodTrack sẽ thấy tên và chuỗi ngày của bạn. Bạn bè thì luôn thấy.",
+  "lb.emptyFriends": "Kết bạn để đua chuỗi ngày cùng nhau!",
+  "lb.emptyGlobal": "Chưa có ai trên bảng toàn cầu. Hãy là người đầu tiên!",
+  "lb.notJoined": "Bật tuỳ chọn ở trên để tham gia bảng toàn cầu.",
+  "lb.noStreak": "Ghi một bữa hôm nay để bắt đầu chuỗi và được xếp hạng.",
+  "lb.yourRank": "Hạng của bạn: #{n}",
+  "lb.you": "bạn",
+  "lb.open": "Bảng xếp hạng chuỗi ngày",
 };
 
 export default vi;

@@ -651,6 +651,19 @@ const ko: Messages = {
   "profile.consentShortYes": "허용됨",
   "profile.consentShortNo": "아직",
   "profile.dataSummary": "백업, 복원 또는 삭제",
+  "lb.tab": "랭킹",
+  "lb.best": "최고: {n}일",
+  "lb.friends": "친구",
+  "lb.global": "전체",
+  "lb.joinGlobal": "전체 랭킹에 나를 표시",
+  "lb.joinGlobalHelp": "FoodTrack의 모든 사용자가 이름과 연속 기록을 볼 수 있어요. 친구는 항상 볼 수 있어요.",
+  "lb.emptyFriends": "친구를 추가하고 연속 기록을 겨뤄 보세요!",
+  "lb.emptyGlobal": "아직 전체 랭킹에 아무도 없어요. 첫 번째가 되어 보세요!",
+  "lb.notJoined": "위 옵션을 켜면 전체 랭킹에 참여해요.",
+  "lb.noStreak": "오늘 식사를 기록하면 연속 기록이 시작되고 랭킹에 올라요.",
+  "lb.yourRank": "내 순위: {n}위",
+  "lb.you": "나",
+  "lb.open": "연속 기록 랭킹",
 };
 
 export default ko;

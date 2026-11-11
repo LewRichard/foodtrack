@@ -668,6 +668,19 @@ const en = {
   "profile.consentShortYes": "Allowed",
   "profile.consentShortNo": "Not yet",
   "profile.dataSummary": "Back up, restore or clear",
+  "lb.tab": "Ranks",
+  "lb.best": "Best: {n} days",
+  "lb.friends": "Friends",
+  "lb.global": "Everyone",
+  "lb.joinGlobal": "Show me on the global board",
+  "lb.joinGlobalHelp": "Anyone on FoodTrack can then see your name and streak. Friends always see it.",
+  "lb.emptyFriends": "Add friends to race your streaks together!",
+  "lb.emptyGlobal": "Nobody is on the global board yet. Be the first!",
+  "lb.notJoined": "Turn on the option above to join the global board.",
+  "lb.noStreak": "Log a meal today to start a streak and get ranked.",
+  "lb.yourRank": "Your rank: #{n}",
+  "lb.you": "you",
+  "lb.open": "Streak leaderboard",
 };
 
 export default en;

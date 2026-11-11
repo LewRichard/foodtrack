@@ -444,6 +444,39 @@ create policy "avatars: delete own" on storage.objects
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ---------------------------------------------------------------------------------------------
+-- Streak leaderboard. Each person's app publishes their own streak here. Friends always see each
+-- other's; the global board only lists people who chose to join it. Blocked people never see each other.
+-- ---------------------------------------------------------------------------------------------
+
+create table if not exists public.streaks (
+  user_id uuid primary key default auth.uid() references public.profiles (id) on delete cascade,
+  current_days integer not null default 0 check (current_days between 0 and 5000),
+  longest_days integer not null default 0 check (longest_days between 0 and 5000 and longest_days >= current_days),
+  last_date date, -- the last day logged; a streak that ended before yesterday counts as 0
+  public boolean not null default false, -- listed on the global board
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists streaks_public_rank on public.streaks (current_days desc) where public;
+
+alter table public.streaks enable row level security;
+
+drop policy if exists "streaks: own, friends', or public" on public.streaks;
+create policy "streaks: own, friends', or public" on public.streaks
+  for select to authenticated
+  using (user_id = auth.uid() or ((public or public.is_friend(user_id)) and not public.is_blocked_with(user_id)));
+drop policy if exists "streaks: publish own" on public.streaks;
+create policy "streaks: publish own" on public.streaks
+  for insert to authenticated with check (user_id = auth.uid() and (last_date is null or last_date <= current_date + 1));
+drop policy if exists "streaks: update own" on public.streaks;
+create policy "streaks: update own" on public.streaks
+  for update to authenticated using (user_id = auth.uid())
+  with check (user_id = auth.uid() and (last_date is null or last_date <= current_date + 1));
+drop policy if exists "streaks: remove own" on public.streaks;
+create policy "streaks: remove own" on public.streaks
+  for delete to authenticated using (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------------------------
 -- Permissions for the functions
 -- ---------------------------------------------------------------------------------------------
 

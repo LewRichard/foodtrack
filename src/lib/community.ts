@@ -7,7 +7,9 @@ import { accessToken, cloudClient, onBeforeDeleteAccount } from "./cloud.ts";
 import { isNative } from "./native.ts";
 import { reminderSupport, subscribeThisDevice, unsubscribeThisDevice } from "./reminders.ts";
 import { photoSquare } from "./image.ts";
-import { actions, getState } from "./store.ts";
+import { actions, getState, onStateChange } from "./store.ts";
+import { streak } from "./achievements.ts";
+import { addDays, todayKey } from "./dates.ts";
 
 // Community: profiles, friends, posts, comments, likes and chat, all stored in Supabase.
 // Who can see or do what is enforced by the database (supabase/community.sql); this file just asks.
@@ -540,3 +542,115 @@ onBeforeDeleteAccount(async () => {
     if (paths.length) await client.storage.from(bucket).remove(paths);
   }
 });
+
+// ---- Streak leaderboard ----------------------------------------------------------------------------
+
+export interface StreakRow {
+  user_id: string;
+  current_days: number;
+  longest_days: number;
+  last_date: string | null;
+  public: boolean;
+  profiles: Profile;
+}
+
+/** A published streak as it stands today: one that ended before yesterday has run out. */
+export function liveStreak(row: Pick<StreakRow, "current_days" | "last_date">, today = todayKey()): number {
+  return row.last_date && row.last_date >= addDays(today, -1) ? row.current_days : 0;
+}
+
+/** Ranks rows by live streak, then best streak, giving equal streaks the same place (1, 1, 3). */
+export function rankStreaks<T extends Pick<StreakRow, "current_days" | "longest_days" | "last_date">>(rows: T[], today = todayKey()): (T & { live: number; rank: number })[] {
+  const sorted = rows
+    .map((r) => ({ ...r, live: liveStreak(r, today) }))
+    .sort((a, b) => b.live - a.live || b.longest_days - a.longest_days);
+  return sorted.map((r) => ({ ...r, rank: sorted.findIndex((x) => x.live === r.live) + 1 }));
+}
+
+/** What my diary says my streak is, in the shape the leaderboard stores. */
+export function myStreakSnapshot(today = todayKey()): { current_days: number; longest_days: number; last_date: string | null } {
+  const state = getState();
+  const s = streak(state, today);
+  let last: string | null = null;
+  if (s.loggedToday) last = today;
+  else if (s.current > 0) last = addDays(today, -1);
+  else last = state.entries.reduce<string | null>((max, e) => (e.date <= today && (!max || e.date > max) ? e.date : max), null);
+  return { current_days: s.current, longest_days: Math.max(s.longest, s.current), last_date: last };
+}
+
+const STREAK_COLUMNS = "user_id, current_days, longest_days, last_date, public, profiles!streaks_user_id_fkey(id, username, display_name, avatar_path)";
+
+export async function loadMyStreak(): Promise<StreakRow | null> {
+  const id = await me();
+  const { data, error } = await (await db()).from("streaks").select(STREAK_COLUMNS).eq("user_id", id).maybeSingle();
+  fail(error);
+  return data as unknown as StreakRow | null;
+}
+
+let publishedKey = "";
+
+/** Publishes my streak if it changed since last time. Needs a Community profile. */
+export async function publishStreak(force = false): Promise<void> {
+  if (!myProfile) return;
+  const snapshot = myStreakSnapshot();
+  const key = `${myProfile.id}:${JSON.stringify(snapshot)}`;
+  if (!force && key === publishedKey) return;
+  const { error } = await (await db())
+    .from("streaks")
+    .upsert({ user_id: myProfile.id, ...snapshot, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  fail(error);
+  publishedKey = key;
+}
+
+/** Keeps my published streak in step with my diary while signed in with a Community profile. */
+export function useStreakPublisher(userId: string | null): void {
+  useEffect(() => {
+    if (!userId) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const soon = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => void publishStreak().catch(() => {}), 1500);
+    };
+    // My Community profile may not be loaded yet if neither Community nor Profile has been opened.
+    if (myProfile === undefined) void loadMyProfile().catch(() => {});
+    soon();
+    const stopState = onStateChange(soon);
+    profileListeners.add(soon);
+    return () => {
+      clearTimeout(timer);
+      stopState();
+      profileListeners.delete(soon);
+    };
+  }, [userId]);
+}
+
+export async function setStreakPublic(on: boolean): Promise<void> {
+  await publishStreak(true);
+  const { error } = await (await db()).from("streaks").update({ public: on }).eq("user_id", await me());
+  fail(error);
+}
+
+/** Friends' streaks (and mine), or the global top 50 among people who joined it. */
+export async function loadLeaderboard(kind: "friends" | "global", friendIds: string[], today = todayKey()): Promise<StreakRow[]> {
+  const client = await db();
+  let query = client.from("streaks").select(STREAK_COLUMNS);
+  query =
+    kind === "friends"
+      ? query.in("user_id", [await me(), ...friendIds])
+      : query.eq("public", true).gte("last_date", addDays(today, -1)).order("current_days", { ascending: false }).order("longest_days", { ascending: false }).limit(50);
+  const { data, error } = await query;
+  fail(error);
+  return ((data ?? []) as unknown as StreakRow[]).filter((r) => r.profiles);
+}
+
+/** My place on the global board (people with a longer live streak, plus one). */
+export async function myGlobalRank(current: number, today = todayKey()): Promise<number> {
+  const { count, error } = await (await db())
+    .from("streaks")
+    .select("user_id", { count: "exact", head: true })
+    .eq("public", true)
+    .gte("last_date", addDays(today, -1))
+    .gt("current_days", current);
+  fail(error);
+  return (count ?? 0) + 1;
+}

@@ -10,7 +10,7 @@ import { useSyncStatus } from "./lib/sync.ts";
 import AuthScreen from "./components/AuthScreen.tsx";
 import { BadgeCelebration } from "./components/Achievements.tsx";
 import Onboarding from "./components/Onboarding.tsx";
-import { refreshAlerts, useCommunityAlerts } from "./lib/community.ts";
+import { refreshAlerts, useCommunityAlerts, useStreakPublisher } from "./lib/community.ts";
 import { useHealthSync } from "./lib/health.ts";
 import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
@@ -71,6 +71,7 @@ export default function App() {
   const badge = alerts.messages + alerts.requests;
   useEffect(() => watchTheme(theme), [theme]);
   useHealthSync();
+  useStreakPublisher(cloudEnabled ? (session?.user.id ?? null) : null);
 
   // Screen readers and the browser's own UI (e.g. translation offers) follow the page language.
   useEffect(() => {

@@ -24,10 +24,10 @@ Before you start, have these live (Paddle checks them when approving your accoun
    - **API keys → New API key** with permission to read customers and create customer portal sessions →
      copy it. (Optional; it powers the "Manage subscription" button.)
 4. **Developer tools → Notifications → New destination**:
-   - URL: `https://YOUR-DOMAIN/api/paddle/webhook`
+   - URL: `https://foodtrack.fit/api/paddle/webhook`
    - Events: all **subscription.*** events (created, updated, activated, canceled, paused, resumed, past_due)
    - Save, then open it and copy the **secret key**.
-5. **Checkout → Checkout settings**: set **Default payment link** to `https://YOUR-DOMAIN/` and add your
+5. **Checkout → Checkout settings**: set **Default payment link** to `https://foodtrack.fit/` and add your
    domain under approved domains.
 6. On Render → Environment, set and redeploy:
 

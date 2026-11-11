@@ -4,6 +4,7 @@ import { addDays, formatDateLabel, formatLongDate, parseDateKey, todayKey } from
 import { actions, latestWeight, useAppState } from "../lib/store.ts";
 import { projectedGoalDate, series, weeklyRate, weightAxis, type WeighIn } from "../lib/weight.ts";
 import Sheet from "./Sheet.tsx";
+import { Icon } from "./Icon.tsx";
 
 const MIN_KG = 20;
 const MAX_KG = 400;
@@ -132,7 +133,7 @@ export function WeightTile({ date }: { date: string }) {
     <section className="card meal">
       <div className="meal-head">
         <span className="tile tile-weight" aria-hidden="true">
-          ⚖️
+          <Icon name="scale" />
         </span>
         <div className="meal-title">
           <h3>{t("weight.title")}</h3>
@@ -147,7 +148,7 @@ export function WeightTile({ date }: { date: string }) {
           </span>
         </div>
         <button className="plus-btn" onClick={() => setOpen(true)} aria-label={t("weight.log")}>
-          {today !== undefined ? "✎" : "+"}
+          <Icon name={today !== undefined ? "pen" : "plus"} size={18} strokeWidth={2} />
         </button>
       </div>
       {open && <WeightSheet date={date} onClose={() => setOpen(false)} />}
@@ -217,9 +218,15 @@ export function WeightProgress() {
     setHover(best);
   }
 
-  const xLabels = [points[0], points[Math.floor(points.length / 2)], points[points.length - 1]].filter(
-    (p, i, a) => p && a.findIndex((q) => q?.date === p.date) === i,
-  );
+  // First, middle and last dates, skipping any that would overlap the one before (about 70 px apart).
+  const xLabels = [points[0], points[Math.floor(points.length / 2)], points[points.length - 1]]
+    .filter((p, i, a) => p && a.findIndex((q) => q?.date === p.date) === i)
+    .reduce<WeighIn[]>((kept, p) => {
+      const prev = kept[kept.length - 1];
+      if (!prev || x(p) - x(prev) >= 70) kept.push(p);
+      else if (p === points[points.length - 1] && kept.length > 1) kept[kept.length - 1] = p;
+      return kept;
+    }, []);
 
   return (
     <section className="card chart-card weight-card">
@@ -328,14 +335,14 @@ export function WeightProgress() {
           <div className="weight-goal">
             {targetWeight === null ? (
               <button className="link" onClick={() => setEditing(latest!.date)}>
-                🎯 {t("weight.setGoal")}
+                <Icon name="target" size={16} /> {t("weight.setGoal")}
               </button>
             ) : Math.abs(targetWeight - latest!.kg) < 0.05 ? (
-              <p>🎉 {t("weight.reached", { kg: num(targetWeight, 1) })}</p>
+              <p><Icon name="party" size={16} /> {t("weight.reached", { kg: num(targetWeight, 1) })}</p>
             ) : (
               <>
                 <p>
-                  🎯 {t("weight.toGo", { n: num(Math.abs(targetWeight - latest!.kg), 1), kg: num(targetWeight, 1) })}
+                  <Icon name="target" size={16} /> {t("weight.toGo", { n: num(Math.abs(targetWeight - latest!.kg), 1), kg: num(targetWeight, 1) })}
                 </p>
                 <p className="muted small">
                   {eta

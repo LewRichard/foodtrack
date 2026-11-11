@@ -4,6 +4,7 @@
 import { averageHealthScore, sumNutrients } from "../../shared/nutrition.ts";
 import { addDays, todayKey } from "./dates.ts";
 import type { AppState } from "./store.ts";
+import type { IconName } from "../components/Icon.tsx";
 import { series } from "./weight.ts";
 
 export const WATER_GOAL = 8; // glasses
@@ -66,7 +67,7 @@ export type BadgeId =
 
 export interface Badge {
   id: BadgeId;
-  icon: string;
+  icon: IconName;
   target: number;
   progress: number; // towards target (capped)
   earned: boolean;
@@ -124,28 +125,28 @@ export function badges(s: AppState, today = todayKey()): Badge[] {
     latest !== undefined &&
     (goalType === "lose" ? latest <= s.targetWeight : goalType === "gain" ? latest >= s.targetWeight : Math.abs(latest - s.targetWeight) < 0.5);
 
-  const list: [BadgeId, string, number, number][] = [
-    ["first_meal", "🍽️", 1, s.entries.length],
-    ["first_scan", "📸", 1, count(s.entries, (e) => e.source === "scan")],
-    ["streak_3", "🔥", 3, longest],
-    ["streak_7", "⚡", 7, longest],
-    ["streak_30", "🏆", 30, longest],
-    ["streak_100", "💎", 100, longest],
-    ["meals_100", "💯", 100, s.entries.length],
-    ["on_target", "🎯", 1, count(days, onTarget)],
-    ["on_target_7", "🏹", 7, count(days, onTarget)],
-    ["protein_day", "💪", 1, count(days, (d) => goal.protein > 0 && d.protein >= goal.protein)],
-    ["protein_5", "🦾", 5, count(days, (d) => goal.protein > 0 && d.protein >= goal.protein)],
-    ["water_day", "💧", 1, waterDays.size],
-    ["water_7", "🌊", 7, longestRun(waterDays)],
-    ["green_meal", "🥗", 1, count(s.entries, (e) => (e.healthScore ?? 0) >= 9)],
-    ["healthy_day", "🌿", 1, count(days, (d) => d.health !== null && d.health >= 8)],
-    ["healthy_week", "🌳", 7, count(days, (d) => d.health !== null && d.health >= 7)],
-    ["first_weigh", "⚖️", 1, weights.length],
-    ["weigh_10", "📈", 10, weights.length],
-    ["lost_1", "📉", 1, lost],
-    ["lost_5", "🥇", 5, lost],
-    ["goal_weight", "🏅", 1, reachedGoal ? 1 : 0],
+  const list: [BadgeId, IconName, number, number][] = [
+    ["first_meal", "utensils", 1, s.entries.length],
+    ["first_scan", "camera", 1, count(s.entries, (e) => e.source === "scan")],
+    ["streak_3", "flame", 3, longest],
+    ["streak_7", "zap", 7, longest],
+    ["streak_30", "trophy", 30, longest],
+    ["streak_100", "gem", 100, longest],
+    ["meals_100", "list-checks", 100, s.entries.length],
+    ["on_target", "target", 1, count(days, onTarget)],
+    ["on_target_7", "crosshair", 7, count(days, onTarget)],
+    ["protein_day", "dumbbell", 1, count(days, (d) => goal.protein > 0 && d.protein >= goal.protein)],
+    ["protein_5", "award", 5, count(days, (d) => goal.protein > 0 && d.protein >= goal.protein)],
+    ["water_day", "droplet", 1, waterDays.size],
+    ["water_7", "waves", 7, longestRun(waterDays)],
+    ["green_meal", "salad", 1, count(s.entries, (e) => (e.healthScore ?? 0) >= 9)],
+    ["healthy_day", "leaf", 1, count(days, (d) => d.health !== null && d.health >= 8)],
+    ["healthy_week", "tree", 7, count(days, (d) => d.health !== null && d.health >= 7)],
+    ["first_weigh", "scale", 1, weights.length],
+    ["weigh_10", "trend-up", 10, weights.length],
+    ["lost_1", "trend-down", 1, lost],
+    ["lost_5", "medal", 5, lost],
+    ["goal_weight", "flag", 1, reachedGoal ? 1 : 0],
   ];
   return list.map(([id, icon, target, value]) => ({ id, icon, target, progress: Math.min(value, target), earned: value >= target }));
 }

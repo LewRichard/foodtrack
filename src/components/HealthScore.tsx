@@ -8,7 +8,6 @@ const TIER_LABEL: Record<HealthTier, MessageKey> = {
   poor: "health.poor",
 };
 
-const TIER_ICON: Record<HealthTier, string> = { great: "🌿", good: "👍", fair: "⚖️", poor: "🍟" };
 
 /** A ring showing the score out of 10, coloured by how healthy it is (and always labelled in words). */
 export function ScoreRing({ score, size = 64 }: { score: number; size?: number }) {
@@ -40,11 +39,13 @@ export function HealthScoreCard({ score, reason }: { score: number; reason: stri
   const tier = healthTier(score);
   return (
     <div className="card health-card" role="group" aria-label={t("health.aria", { score })}>
-      <ScoreRing score={score} />
+      <span className={`score-dot tier-${tier}`} aria-hidden="true">
+        {score}
+      </span>
       <div>
         <p className="label">{t("health.title")}</p>
         <strong>
-          {TIER_ICON[tier]} {t(TIER_LABEL[tier])} · {score}/10
+          {t(TIER_LABEL[tier])} · {score}/10
         </strong>
         {reason && <p className="muted small">{reason}</p>}
       </div>
@@ -52,13 +53,13 @@ export function HealthScoreCard({ score, reason }: { score: number; reason: stri
   );
 }
 
-/** Small "🌿 8" chip next to a diary entry. */
+/** Small coloured score dot next to a diary entry. */
 export function HealthChip({ score }: { score: number }) {
   const { t } = useI18n();
   const tier = healthTier(score);
   return (
     <span className={`health-chip tier-${tier}`} title={t("health.aria", { score })}>
-      {TIER_ICON[tier]} {score}
+      {score}
     </span>
   );
 }

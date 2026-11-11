@@ -1,14 +1,15 @@
 import type { FoodItem } from "../../shared/nutrition.ts";
+import type { IconName } from "../components/Icon.tsx";
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 export const MEAL_TYPES: MealType[] = ["breakfast", "lunch", "dinner", "snack"];
 
-export const MEAL_ICONS: Record<MealType, string> = {
-  breakfast: "🍳",
-  lunch: "🥗",
-  dinner: "🍲",
-  snack: "🍎",
+export const MEAL_ICONS: Record<MealType, IconName> = {
+  breakfast: "coffee",
+  lunch: "salad",
+  dinner: "soup",
+  snack: "apple",
 };
 
 /** Share of the daily calorie goal suggested for each meal (sums to 1). */

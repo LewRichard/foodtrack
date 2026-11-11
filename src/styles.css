@@ -1,84 +1,92 @@
 :root {
   color-scheme: light;
-  --bg: #f4f7f3;
-  --bg-glow: #d9f5df;
+  /* Warm, quiet palette: off-white paper, ink text, colour only where it carries meaning. */
+  --bg: #f3eee8;
+  --bg-glow: #f3eee8;
   --surface: #ffffff;
-  --surface-2: #f2f4f1;
-  --border: #e8ece7;
-  --text: #0f1a12;
-  --text-2: #5d665f;
-  --accent: #16a34a;
-  --accent-strong: #15803d;
-  --accent-soft: #e6f7ea;
+  --surface-2: #f6f2ed;
+  --border: #e9e2da;
+  --text: #171513;
+  --text-2: #7b736b;
+  --accent: #171513; /* primary actions are ink */
+  --accent-strong: #000000;
+  --accent-soft: #efe9e2;
   --on-accent: #ffffff;
-  --ink: #0f1a12; /* selected day pill, banner arrow */
+  --good: #34c759; /* healthy / done */
+  --good-soft: #e4f6e8;
+  --ink: #171513;
   --on-ink: #ffffff;
-  --danger: #c62828;
-  --warn: #b45309;
-  --warn-soft: #fef3c7;
-  --ring-start: #4ade80;
-  --ring-end: #16a34a;
-  --ring-track: #edf1ec;
-  --banner-start: #2fcf63;
-  --banner-end: #a8ea5f;
-  --on-banner: #0b3a1a;
+  --danger: #d1453b;
+  --warn: #c2700a;
+  --warn-soft: #fbefd9;
+  --ring-start: #4cd97b;
+  --ring-end: #2bb35a;
+  --ring-track: #efe9e2;
+  --banner-start: #171513;
+  --banner-end: #2b2724;
+  --on-banner: #ffffff;
   /* Macro colours (each is always shown next to its label) */
-  --protein: #f6765a;
-  --carbs: #4aa8ef;
-  --fat: #f5bd36;
-  --water-start: #4aaaf2;
-  --water-end: #1f7fe0;
-  --neutral-fill: #8a938b;
-  --chart-bar: #22a652;
-  --grid: #e6e9e4;
-  --tile-breakfast: #fff3e3;
-  --tile-lunch: #e7f5fb;
-  --tile-dinner: #fdeeea;
-  --tile-snack: #fdecef;
-  --tile-water: #e7f1fd;
-  --tile-weight: #efeafd;
-  --shadow: 0 1px 2px rgb(16 32 20 / 0.04), 0 8px 24px rgb(16 32 20 / 0.05);
-  --shadow-float: 0 8px 32px rgb(16 32 20 / 0.12);
-  --radius: 24px;
-  font-family: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --protein: #e8609c;
+  --carbs: #5568f0;
+  --fat: #a56cf0;
+  --water-start: #7aa7f7;
+  --water-end: #4f7ff0;
+  --neutral-fill: #a39a90;
+  --chart-bar: #171513;
+  --grid: #ece5dd;
+  --tile-breakfast: #f6f2ed;
+  --tile-lunch: #f6f2ed;
+  --tile-dinner: #f6f2ed;
+  --tile-snack: #f6f2ed;
+  --tile-water: #f6f2ed;
+  --tile-weight: #f6f2ed;
+  --shadow: 0 1px 2px rgb(40 30 20 / 0.03), 0 6px 20px rgb(40 30 20 / 0.04);
+  --shadow-float: 0 10px 30px rgb(40 30 20 / 0.12);
+  --radius: 22px;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
 /* Dark theme: set by src/lib/theme.ts (and index.html at startup) from Profile → Appearance. */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0f1210;
-  --bg-glow: #12301b;
-  --surface: #1a1e1b;
-  --surface-2: #252a26;
-  --border: #2c322d;
-  --text: #f2f5f1;
-  --text-2: #a8b1a9;
-  --accent: #22c55e;
-  --accent-strong: #4ade80;
-  --accent-soft: #163821;
-  --on-accent: #06200f;
-  --ink: #f2f5f1;
-  --on-ink: #0f1210;
-  --danger: #ef5350;
-  --warn: #fbbf24;
-  --warn-soft: #3a2a07;
-  --ring-track: #262b27;
-  --on-banner: #06240f;
-  --protein: #f4836a;
-  --carbs: #5ab2f2;
-  --fat: #f2c14e;
-  --neutral-fill: #7d857e;
-  --chart-bar: #2fbf63;
-  --grid: #2a2f2b;
-  --tile-breakfast: #3a2e1c;
-  --tile-lunch: #1b3038;
-  --tile-dinner: #3a2420;
-  --tile-snack: #3a2028;
-  --tile-water: #1a2b3d;
-  --tile-weight: #2a2340;
+  --bg: #121110;
+  --bg-glow: #121110;
+  --surface: #1c1a18;
+  --surface-2: #262320;
+  --border: #322e2a;
+  --text: #f3eee8;
+  --text-2: #a49b91;
+  --accent: #f3eee8;
+  --accent-strong: #ffffff;
+  --accent-soft: #2b2723;
+  --on-accent: #121110;
+  --good: #3ddc6b;
+  --good-soft: #17301f;
+  --ink: #f3eee8;
+  --on-ink: #121110;
+  --danger: #f0675c;
+  --warn: #f2b84b;
+  --warn-soft: #3a2a10;
+  --ring-track: #2b2723;
+  --banner-start: #f3eee8;
+  --banner-end: #e4ddd5;
+  --on-banner: #121110;
+  --protein: #f07aae;
+  --carbs: #7a89f5;
+  --fat: #bb8cf5;
+  --neutral-fill: #8a8178;
+  --chart-bar: #f3eee8;
+  --grid: #2c2925;
+  --tile-breakfast: #262320;
+  --tile-lunch: #262320;
+  --tile-dinner: #262320;
+  --tile-snack: #262320;
+  --tile-water: #262320;
+  --tile-weight: #262320;
   --shadow: none;
-  --shadow-float: 0 8px 32px rgb(0 0 0 / 0.5);
+  --shadow-float: 0 10px 30px rgb(0 0 0 / 0.5);
 }
 
 * {
@@ -207,7 +215,7 @@ a {
   color: var(--on-banner);
   display: grid;
   place-items: center;
-  box-shadow: 0 10px 24px rgb(34 166 82 / 0.35);
+  box-shadow: 0 10px 24px rgb(23 21 19 / 0.25);
 }
 
 .tab-scan .icon {
@@ -225,7 +233,7 @@ h1 {
   font-size: 28px;
   line-height: 1.15;
   letter-spacing: -0.02em;
-  font-weight: 800;
+  font-weight: 650;
   margin: 0;
 }
 
@@ -475,7 +483,7 @@ select:focus {
   background: linear-gradient(140deg, #22c55e, #15803d);
   color: #ffffff;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 650;
   display: grid;
   place-items: center;
   box-shadow: 0 6px 16px rgb(22 163 74 / 0.3);
@@ -540,7 +548,7 @@ select:focus {
 }
 
 .week-day.selected .week-dot.on {
-  background: #4ade80;
+  background: var(--good);
 }
 
 .save-warning {
@@ -611,7 +619,7 @@ select:focus {
 
 .ring-label strong {
   font-size: 40px;
-  font-weight: 800;
+  font-weight: 650;
   letter-spacing: -0.03em;
   line-height: 1.05;
 }
@@ -665,7 +673,7 @@ select:focus {
 
 .kpi-text strong {
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 650;
   letter-spacing: -0.01em;
 }
 
@@ -696,7 +704,7 @@ select:focus {
 
 .macro-value strong {
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .macro-value small {
@@ -741,7 +749,7 @@ select:focus {
   text-align: left;
   color: var(--on-banner);
   background: linear-gradient(100deg, var(--banner-start), var(--banner-end));
-  box-shadow: 0 10px 28px rgb(47 207 99 / 0.28);
+  box-shadow: none;
 }
 
 .scan-banner:active {
@@ -767,7 +775,7 @@ select:focus {
 
 .scan-banner-text strong {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .scan-banner-text span {
@@ -798,7 +806,7 @@ select:focus {
 
 .section-head h2 {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 650;
   letter-spacing: -0.01em;
   margin: 0;
 }
@@ -1172,7 +1180,7 @@ select:focus {
 
 .big-kcal strong {
   font-size: 32px;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1;
 }
 
@@ -1377,7 +1385,7 @@ select:focus {
 
 .stat strong {
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 650;
 }
 
 .chart-wrap {
@@ -2204,7 +2212,7 @@ img.avatar {
   width: 130px;
   text-align: center;
   font-size: 34px;
-  font-weight: 800;
+  font-weight: 650;
   padding: 8px;
   font-variant-numeric: tabular-nums;
 }
@@ -2238,7 +2246,7 @@ img.avatar {
 
 .weight-stats strong {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
@@ -2316,7 +2324,7 @@ img.avatar {
 
 .score-ring .score-text {
   fill: var(--text);
-  font-weight: 800;
+  font-weight: 650;
 }
 
 /* Score colours: green → amber → red; the label in words always sits next to them. */
@@ -2670,7 +2678,7 @@ img.avatar {
 
 .onb-number input {
   font-size: 30px;
-  font-weight: 800;
+  font-weight: 650;
   padding: 12px 16px;
   font-variant-numeric: tabular-nums;
 }
@@ -2693,7 +2701,7 @@ img.avatar {
 
 .onb-kcal {
   font-size: 52px;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1.1;
 }
 
@@ -2735,7 +2743,7 @@ img.avatar {
   border: 0;
   border-radius: 999px;
   padding: 8px 12px;
-  font-weight: 800;
+  font-weight: 650;
   font-size: 16px;
   background: #fff1e0;
   color: #9a3412;
@@ -3466,4 +3474,464 @@ img.avatar {
 
 .lb-open {
   align-self: stretch;
+}
+
+/* =====================================================================================================
+   Visual refresh: warm paper background, ink actions, line icons, mono numbers.
+   Kept as one layer at the end so it reads as the design system on top of the layout rules above.
+   ===================================================================================================== */
+
+body {
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ic {
+  flex-shrink: 0;
+  vertical-align: -0.18em;
+}
+
+/* Type */
+h1 {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.label,
+.kpi-label,
+.settings-heading {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-2);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Numbers and dates in monospace, like a nutrition label */
+.hello-date,
+.kpi-text strong,
+.ring-label strong,
+.macro-value strong,
+.entry-kcal,
+.big-kcal strong,
+.plan-total strong,
+.plan-kcal,
+.lb-days,
+.lb-rank,
+.streak-chip,
+.score-dot,
+.health-chip,
+.badge-tile .tiny:last-child {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.hello-date {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.hello h1 {
+  font-weight: 600;
+}
+
+.ring-label strong {
+  font-weight: 500;
+  font-size: 38px;
+}
+
+.kpi-text strong,
+.macro-value strong {
+  font-weight: 500;
+}
+
+/* Surfaces */
+.card,
+.macro-card {
+  border-radius: var(--radius);
+  border-color: var(--border);
+}
+
+/* Buttons: pill shapes, ink primary */
+.btn {
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 600;
+  background: var(--surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.link {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--text) 30%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+a {
+  color: var(--text);
+}
+
+.icon-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.plus-btn {
+  display: grid;
+  place-items: center;
+}
+
+/* Segmented controls */
+.segmented {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.segmented button.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Bottom bar */
+.tab.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.tab-scan {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+/* Diary */
+.scan-banner {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.scan-banner-icon {
+  background: color-mix(in srgb, var(--on-ink) 14%, transparent);
+}
+
+.scan-banner-go {
+  background: var(--on-ink);
+  color: var(--ink);
+}
+
+.kpi-icon,
+.tile,
+.settings-icon,
+.coach-avatar,
+.onb-choice-icon {
+  color: var(--text);
+}
+
+.kpi-icon {
+  background: var(--surface-2);
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+}
+
+.coach-avatar {
+  background: var(--surface-2);
+}
+
+.week-day.selected .week-dot.on {
+  background: var(--good);
+}
+
+/* Streak chip */
+.streak-chip .ic {
+  color: #f26a1b;
+}
+
+.streak-chip.cold .ic {
+  color: var(--text-2);
+}
+
+/* Health score: a solid coloured dot with the number */
+.score-dot {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 500;
+  color: #121110;
+  background: var(--good);
+}
+
+.score-dot.tier-good {
+  background: #a6e05b;
+}
+
+.score-dot.tier-fair {
+  background: #f4c74c;
+}
+
+.score-dot.tier-poor {
+  background: #f39a6b;
+}
+
+.health-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+
+.health-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #121110;
+  background: var(--good);
+  border: 0;
+}
+
+.health-chip.tier-good {
+  background: #a6e05b;
+}
+
+.health-chip.tier-fair {
+  background: #f4c74c;
+}
+
+.health-chip.tier-poor {
+  background: #f39a6b;
+}
+
+/* Badges */
+.badge-icon {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text);
+  filter: none;
+}
+
+.badge-tile.earned {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.badge-tile.earned .badge-icon {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+.badge-tile.locked .badge-icon {
+  color: var(--text-2);
+  opacity: 1;
+  filter: none;
+}
+
+.badge-done {
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.celebrate-icons span {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+/* Community */
+.post-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.post-action.liked .ic {
+  color: #e8476b;
+  fill: currentColor;
+}
+
+.lb-flame {
+  color: #f26a1b;
+}
+
+.lb-days .ic {
+  color: #f26a1b;
+}
+
+.lb-days.muted .ic {
+  color: var(--text-2);
+}
+
+.lb-rank.top {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  color: #121110;
+}
+
+.lb-rank.top-1 {
+  background: #f4c74c;
+}
+
+.lb-rank.top-2 {
+  background: #d9d4cd;
+}
+
+.lb-rank.top-3 {
+  background: #e6a877;
+}
+
+.lb-row.me {
+  background: var(--surface-2);
+}
+
+.lb-you {
+  color: var(--text-2);
+}
+
+/* Lists with a check */
+.choice.active {
+  color: var(--text);
+}
+
+.settings-chev {
+  color: var(--text-2);
+}
+
+.describe-hint {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.describe-mic.listening {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* Inputs */
+input,
+select,
+textarea {
+  border-radius: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline-color: var(--text);
+}
+
+.avatar {
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.streak-chip,
+:root[data-theme="dark"] .streak-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Score rings use the same colours as the score dots */
+.tier-great .score-fill {
+  stroke: var(--good);
+}
+
+.tier-good .score-fill {
+  stroke: #8fd14f;
+}
+
+.tier-fair .score-fill {
+  stroke: #e9b53b;
+}
+
+.tier-poor .score-fill {
+  stroke: #ef8a55;
+}
+
+.score-ring .score-text {
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+h1,
+h2,
+h3,
+strong {
+  letter-spacing: -0.01em;
+}
+
+.streak-hero,
+:root[data-theme="dark"] .streak-hero {
+  background: var(--surface-2);
+}
+
+.streak-hero .ic {
+  color: #f26a1b;
+}
+
+.stat strong,
+.weight-stats strong {
+  font-family: var(--mono);
+  font-weight: 500;
+  letter-spacing: -0.03em;
 }

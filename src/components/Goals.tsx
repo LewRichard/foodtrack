@@ -10,6 +10,7 @@ import {
 } from "../../shared/nutrition.ts";
 import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { actions, useAppState } from "../lib/store.ts";
+import { Icon } from "./Icon.tsx";
 
 const ACTIVITIES: Activity[] = ["sedentary", "light", "moderate", "active", "very_active"];
 const GOAL_TYPES: GoalType[] = ["lose", "maintain", "gain"];
@@ -55,7 +56,7 @@ export default function Goals({ onBack }: { onBack?: () => void }) {
       <header className="page-head">
         {onBack && (
           <button className="link back-link" onClick={onBack}>
-            ‹ {t("tab.profile")}
+            <Icon name="chevron-left" size={18} /> {t("tab.profile")}
           </button>
         )}
         <h1>{t("goals.title")}</h1>

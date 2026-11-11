@@ -3,6 +3,7 @@ import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { errorMessage, isSignInError, streamCoach } from "../lib/api.ts";
 import { coachContext, turnsToSend } from "../lib/coach.ts";
 import { actions, getState, useAppState, type CoachMessage } from "../lib/store.ts";
+import { Icon } from "./Icon.tsx";
 
 const SUGGESTIONS: MessageKey[] = ["coach.ask1", "coach.ask2", "coach.ask3", "coach.ask4"];
 
@@ -66,10 +67,10 @@ export default function Coach({ onBack, onSignIn }: { onBack: () => void; onSign
     <div className="page coach">
       <header className="coach-head">
         <button className="icon-btn" onClick={onBack} aria-label={t("common.back")}>
-          ‹
+          <Icon name="chevron-left" size={22} />
         </button>
         <span className="coach-avatar" aria-hidden="true">
-          🥑
+          <Icon name="sparkles" />
         </span>
         <div className="coach-title">
           <strong>Lew</strong>

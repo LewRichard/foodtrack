@@ -6,6 +6,7 @@ import { errorMessage, fetchMealPlan, isSignInError } from "../lib/api.ts";
 import { timeAgo, todayKey } from "../lib/dates.ts";
 import { actions, getState, newId, useAppState } from "../lib/store.ts";
 import { MEAL_ICONS } from "../lib/types.ts";
+import { Icon } from "./Icon.tsx";
 
 /** Foods the person logs most, so the plan stays close to what they actually eat. */
 function usualFoods(): string[] {
@@ -30,10 +31,10 @@ export default function MealPlanScreen({ onBack, onSignIn }: { onBack: () => voi
     <div className="page plan">
       <header className="coach-head">
         <button className="icon-btn" onClick={composing && mealPlan ? () => setComposing(false) : onBack} aria-label={t("common.back")}>
-          ‹
+          <Icon name="chevron-left" size={22} />
         </button>
         <span className="coach-avatar" aria-hidden="true">
-          🗓️
+          <Icon name="calendar" />
         </span>
         <div className="coach-title">
           <strong>{t("plan.title")}</strong>
@@ -157,7 +158,7 @@ function PlanForm({ onDone, onSignIn }: { onDone: () => void; onSignIn: () => vo
         </>
       ) : (
         <button className="btn primary" onClick={() => void create()}>
-          ✨ {t("plan.create")}
+          <Icon name="sparkles" size={18} /> {t("plan.create")}
         </button>
       )}
       {error && (
@@ -247,7 +248,7 @@ function Menu({ day, setDay }: { day: number; setDay: (d: number) => void }) {
 
       {plan.tips.length > 0 && (
         <section className="card">
-          <h2 className="title">💡 {t("plan.tips")}</h2>
+          <h2 className="title">{t("plan.tips")}</h2>
           <ul className="plan-tips">
             {plan.tips.map((tip, i) => (
               <li key={i}>{tip}</li>
@@ -265,7 +266,7 @@ function PlannedMeal({ meal, added, onAdd }: { meal: PlanMeal; added: boolean; o
     <section className="card plan-meal">
       <div className="row between">
         <span className="label">
-          {MEAL_ICONS[meal.meal]} {t(`meal.${meal.meal}`)}
+          <Icon name={MEAL_ICONS[meal.meal]} size={14} /> {t(`meal.${meal.meal}`)}
         </span>
         <strong className="plan-kcal">{num(meal.calories)} kcal</strong>
       </div>
@@ -277,7 +278,7 @@ function PlannedMeal({ meal, added, onAdd }: { meal: PlanMeal; added: boolean; o
       </p>
       {meal.recipe && <p className="small">{meal.recipe}</p>}
       <button className={`btn small-btn ${added ? "" : "primary"}`} disabled={added} onClick={onAdd}>
-        {added ? `✓ ${t("plan.added")}` : `+ ${t("plan.addToday")}`}
+        <Icon name={added ? "check" : "plus"} size={16} strokeWidth={2} /> {added ? t("plan.added") : t("plan.addToday")}
       </button>
     </section>
   );
@@ -316,7 +317,7 @@ function Shopping() {
       <div className="row between">
         <span className="muted small">{t("plan.bought", { done, total: all.length })}</span>
         <button className="link small" onClick={() => void copy()}>
-          {copied ? `✓ ${t("plan.copied")}` : t("plan.copy")}
+          {copied ? t("plan.copied") : t("plan.copy")}
         </button>
       </div>
       {shopping.map((g, gi) => (

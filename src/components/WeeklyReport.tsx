@@ -5,6 +5,7 @@ import { addDays, formatLongDate, timeAgo, todayKey } from "../lib/dates.ts";
 import { buildWeek, daysLogged } from "../lib/report.ts";
 import { actions, getState, useAppState } from "../lib/store.ts";
 import { ScoreRing, tierLabel } from "./HealthScore.tsx";
+import { Icon, type IconName } from "./Icon.tsx";
 
 const MIN_DAYS = 2;
 
@@ -48,7 +49,7 @@ export default function WeeklyReportCard() {
   return (
     <section className="card report-card">
       <div className="row between">
-        <h2 className="title">✨ {t("report.title")}</h2>
+        <h2 className="title">{t("report.title")}</h2>
         {saved && <span className="muted tiny">{t("report.created", { when: timeAgo(saved.createdAt, locale) })}</span>}
       </div>
 
@@ -76,12 +77,12 @@ export default function WeeklyReportCard() {
             </div>
           </div>
           <p className="report-summary">{saved.report.summary}</p>
-          <ReportList icon="✅" title={t("report.wins")} items={saved.report.wins} />
-          <ReportList icon="🔧" title={t("report.improve")} items={saved.report.improvements} />
-          <ReportList icon="🎯" title={t("report.nextWeek")} items={saved.report.nextWeek} />
+          <ReportList icon="check" title={t("report.wins")} items={saved.report.wins} />
+          <ReportList icon="wrench" title={t("report.improve")} items={saved.report.improvements} />
+          <ReportList icon="target" title={t("report.nextWeek")} items={saved.report.nextWeek} />
           {saved.report.mealIdea && (
             <div className="report-idea">
-              <p className="label">🍽️ {t("report.mealIdea")}</p>
+              <p className="label"><Icon name="utensils" size={14} /> {t("report.mealIdea")}</p>
               <p className="small">{saved.report.mealIdea}</p>
             </div>
           )}
@@ -101,12 +102,12 @@ export default function WeeklyReportCard() {
   );
 }
 
-function ReportList({ icon, title, items }: { icon: string; title: string; items: string[] }) {
+function ReportList({ icon, title, items }: { icon: IconName; title: string; items: string[] }) {
   if (!items.length) return null;
   return (
     <div className="report-list">
       <p className="label">
-        {icon} {title}
+        <Icon name={icon} size={14} /> {title}
       </p>
       <ul>
         {items.map((item, i) => (

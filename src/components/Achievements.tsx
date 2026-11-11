@@ -3,12 +3,13 @@ import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { badges, newBadges, streak, type Badge } from "../lib/achievements.ts";
 import { actions, useAppState } from "../lib/store.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
+import { Icon } from "./Icon.tsx";
 import Sheet from "./Sheet.tsx";
 
 const name = (b: Badge) => `badge.${b.id}` as MessageKey;
 const desc = (b: Badge) => `badge.${b.id}.desc` as MessageKey;
 
-/** "🔥 5" next to the greeting; opens the achievements. */
+/** The flame and day count next to the greeting; opens the achievements. */
 export function StreakChip() {
   const state = useAppState();
   const { t } = useI18n();
@@ -21,7 +22,7 @@ export function StreakChip() {
         onClick={() => setOpen(true)}
         aria-label={t("streak.aria", { n: s.current })}
       >
-        <span aria-hidden="true">🔥</span> {s.current}
+        <Icon name="flame" size={16} /> {s.current}
       </button>
       {open && (
         <Sheet title={t("streak.achievements")} onClose={() => setOpen(false)}>
@@ -45,7 +46,7 @@ export function AchievementsPanel() {
     <div className="stack achievements">
       <div className="streak-hero">
         <span className="streak-flame" aria-hidden="true">
-          🔥
+          <Icon name="flame" size={30} />
         </span>
         <div>
           <strong>{tp("streak.days", s.current)}</strong>
@@ -72,7 +73,7 @@ export function AchievementsPanel() {
             window.dispatchEvent(new CustomEvent("foodtrack:navigate", { detail: "community" }));
           }}
         >
-          🏆 {t("lb.open")}
+          <Icon name="trophy" size={18} /> {t("lb.open")}
         </button>
       )}
 
@@ -81,7 +82,7 @@ export function AchievementsPanel() {
         {all.map((b) => (
           <div key={b.id} className={`badge-tile ${b.earned ? "earned" : "locked"}`} title={t(desc(b))}>
             <span className="badge-icon" aria-hidden="true">
-              {b.icon}
+              <Icon name={b.icon} size={24} />
             </span>
             <strong className="small">{t(name(b))}</strong>
             <span className="muted tiny">{t(desc(b))}</span>
@@ -95,7 +96,7 @@ export function AchievementsPanel() {
                 </span>
               </>
             )}
-            {b.earned && <span className="badge-done tiny">✓ {t("streak.earned")}</span>}
+            {b.earned && <span className="badge-done tiny"><Icon name="check" size={12} strokeWidth={2.5} /> {t("streak.earned")}</span>}
           </div>
         ))}
       </div>
@@ -124,7 +125,7 @@ export function BadgeCelebration() {
       <div className="celebrate">
         <div className="celebrate-icons" aria-hidden="true">
           {fresh.slice(0, 3).map((b) => (
-            <span key={b.id}>{b.icon}</span>
+            <span key={b.id}><Icon name={b.icon} size={30} /></span>
           ))}
         </div>
         {fresh.map((b) => (

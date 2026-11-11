@@ -13,6 +13,7 @@ import {
   type MealType,
 } from "../lib/types.ts";
 import AddFood from "./AddFood.tsx";
+import { Icon, type IconName } from "./Icon.tsx";
 import EditEntry from "./EditEntry.tsx";
 import { CalorieRing, MacroCard, NutrientBar } from "./Progress.tsx";
 import Sheet from "./Sheet.tsx";
@@ -76,8 +77,7 @@ export default function Today({
             />
           </label>
           <h1>
-            {firstName ? t("greet.withName", { greeting: t(greetingKey()), name: firstName }) : t(greetingKey())}{" "}
-            <span aria-hidden="true">👋</span>
+            {firstName ? t("greet.withName", { greeting: t(greetingKey()), name: firstName }) : t(greetingKey())}
           </h1>
         </div>
         <div className="hello-actions">
@@ -96,7 +96,7 @@ export default function Today({
 
       {cloudEnabled && !session && state.entries.length > 0 && (
         <button className="backup-banner" onClick={onOpenProfile}>
-          <span aria-hidden="true">☁️</span>
+          <Icon name="cloud" />
           <span>
             <strong>{t("today.backupTitle")}</strong> {t("today.backupAction")}
           </span>
@@ -108,10 +108,10 @@ export default function Today({
       <section className="card summary">
         <CalorieRing eaten={total.calories - burned} goal={goals.calories} />
         <div className="summary-stats">
-          <Stat icon="🎯" label={t("today.goal")} value={goals.calories} />
-          <Stat icon="🍽️" label={t("today.eaten")} value={Math.round(total.calories)} />
-          <Stat icon="🔥" label={t("today.burned")} value={burned} onClick={() => setEditingBurned(true)} />
-          {steps !== undefined && <Stat icon="👟" label={t("today.steps")} value={steps} />}
+          <Stat icon="target" label={t("today.goal")} value={goals.calories} />
+          <Stat icon="utensils" label={t("today.eaten")} value={Math.round(total.calories)} />
+          <Stat icon="flame" label={t("today.burned")} value={burned} onClick={() => setEditingBurned(true)} />
+          {steps !== undefined && <Stat icon="footprints" label={t("today.steps")} value={steps} />}
         </div>
       </section>
 
@@ -136,28 +136,24 @@ export default function Today({
 
       <button className="card coach-banner" onClick={onOpenCoach}>
         <span className="coach-avatar" aria-hidden="true">
-          🥑
+          <Icon name="sparkles" />
         </span>
         <span className="coach-banner-text">
           <strong>{t("coach.bannerTitle")}</strong>
           <span className="muted small">{t("coach.bannerBody")}</span>
         </span>
-        <span className="muted" aria-hidden="true">
-          ›
-        </span>
+        <Icon name="chevron-right" className="muted" />
       </button>
 
       <button className="card coach-banner" onClick={onOpenPlan}>
         <span className="coach-avatar" aria-hidden="true">
-          🗓️
+          <Icon name="calendar" />
         </span>
         <span className="coach-banner-text">
           <strong>{t("plan.bannerTitle")}</strong>
           <span className="muted small">{state.mealPlan ? t("plan.bannerOpen") : t("plan.bannerBody")}</span>
         </span>
-        <span className="muted" aria-hidden="true">
-          ›
-        </span>
+        <Icon name="chevron-right" className="muted" />
       </button>
 
       <div className="section-head">
@@ -184,7 +180,7 @@ export default function Today({
           <section key={meal} className="card meal">
             <div className="meal-head">
               <span className={`tile tile-${meal}`} aria-hidden="true">
-                {MEAL_ICONS[meal]}
+                <Icon name={MEAL_ICONS[meal]} />
               </span>
               <div className="meal-title">
                 <h3>{t(`meal.${meal}`)}</h3>
@@ -195,7 +191,7 @@ export default function Today({
                 </span>
               </div>
               <button className="plus-btn" onClick={() => setAdding(meal)} aria-label={t("today.addFoodTo", { meal: t(`meal.${meal}`) })}>
-                +
+                <Icon name="plus" size={18} strokeWidth={2} />
               </button>
             </div>
             {items.map((e) => (
@@ -222,14 +218,14 @@ export default function Today({
       <section className="card meal">
         <div className="meal-head">
           <span className="tile tile-water" aria-hidden="true">
-            💧
+            <Icon name="droplet" />
           </span>
           <div className="meal-title">
             <h3>{t("today.water")}</h3>
             <span className="muted">{t("today.waterStatus", { n: water, goal: WATER_GOAL, ml: num(water * GLASS_ML) })}</span>
           </div>
           <button className="plus-btn" onClick={() => actions.setWater(date, water + 1)} aria-label={t("today.addWater")}>
-            +
+            <Icon name="plus" size={18} strokeWidth={2} />
           </button>
         </div>
         <div className="water">
@@ -260,12 +256,12 @@ export default function Today({
   );
 }
 
-function Stat({ icon, label, value, onClick }: { icon: string; label: string; value: number; onClick?: () => void }) {
+function Stat({ icon, label, value, onClick }: { icon: IconName; label: string; value: number; onClick?: () => void }) {
   const { t, num } = useI18n();
   const body = (
     <>
       <span className="kpi-icon" aria-hidden="true">
-        {icon}
+        <Icon name={icon} size={18} />
       </span>
       <span className="kpi-text">
         <span className="kpi-label">{label}</span>
@@ -291,7 +287,7 @@ function BurnedSheet({ date, value, onClose }: { date: string; value: number; on
   return (
     <Sheet title={t("burned.title")} onClose={onClose}>
       <p className="muted small">{t("burned.help", { date: formatLongDate(date, i18n) })}</p>
-      {APPLE_HEALTH_ENABLED && health.connected && <p className="muted small">❤️ {t("burned.fromHealth")}</p>}
+      {APPLE_HEALTH_ENABLED && health.connected && <p className="muted small">{t("burned.fromHealth")}</p>}
       <input
         type="number"
         inputMode="numeric"

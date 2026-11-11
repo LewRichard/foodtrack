@@ -12,6 +12,7 @@ import Consent from "./Consent.tsx";
 import DescribeMeal from "./DescribeMeal.tsx";
 import { HealthScoreCard } from "./HealthScore.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
+import { Icon } from "./Icon.tsx";
 
 type Phase =
   | { kind: "capture" }
@@ -361,7 +362,7 @@ function Capture({
         )}
         {camera === "live" && <div className="frame" aria-hidden="true" />}
         <button className="close-btn" onClick={onCancel} aria-label={t("scan.closeCamera")}>
-          ✕
+          <Icon name="x" size={20} />
         </button>
       </div>
 
@@ -389,7 +390,7 @@ function Capture({
         </button>
       </div>
       <button className="btn describe-open" onClick={onDescribe}>
-        ✍️ {t("describe.open")}
+        <Icon name="pen" size={18} /> {t("describe.open")}
       </button>
       {pickError && <p className="error small center">{pickError}</p>}
       <p className="muted small center">{t("scan.tip")}</p>

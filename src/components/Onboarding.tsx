@@ -3,22 +3,23 @@ import { bmr, goalsFromProfile, tdee, type Activity, type GoalType, type Profile
 import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { todayKey } from "../lib/dates.ts";
 import { actions, useAppState } from "../lib/store.ts";
+import { Icon, type IconName } from "./Icon.tsx";
 
 type Step = "name" | "sex" | "age" | "body" | "goal" | "activity" | "result";
 const STEPS: Step[] = ["name", "sex", "age", "body", "goal", "activity", "result"];
 
-const ACTIVITIES: { id: Activity; icon: string; label: MessageKey; hint: MessageKey }[] = [
-  { id: "sedentary", icon: "🪑", label: "onb.act.sedentary", hint: "onb.act.sedentaryHint" },
-  { id: "light", icon: "🚶", label: "onb.act.light", hint: "onb.act.lightHint" },
-  { id: "moderate", icon: "🏃", label: "onb.act.moderate", hint: "onb.act.moderateHint" },
-  { id: "active", icon: "🏋️", label: "onb.act.active", hint: "onb.act.activeHint" },
-  { id: "very_active", icon: "🔥", label: "onb.act.veryActive", hint: "onb.act.veryActiveHint" },
+const ACTIVITIES: { id: Activity; icon: IconName; label: MessageKey; hint: MessageKey }[] = [
+  { id: "sedentary", icon: "armchair", label: "onb.act.sedentary", hint: "onb.act.sedentaryHint" },
+  { id: "light", icon: "footprints", label: "onb.act.light", hint: "onb.act.lightHint" },
+  { id: "moderate", icon: "bike", label: "onb.act.moderate", hint: "onb.act.moderateHint" },
+  { id: "active", icon: "dumbbell", label: "onb.act.active", hint: "onb.act.activeHint" },
+  { id: "very_active", icon: "flame", label: "onb.act.veryActive", hint: "onb.act.veryActiveHint" },
 ];
 
-const GOALS: { id: GoalType; icon: string; label: MessageKey; hint: MessageKey }[] = [
-  { id: "lose", icon: "📉", label: "onb.goal.lose", hint: "onb.goal.loseHint" },
-  { id: "maintain", icon: "⚖️", label: "onb.goal.maintain", hint: "onb.goal.maintainHint" },
-  { id: "gain", icon: "💪", label: "onb.goal.gain", hint: "onb.goal.gainHint" },
+const GOALS: { id: GoalType; icon: IconName; label: MessageKey; hint: MessageKey }[] = [
+  { id: "lose", icon: "trend-down", label: "onb.goal.lose", hint: "onb.goal.loseHint" },
+  { id: "maintain", icon: "scale", label: "onb.goal.maintain", hint: "onb.goal.maintainHint" },
+  { id: "gain", icon: "trend-up", label: "onb.goal.gain", hint: "onb.goal.gainHint" },
 ];
 
 const num = (s: string) => Number(s.replace(",", "."));
@@ -77,12 +78,12 @@ export default function Onboarding() {
     if (valid[current]) setStep(step + 1);
   }
 
-  const choices = <T extends string>(items: { id: T; icon: string; label: MessageKey; hint?: MessageKey }[], value: T | null, set: (v: T) => void) => (
+  const choices = <T extends string>(items: { id: T; icon: IconName; label: MessageKey; hint?: MessageKey }[], value: T | null, set: (v: T) => void) => (
     <div className="onb-choices" role="radiogroup">
       {items.map((item) => (
         <button key={item.id} role="radio" aria-checked={value === item.id} className={`onb-choice ${value === item.id ? "active" : ""}`} onClick={() => set(item.id)}>
           <span className="onb-choice-icon" aria-hidden="true">
-            {item.icon}
+            <Icon name={item.icon} size={22} />
           </span>
           <span>
             <strong>{t(item.label)}</strong>
@@ -107,8 +108,8 @@ export default function Onboarding() {
         <Question title={t("onb.sexTitle")} subtitle={t("onb.sexBody")}>
           {choices(
             [
-              { id: "female" as Sex, icon: "👩", label: "goals.female" },
-              { id: "male" as Sex, icon: "👨", label: "goals.male" },
+              { id: "female" as Sex, icon: "female", label: "goals.female" },
+              { id: "male" as Sex, icon: "male", label: "goals.male" },
             ],
             sex,
             setSex,
@@ -157,7 +158,7 @@ export default function Onboarding() {
     case "result":
       body =
         profile && goals ? (
-          <Question title={t("onb.resultTitle", { name: name.trim() || "👋" })} subtitle={t("onb.resultBody")}>
+          <Question title={name.trim() ? t("onb.resultTitle", { name: name.trim() }) : t("onb.resultTitle", { name: "\u0000" }).replace(/,?\s*\u0000(さんの|님의|，)?\s*/, "")} subtitle={t("onb.resultBody")}>
             <div className="onb-result">
               <span className="muted small">{t("onb.dailyCalories")}</span>
               <strong className="onb-kcal">{fmt(goals.calories)}</strong>
@@ -190,7 +191,7 @@ export default function Onboarding() {
       <div className="onb-top">
         {step > 0 ? (
           <button className="icon-btn" onClick={() => setStep(step - 1)} aria-label={t("common.back")}>
-            ‹
+            <Icon name="chevron-left" size={22} />
           </button>
         ) : (
           <span className="icon-btn-spacer" />

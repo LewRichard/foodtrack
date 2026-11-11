@@ -38,7 +38,7 @@ function HealthCard() {
       <div className="row between">
         <div className="account-who">
           <h2 className="title">
-            <span aria-hidden="true">❤️</span> {t("appleHealth.title")}
+            {t("appleHealth.title")}
           </h2>
           <span className="muted small">{t("appleHealth.subtitle")}</span>
         </div>

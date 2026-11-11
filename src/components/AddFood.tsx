@@ -9,6 +9,7 @@ import { type MealType } from "../lib/types.ts";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 import BarcodeScanner from "./BarcodeScanner.tsx";
 import Sheet from "./Sheet.tsx";
+import { Icon } from "./Icon.tsx";
 
 const BLANK: FoodItem = {
   name: "",
@@ -120,7 +121,7 @@ export default function AddFood({
               {t("add.barcode")}
             </button>
             <button className="btn barcode-open" onClick={() => setDescribing(true)}>
-              ✍️ {t("describe.short")}
+              <Icon name="pen" size={18} /> {t("describe.short")}
             </button>
           </div>
           {describing && <DescribeMeal date={date} meal={meal} onClose={() => setDescribing(false)} onLogged={onAdded} />}

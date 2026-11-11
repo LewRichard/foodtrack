@@ -8,6 +8,7 @@ import { actions, newId } from "../lib/store.ts";
 import { MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
 import { HealthScoreCard } from "./HealthScore.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
+import { Icon } from "./Icon.tsx";
 
 // The browser's own speech-to-text (Chrome, Edge, Safari). Not in every browser or in the iPhone app,
 // where the microphone on the keyboard does the same job.
@@ -137,10 +138,10 @@ export default function DescribeMeal({
       <div className="page describe-page">
         <header className="coach-head">
           <button className="icon-btn" onClick={phase === "review" ? () => setPhase("input") : onClose} aria-label={t("common.back")}>
-            ‹
+            <Icon name="chevron-left" size={22} />
           </button>
           <span className="coach-avatar" aria-hidden="true">
-            ✍️
+            <Icon name="pen" />
           </span>
           <div className="coach-title">
             <strong>{t("describe.title")}</strong>
@@ -164,10 +165,10 @@ export default function DescribeMeal({
             </label>
             {SpeechRecognition ? (
               <button className={`btn describe-mic ${listening ? "listening" : ""}`} disabled={phase === "analyzing"} onClick={toggleVoice} aria-pressed={listening}>
-                {listening ? `⏹ ${t("describe.stopListening")}` : `🎤 ${t("describe.speak")}`}
+                <Icon name={listening ? "stop" : "mic"} size={18} /> {listening ? t("describe.stopListening") : t("describe.speak")}
               </button>
             ) : (
-              <p className="muted small">🎤 {t("describe.keyboardMic")}</p>
+              <p className="muted small describe-hint"><Icon name="mic" size={16} /> {t("describe.keyboardMic")}</p>
             )}
             {phase === "analyzing" ? (
               <>
@@ -191,7 +192,7 @@ export default function DescribeMeal({
               </>
             ) : (
               <button className="btn primary" disabled={!text.trim()} onClick={() => void analyze()}>
-                ✨ {t("describe.analyze")}
+                <Icon name="sparkles" size={18} /> {t("describe.analyze")}
               </button>
             )}
             {error && (

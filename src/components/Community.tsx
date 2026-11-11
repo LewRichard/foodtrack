@@ -58,6 +58,7 @@ import { photoForUpload } from "../lib/image.ts";
 import { entriesForDate, getState, useAppState } from "../lib/store.ts";
 import AvatarCropper from "./AvatarCropper.tsx";
 import Sheet from "./Sheet.tsx";
+import { Icon } from "./Icon.tsx";
 
 type Section = "feed" | "chats" | "friends" | "leaderboard";
 type Person = Pick<Profile, "id" | "username" | "display_name" | "avatar_path">;
@@ -76,7 +77,7 @@ export default function Community({ onSignIn, alerts }: { onSignIn: () => void; 
       <div className="page">
         <h1 className="page-title">{t("community.title")}</h1>
         <section className="card community-intro">
-          <p className="community-emoji" aria-hidden="true">👋</p>
+          <p className="community-emoji" aria-hidden="true"><Icon name="users" size={36} /></p>
           <h2 className="title">{t("community.introTitle")}</h2>
           <p className="muted">{cloudEnabled ? t("community.signInBody") : t("cloud.notSetUp")}</p>
           {cloudEnabled && (
@@ -259,7 +260,7 @@ function Home({ profile, alerts }: { profile: Profile; alerts: { messages: numbe
         <span className="row gap-sm">
           <span className="muted small">@{profile.username}</span>
           <button className="icon-btn" onClick={() => setShowNotify(true)} aria-label={t("community.notifications")}>
-            {communityPush ? "🔔" : "🔕"}
+            <Icon name={communityPush ? "bell" : "bell-off"} />
           </button>
         </span>
       </div>
@@ -316,7 +317,7 @@ function NotifyPrompt({ onOpen }: { onOpen: () => void }) {
   return (
     <section className="card notify-prompt">
       <p className="small">
-        <strong>🔔 {t("community.notifyTitle")}</strong>
+        <strong>{t("community.notifyTitle")}</strong>
         <br />
         <span className="muted">{t("community.notifyBody")}</span>
       </p>
@@ -366,7 +367,7 @@ function NotifySheet({ onClose }: { onClose: () => void }) {
         {support === "web" &&
           (communityPush ? (
             <>
-              <p className="small">✅ {t("community.notifyOn")}</p>
+              <p className="small">{t("community.notifyOn")}</p>
               <button className="btn" disabled={busy} onClick={() => toggle(false)}>
                 {t("rem.turnOff")}
               </button>
@@ -506,10 +507,10 @@ function Feed({
       <div className="row gap feed-head">
         <div className="chips">
           <button className={`chip-btn ${kind === "friends" ? "active" : ""}`} onClick={() => setKind("friends")}>
-            👥 {t("community.friendsFeed")}
+            <Icon name="users" size={16} /> {t("community.friendsFeed")}
           </button>
           <button className={`chip-btn ${kind === "explore" ? "active" : ""}`} onClick={() => setKind("explore")}>
-            🌍 {t("community.explore")}
+            <Icon name="earth" size={16} /> {t("community.explore")}
           </button>
         </div>
         <button
@@ -528,7 +529,7 @@ function Feed({
         <Avatar name={me.display_name || me.username} path={me.avatar_path} />
         <span className="muted">{t("community.composePrompt")}</span>
         <span className="composer-photo" aria-hidden="true">
-          📷
+          <Icon name="image" />
         </span>
       </button>
 
@@ -578,7 +579,7 @@ function SummaryChip({ summary }: { summary: DaySummary }) {
   const { t, num } = useI18n();
   return (
     <div className="day-summary">
-      <span>🔥 {t("community.summaryKcal", { kcal: num(summary.kcal), goal: num(summary.goal) })}</span>
+      <span><Icon name="flame" size={14} /> {t("community.summaryKcal", { kcal: num(summary.kcal), goal: num(summary.goal) })}</span>
       <span className="muted small">
         {t("abbr.protein")} {Math.round(summary.protein)}g · {t("abbr.carbs")} {Math.round(summary.carbs)}g · {t("abbr.fat")} {Math.round(summary.fat)}g
       </span>
@@ -634,12 +635,12 @@ function PostCard({ post, me, onChange, onOpen }: { post: Post; me: Profile; onC
           <span className="muted small">
             @{author.username} · {timeAgo(Date.parse(post.created_at), locale)} ·{" "}
             <span title={post.visibility === "public" ? t("community.public") : t("community.friendsOnly")}>
-              {post.visibility === "public" ? "🌍" : "👥"}
+              <Icon name={post.visibility === "public" ? "earth" : "users"} size={13} />
             </span>
           </span>
         </span>
         <button className="icon-btn" onClick={() => setMenu(true)} aria-label={t("community.more")}>
-          ⋯
+          <Icon name="more" />
         </button>
       </header>
       {post.body && <p className="post-body">{post.body}</p>}
@@ -647,11 +648,11 @@ function PostCard({ post, me, onChange, onOpen }: { post: Post; me: Profile; onC
       {post.imageUrl && <img className="post-image" src={post.imageUrl} alt="" loading="lazy" />}
       <footer className="post-actions">
         <button className={`post-action ${post.liked ? "liked" : ""}`} onClick={toggleLike} aria-pressed={post.liked}>
-          {post.liked ? "❤️" : "🤍"} {post.like_count > 0 && post.like_count}
+          <Icon name="heart" /> {post.like_count > 0 && post.like_count}
           <span className="sr-only">{t("community.like")}</span>
         </button>
         <button className="post-action" onClick={onOpen} disabled={!onOpen}>
-          💬 {post.comment_count > 0 && post.comment_count}
+          <Icon name="message" /> {post.comment_count > 0 && post.comment_count}
           <span className="sr-only">{t("community.comments")}</span>
         </button>
       </footer>
@@ -850,14 +851,14 @@ function Composer({ onClose, onPosted }: { onClose: () => void; onPosted: (p: Po
           <div className="composer-preview">
             <img src={photo.url} alt="" />
             <button className="icon-btn" onClick={() => setPhoto(null)} aria-label={t("community.removePhoto")}>
-              ✕
+              <Icon name="x" />
             </button>
           </div>
         )}
         {withSummary && <SummaryChip summary={summary} />}
         <div className="row gap wrap">
           <button className="btn" onClick={() => fileInput.current?.click()}>
-            📷 {photo ? t("community.changePhoto") : t("community.addPhoto")}
+            <Icon name="image" size={18} /> {photo ? t("community.changePhoto") : t("community.addPhoto")}
           </button>
           {summary.kcal > 0 && (
             <label className="check">
@@ -872,7 +873,7 @@ function Composer({ onClose, onPosted }: { onClose: () => void; onPosted: (p: Po
           <div className="segmented" role="radiogroup">
             {(["friends", "public"] as Visibility[]).map((v) => (
               <button key={v} role="radio" aria-checked={visibility === v} className={visibility === v ? "active" : ""} onClick={() => setVisibility(v)}>
-                {v === "friends" ? `👥 ${t("community.friendsOnly")}` : `🌍 ${t("community.public")}`}
+                <Icon name={v === "friends" ? "users" : "earth"} size={16} /> {v === "friends" ? t("community.friendsOnly") : t("community.public")}
               </button>
             ))}
           </div>
@@ -1025,7 +1026,7 @@ function Friends({
               {t("community.message")}
             </button>
             <button className="icon-btn" onClick={() => setMenuFor(c)} aria-label={t("community.more")}>
-              ⋯
+              <Icon name="more" />
             </button>
           </PersonRow>
         ))}
@@ -1141,7 +1142,7 @@ export function EditProfile({ me, onClose }: { me: Profile; onClose: () => void 
           <Avatar name={me.display_name || me.username} path={me.avatar_path} size="lg" />
           <div className="stack">
             <button className="btn" disabled={busy} onClick={() => fileInput.current?.click()}>
-              📷 {me.avatar_path ? t("community.changeAvatar") : t("community.addAvatar")}
+              <Icon name="camera" size={18} /> {me.avatar_path ? t("community.changeAvatar") : t("community.addAvatar")}
             </button>
             {me.avatar_path && (
               <button className="btn danger" disabled={busy} onClick={() => run(removeAvatar)}>
@@ -1291,7 +1292,7 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
     <div className="page chat">
       <header className="chat-head">
         <button className="icon-btn" onClick={onBack} aria-label={t("common.back")}>
-          ‹
+          <Icon name="chevron-left" size={22} />
         </button>
         <PersonRow person={other} />
         <button className="link small" onClick={() => setReporting(true)}>
@@ -1394,7 +1395,7 @@ function Leaderboard({ me, friendIds, onFindFriends }: { me: Profile; friendIds:
       <section className="card lb-me">
         <div className="row gap">
           <span className="lb-flame" aria-hidden="true">
-            🔥
+            <Icon name="flame" size={28} />
           </span>
           <div className="lb-me-text">
             <strong>{tp("streak.days", snapshot.current_days)}</strong>
@@ -1417,10 +1418,10 @@ function Leaderboard({ me, friendIds, onFindFriends }: { me: Profile; friendIds:
 
       <div className="segmented" role="tablist">
         <button role="tab" aria-selected={board === "friends"} className={board === "friends" ? "active" : ""} onClick={() => setBoard("friends")}>
-          👥 {t("lb.friends")}
+          <Icon name="users" size={16} /> {t("lb.friends")}
         </button>
         <button role="tab" aria-selected={board === "global"} className={board === "global" ? "active" : ""} onClick={() => setBoard("global")}>
-          🌏 {t("lb.global")}
+          <Icon name="earth" size={16} /> {t("lb.global")}
         </button>
       </div>
 
@@ -1468,14 +1469,13 @@ function Leaderboard({ me, friendIds, onFindFriends }: { me: Profile; friendIds:
   );
 }
 
-const MEDALS = ["🥇", "🥈", "🥉"];
 
 function LeaderRow({ row, isMe }: { row: Ranked; isMe: boolean }) {
   const { t, num } = useI18n();
   const p = row.profiles;
   return (
     <li className={`lb-row ${isMe ? "me" : ""}`}>
-      <span className="lb-rank">{row.live > 0 && row.rank <= 3 ? MEDALS[row.rank - 1] : row.live > 0 ? row.rank : "–"}</span>
+      <span className={`lb-rank ${row.live > 0 && row.rank <= 3 ? `top top-${row.rank}` : ""}`}>{row.live > 0 ? row.rank : "–"}</span>
       <Avatar name={p.display_name || p.username} path={p.avatar_path} size="sm" />
       <span className="person-name">
         <strong>
@@ -1484,7 +1484,7 @@ function LeaderRow({ row, isMe }: { row: Ranked; isMe: boolean }) {
         </strong>
         <span className="muted small">{t("lb.best", { n: num(row.longest_days) })}</span>
       </span>
-      <span className={`lb-days ${row.live === 0 ? "muted" : ""}`}>🔥 {num(row.live)}</span>
+      <span className={`lb-days ${row.live === 0 ? "muted" : ""}`}><Icon name="flame" size={16} /> {num(row.live)}</span>
     </li>
   );
 }

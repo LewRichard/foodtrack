@@ -86,7 +86,7 @@ export function NutrientBar({
         <span>{label}</span>
         <span className="muted">
           <b className={over ? "text-warn" : undefined}>{num(value)}</b> / {num(goal)} {unit}
-          {over && " ⚠"}
+          {over && " !"}
         </span>
       </div>
       <div className="nbar-track">

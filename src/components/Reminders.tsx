@@ -5,6 +5,7 @@ import { disableReminders, enableReminders, reminderSupport, sendTestReminder, s
 import { useAppState } from "../lib/store.ts";
 import { useI18n } from "../i18n/index.ts";
 import { MEAL_ICONS } from "../lib/types.ts";
+import { Icon } from "./Icon.tsx";
 
 /** Profile card for meal reminders. */
 export default function Reminders() {
@@ -74,7 +75,7 @@ export default function Reminders() {
                   aria-label={t("rem.toggle", { meal: t(`meal.${slot}`) })}
                 />
                 <span className="reminder-name">
-                  <span aria-hidden="true">{MEAL_ICONS[slot]}</span> {t(`meal.${slot}`)}
+                  <Icon name={MEAL_ICONS[slot]} size={16} /> {t(`meal.${slot}`)}
                 </span>
                 <input
                   type="time"

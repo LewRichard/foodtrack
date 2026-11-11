@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { scaleItem, type FoodItem, type Nutrients } from "../../shared/nutrition.ts";
 import { useI18n, type MessageKey } from "../i18n/index.ts";
+import { Icon } from "./Icon.tsx";
 
 /** An item being reviewed: the original estimate plus a serving multiplier. */
 export interface Draft {
@@ -82,7 +83,7 @@ export function ItemEditor({
         </button>
         {onRemove && (
           <button className="icon-btn" onClick={onRemove} aria-label={t("item.remove", { name: draft.base.name })}>
-            ✕
+            <Icon name="x" size={20} />
           </button>
         )}
       </div>

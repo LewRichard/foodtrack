@@ -293,7 +293,7 @@ function LanguagePicker() {
       onChange={(e) => actions.setLanguage(e.target.value as LanguagePref)}
       aria-label={t("profile.language")}
     >
-      <option value="auto">🌐 {t("profile.languageAuto", { name: LANGUAGES.find((l) => l.code === deviceLanguage())?.name ?? "" })}</option>
+      <option value="auto">{t("profile.languageAuto", { name: LANGUAGES.find((l) => l.code === deviceLanguage())?.name ?? "" })}</option>
       {LANGUAGES.map((l) => (
         <option key={l.code} value={l.code}>
           {l.name}

@@ -140,7 +140,8 @@ export function cors(config: GuardConfig): RequestHandler {
       res.set({
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, X-Access-Code, Authorization",
+        "Access-Control-Allow-Headers": "Content-Type, X-Access-Code, X-Local-Date, Authorization",
+        "Access-Control-Expose-Headers": "X-AI-Used, X-AI-Limit",
         "Access-Control-Max-Age": "86400",
         Vary: "Origin",
       });

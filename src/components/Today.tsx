@@ -22,6 +22,8 @@ import ProfilePhoto from "./ProfilePhoto.tsx";
 import { StreakChip } from "./Achievements.tsx";
 import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
+import { isLocked, usePlan } from "../lib/plan.ts";
+import { PremiumTag } from "./Premium.tsx";
 
 const GLASS_ML = 250;
 const WATER_GOAL = 8;
@@ -47,6 +49,7 @@ export default function Today({
   const i18n = useI18n();
   const { t, num } = i18n;
   const saveFailed = useSaveFailed();
+  const locked = isLocked(usePlan());
   const session = useSession();
   const { goals, name } = state;
   const entries = entriesForDate(state, date);
@@ -139,7 +142,9 @@ export default function Today({
           <Icon name="sparkles" />
         </span>
         <span className="coach-banner-text">
-          <strong>{t("coach.bannerTitle")}</strong>
+          <strong>
+            {t("coach.bannerTitle")} {locked && <PremiumTag />}
+          </strong>
           <span className="muted small">{t("coach.bannerBody")}</span>
         </span>
         <Icon name="chevron-right" className="muted" />
@@ -150,7 +155,9 @@ export default function Today({
           <Icon name="calendar" />
         </span>
         <span className="coach-banner-text">
-          <strong>{t("plan.bannerTitle")}</strong>
+          <strong>
+            {t("plan.bannerTitle")} {locked && <PremiumTag />}
+          </strong>
           <span className="muted small">{state.mealPlan ? t("plan.bannerOpen") : t("plan.bannerBody")}</span>
         </span>
         <Icon name="chevron-right" className="muted" />

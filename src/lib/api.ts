@@ -6,6 +6,7 @@ import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
 import type { PreparedImage } from "./image.ts";
 import type { MealType } from "./types.ts";
+import { todayKey } from "./dates.ts";
 
 const CODE_KEY = "foodtrack:accessCode";
 
@@ -50,6 +51,7 @@ async function request<T>(path: string, init: RequestInit, code = getAccessCode(
       ...init,
       headers: {
         "Content-Type": "application/json",
+        "x-local-date": todayKey(), // free AI logs reset at the person's own midnight
         ...(code ? { "x-access-code": code } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
@@ -122,6 +124,7 @@ export async function streamCoach(
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
+        "x-local-date": todayKey(),
         ...(code ? { "x-access-code": code } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
@@ -177,6 +180,8 @@ const ERROR_MESSAGES: Record<string, MessageKey> = {
   bad_barcode: "barcode.invalid",
   sign_in_required: "report.signIn",
   bad_report: "err.server",
+  scan_limit: "premium.limitReached",
+  premium_required: "premium.required",
 };
 
 /** A message for any error, translated when the server sent a known code. */
@@ -193,6 +198,23 @@ export async function unlock(code: string): Promise<void> {
 
 export function isAccessError(e: unknown): boolean {
   return e instanceof ApiError && e.code === "access_code_required";
+}
+
+/** The free plan's daily AI logs are used up, or the feature needs Premium: show the upgrade screen. */
+export function isPremiumError(e: unknown): boolean {
+  return e instanceof ApiError && (e.code === "scan_limit" || e.code === "premium_required");
+}
+
+export interface PlanInfo {
+  enforced: boolean; // false when the server doesn't limit anything (no accounts)
+  premium: boolean;
+  until: string | null;
+  used: number; // free AI logs used today
+  limit: number;
+}
+
+export function fetchPlan(): Promise<PlanInfo> {
+  return request<PlanInfo>("/api/me/plan", { method: "GET" });
 }
 
 export function isSignInError(e: unknown): boolean {

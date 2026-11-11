@@ -39,3 +39,12 @@ services:
         value: "30"
       - key: DAILY_SCAN_LIMIT
         value: "300"
+      # Free plan: AI meal logs (photo or description) per person per day. Needs SUPABASE_SERVICE_ROLE_KEY
+      # and supabase/premium.sql; without them nothing is limited. See docs/PREMIUM.md.
+      - key: FREE_SCANS_PER_DAY
+        value: "5"
+      # Optional: a hosted checkout page for Premium (e.g. a Stripe Payment Link) and the price to show.
+      - key: VITE_PREMIUM_CHECKOUT_URL
+        sync: false
+      - key: VITE_PREMIUM_PRICE
+        sync: false

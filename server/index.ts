@@ -14,6 +14,7 @@ import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from
 import { CoachRequestSchema, streamCoachReply } from "./coach.ts";
 import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
 import { PlanRequestSchema, writeMealPlan } from "./mealplan.ts";
+import { limitFreeScans, planConfigFromEnv, requirePremium, supabasePlanStore, usageDay } from "./plans.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
 
 const MEDIA_TYPES: ImageMediaType[] = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -22,6 +23,8 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // Claude's per-image limit
 const guard = configFromEnv();
 const limiter = new ScanLimiter(guard.perIpPerHour, guard.dailyLimit);
 const verifyUser = supabaseVerifier();
+const plans = supabasePlanStore();
+const planConfig = planConfigFromEnv();
 const push = pushConfigFromEnv();
 const barcodes = new BarcodeLookup();
 // Lookups are free for us but shouldn't let one visitor hammer Open Food Facts through this server.
@@ -189,7 +192,7 @@ function sendAiError(res: Response, error: unknown) {
   }
 }
 
-app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, limitScans(limiter), async (req, res) => {
+app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, limitScans(limiter), limitFreeScans(plans, planConfig), async (req, res) => {
   const { image, mediaType, note, language } = req.body;
   try {
     const result = await analyzeFoodImage(
@@ -200,27 +203,52 @@ app.post("/api/analyze", requireScanAccess(guard, verifyUser), validateUpload, l
     );
     res.json(result);
   } catch (error) {
+    res.locals.giveBack?.();
     sendAiError(res, error);
   }
 });
 
 // Log a meal by describing it ("trưa nay ăn 1 tô bún bò với ly trà đá"). Shares the scan limits.
-app.post("/api/analyze-text", requireScanAccess(guard, verifyUser), limitScans(limiter), async (req, res) => {
+const validateText: RequestHandler = (req, res, next) => {
   const text = typeof req.body?.text === "string" ? req.body.text.trim() : "";
   if (!text || text.length > 500) {
     res.status(400).json({ error: "Describe what you ate in up to 500 characters.", code: "bad_text" });
     return;
   }
+  next();
+};
+
+app.post("/api/analyze-text", requireScanAccess(guard, verifyUser), validateText, limitScans(limiter), limitFreeScans(plans, planConfig), async (req, res) => {
+  const text: string = req.body.text.trim(); // checked by validateText
   const language = isLang(req.body?.language) ? req.body.language : "en";
   try {
     res.json(await analyzeFoodText(text, language));
   } catch (error) {
+    res.locals.giveBack?.();
     sendAiError(res, error);
   }
 });
 
+// The signed-in person's plan: Premium or free, and how many free AI logs are left today.
+app.get("/api/me/plan", async (req, res) => {
+  const token = /^Bearer\s+(.+)$/i.exec(req.get("authorization") ?? "")?.[1];
+  const userId = token && verifyUser ? await verifyUser(token) : null;
+  if (!plans || !userId) {
+    res.json({ enforced: false, premium: true, until: null, used: 0, limit: planConfig.freeScansPerDay });
+    return;
+  }
+  try {
+    const until = await plans.premiumUntil(userId);
+    const used = until === undefined ? await plans.used(userId, usageDay(req.get("x-local-date"))) : 0;
+    res.json({ enforced: true, premium: until !== undefined, until: until ?? null, used, limit: planConfig.freeScansPerDay });
+  } catch (e) {
+    console.error("Plan lookup failed:", e);
+    res.status(503).json({ error: "Couldn't load your plan.", code: "busy" });
+  }
+});
+
 // The AI weekly check-in. Costs about as much as a scan, so it shares the scan limits.
-app.post("/api/report/weekly", requireScanAccess(guard, verifyUser), limitScans(limiter), async (req, res) => {
+app.post("/api/report/weekly", requireScanAccess(guard, verifyUser), requirePremium(plans), limitScans(limiter), async (req, res) => {
   const parsed = ReportInputSchema.safeParse(req.body?.week);
   if (!parsed.success) {
     res.status(400).json({ error: "The week's data isn't in the expected format.", code: "bad_report" });
@@ -235,7 +263,7 @@ app.post("/api/report/weekly", requireScanAccess(guard, verifyUser), limitScans(
 });
 
 // AI meal plan + shopping list. Costs about as much as a scan or two, so it shares the scan limits.
-app.post("/api/mealplan", requireScanAccess(guard, verifyUser), limitScans(limiter), async (req, res) => {
+app.post("/api/mealplan", requireScanAccess(guard, verifyUser), requirePremium(plans), limitScans(limiter), async (req, res) => {
   const parsed = PlanRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "The meal plan request isn't in the expected format.", code: "bad_report" });
@@ -251,7 +279,7 @@ app.post("/api/mealplan", requireScanAccess(guard, verifyUser), limitScans(limit
 
 // Chat with Lew, the AI nutritionist (streams the reply). Its own, looser limits than photo scans.
 const chatLimiter = new ScanLimiter(60, 3000);
-app.post("/api/coach/chat", requireScanAccess(guard, verifyUser), limitScans(chatLimiter), async (req, res) => {
+app.post("/api/coach/chat", requireScanAccess(guard, verifyUser), requirePremium(plans), limitScans(chatLimiter), async (req, res) => {
   const parsed = CoachRequestSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "The chat request isn't in the expected format.", code: "bad_report" });

@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { dayCalories, PLAN_LENGTHS, type PlanLength, type PlanMeal } from "../../shared/mealplan.ts";
 import { sumNutrients } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
-import { errorMessage, fetchMealPlan, isSignInError } from "../lib/api.ts";
+import { errorMessage, fetchMealPlan, isPremiumError, isSignInError } from "../lib/api.ts";
 import { timeAgo, todayKey } from "../lib/dates.ts";
 import { actions, getState, newId, useAppState } from "../lib/store.ts";
 import { MEAL_ICONS } from "../lib/types.ts";
 import { Icon } from "./Icon.tsx";
+import { isLocked, openPaywall, usePlan } from "../lib/plan.ts";
+import { PremiumLock } from "./Premium.tsx";
 
 /** Foods the person logs most, so the plan stays close to what they actually eat. */
 function usualFoods(): string[] {
@@ -20,6 +22,7 @@ export default function MealPlanScreen({ onBack, onSignIn }: { onBack: () => voi
   const { t, tp, locale } = useI18n();
   const { mealPlan } = useAppState();
   const [composing, setComposing] = useState(!mealPlan);
+  const locked = isLocked(usePlan());
   const [view, setView] = useState<"menu" | "shopping">("menu");
   const [day, setDay] = useState(0);
 
@@ -42,7 +45,9 @@ export default function MealPlanScreen({ onBack, onSignIn }: { onBack: () => voi
         </div>
       </header>
 
-      {composing || !mealPlan ? (
+      {locked && (composing || !mealPlan) ? (
+        <PremiumLock title={t("premium.planTitle")} body={t("premium.planBody")} />
+      ) : composing || !mealPlan ? (
         <PlanForm
           onSignIn={onSignIn}
           onDone={() => {
@@ -111,7 +116,10 @@ function PlanForm({ onDone, onSignIn }: { onDone: () => void; onSignIn: () => vo
       actions.setMealPlan({ createdAt: Date.now(), length, preferences: prefs, plan, checked: [], added: [] });
       onDone();
     } catch (e) {
-      if (!controller.signal.aborted) setError({ text: errorMessage(e), signIn: isSignInError(e) });
+      if (!controller.signal.aborted) {
+        setError({ text: errorMessage(e), signIn: isSignInError(e) });
+        if (isPremiumError(e)) openPaywall("feature");
+      }
     } finally {
       setBusy(false);
       abortRef.current = null;

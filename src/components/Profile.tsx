@@ -12,6 +12,7 @@ import Sheet from "./Sheet.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
 import { badges, streak } from "../lib/achievements.ts";
 import { APPLE_HEALTH_ENABLED } from "../lib/health.ts";
+import { freeLeft, openPaywall, usePlan } from "../lib/plan.ts";
 import AvatarCropper from "./AvatarCropper.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import HealthSync from "./HealthSync.tsx";
@@ -119,6 +120,8 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
   const earnedBadges = allBadges.filter((b) => b.earned);
   const langName = language === "auto" ? t("profile.languageAuto", { name: deviceLang.name }) : (LANGUAGES.find((l) => l.code === language)?.name ?? "");
   const close = () => setOpen(null);
+  const plan = usePlan();
+  const left = freeLeft(plan);
 
   return (
     <div className="page">
@@ -139,6 +142,18 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
         <h1>{name.trim() || t("profile.yourProfile")}</h1>
         <p className="muted">{tp("profile.stats", daysLogged, { kcal: num(goals.calories) })}</p>
       </section>
+
+      {plan?.enforced && (
+        <Group title={t("premium.plan")}>
+          <Row
+            icon="sparkles"
+            title={plan.premium ? "FoodTrack Premium" : t("premium.free")}
+            sub={plan.premium ? t("premium.thanks") : t("premium.left", { n: left ?? 0, total: plan.limit })}
+            value={plan.premium ? undefined : t("premium.upgradeShort")}
+            onClick={() => openPaywall("info")}
+          />
+        </Group>
+      )}
 
       <Group title={t("profile.groupProgress")}>
         <Row

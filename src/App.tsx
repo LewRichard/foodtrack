@@ -12,6 +12,8 @@ import { BadgeCelebration } from "./components/Achievements.tsx";
 import Onboarding from "./components/Onboarding.tsx";
 import { refreshAlerts, useCommunityAlerts, useStreakPublisher } from "./lib/community.ts";
 import { useHealthSync } from "./lib/health.ts";
+import { usePlanLoader } from "./lib/plan.ts";
+import { PaywallHost } from "./components/Premium.tsx";
 import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
 import { watchTheme } from "./lib/theme.ts";
@@ -71,6 +73,7 @@ export default function App() {
   const badge = alerts.messages + alerts.requests;
   useEffect(() => watchTheme(theme), [theme]);
   useHealthSync();
+  usePlanLoader(cloudEnabled ? (session?.user.id ?? null) : null);
   useStreakPublisher(cloudEnabled ? (session?.user.id ?? null) : null);
 
   // Screen readers and the browser's own UI (e.g. translation offers) follow the page language.
@@ -173,6 +176,7 @@ export default function App() {
         )}
         {tab === "profile" && <Profile onEditGoals={() => setTab("goals")} />}
       </main>
+      <PaywallHost />
       <nav className="tabbar" aria-label="Main">
         {TABS.slice(0, 2).map(navButton)}
         <button

@@ -1,9 +1,11 @@
 import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useI18n, type MessageKey } from "../i18n/index.ts";
-import { errorMessage, isSignInError, streamCoach } from "../lib/api.ts";
+import { errorMessage, isPremiumError, isSignInError, streamCoach } from "../lib/api.ts";
 import { coachContext, turnsToSend } from "../lib/coach.ts";
 import { actions, getState, useAppState, type CoachMessage } from "../lib/store.ts";
 import { Icon } from "./Icon.tsx";
+import { isLocked, openPaywall, usePlan } from "../lib/plan.ts";
+import { PremiumLock } from "./Premium.tsx";
 
 const SUGGESTIONS: MessageKey[] = ["coach.ask1", "coach.ask2", "coach.ask3", "coach.ask4"];
 
@@ -11,6 +13,7 @@ const SUGGESTIONS: MessageKey[] = ["coach.ask1", "coach.ask2", "coach.ask3", "co
 export default function Coach({ onBack, onSignIn }: { onBack: () => void; onSignIn: () => void }) {
   const { t, lang } = useI18n();
   const { coachChat } = useAppState();
+  const locked = isLocked(usePlan());
   const [draft, setDraft] = useState("");
   const [streaming, setStreaming] = useState<string | null>(null);
   const [error, setError] = useState<{ text: string; signIn: boolean } | null>(null);
@@ -25,6 +28,10 @@ export default function Coach({ onBack, onSignIn }: { onBack: () => void; onSign
   async function send(text: string) {
     const question = text.trim();
     if (!question || streaming !== null) return;
+    if (locked) {
+      openPaywall("feature");
+      return;
+    }
     setDraft("");
     setError(null);
     const history: CoachMessage[] = [...getState().coachChat, { role: "user", content: question, at: Date.now() }];
@@ -47,6 +54,7 @@ export default function Coach({ onBack, onSignIn }: { onBack: () => void; onSign
       } else {
         actions.setCoachChat([...getState().coachChat, { role: "assistant", content: reply, at: Date.now(), failed: true }]);
         setError({ text: errorMessage(e), signIn: isSignInError(e) });
+        if (isPremiumError(e)) openPaywall("feature");
       }
     } finally {
       setStreaming(null);
@@ -87,7 +95,8 @@ export default function Coach({ onBack, onSignIn }: { onBack: () => void; onSign
         <Bubble role="assistant">
           <p>{t("coach.welcome")}</p>
         </Bubble>
-        {coachChat.length === 0 && (
+        {locked && <PremiumLock title={t("premium.coachTitle")} body={t("premium.coachBody")} />}
+        {coachChat.length === 0 && !locked && (
           <div className="coach-suggestions">
             {SUGGESTIONS.map((key) => (
               <button key={key} className="chip-btn" onClick={() => void send(t(key))}>

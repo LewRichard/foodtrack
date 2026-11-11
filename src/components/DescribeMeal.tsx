@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { sumNutrients } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
-import { analyzeText, errorMessage, isSignInError, type TextAnalysis } from "../lib/api.ts";
+import { analyzeText, errorMessage, isPremiumError, isSignInError, type TextAnalysis } from "../lib/api.ts";
+import { freeLeft, noteAiLog, openPaywall, usePlan } from "../lib/plan.ts";
+import { FreeLogsLeft } from "./Scan.tsx";
 import { formatLongDate, todayKey } from "../lib/dates.ts";
 import { actions, newId } from "../lib/store.ts";
 import { MEAL_TYPES, mealForTime, type LogEntry, type MealType } from "../lib/types.ts";
@@ -55,6 +57,7 @@ export default function DescribeMeal({
   const [error, setError] = useState<{ text: string; signIn: boolean } | null>(null);
   const [listening, setListening] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const plan = usePlan();
   const recognitionRef = useRef<Recognition | null>(null);
 
   useEffect(
@@ -99,18 +102,24 @@ export default function DescribeMeal({
     recognitionRef.current?.stop();
     const description = text.trim();
     if (!description) return;
+    if (freeLeft(plan) === 0) {
+      openPaywall("limit");
+      return;
+    }
     const controller = new AbortController();
     abortRef.current = controller;
     setPhase("analyzing");
     setError(null);
     try {
       const r = await analyzeText(description, i18n.lang, controller.signal);
+      noteAiLog();
       setResult(r);
       setDrafts(r.items.map((base, i) => ({ key: `${i}-${base.name}`, base, factor: 1 })));
       if (r.meal) setMeal(r.meal); // "trưa nay…" wins over the meal the sheet was opened from
       setPhase("review");
     } catch (e) {
       if (controller.signal.aborted) return;
+      if (isPremiumError(e)) openPaywall("limit");
       setError({ text: errorMessage(e), signIn: isSignInError(e) });
       setPhase("input");
     }
@@ -170,6 +179,7 @@ export default function DescribeMeal({
             ) : (
               <p className="muted small describe-hint"><Icon name="mic" size={16} /> {t("describe.keyboardMic")}</p>
             )}
+            <FreeLogsLeft />
             {phase === "analyzing" ? (
               <>
                 <p className="plan-writing small">

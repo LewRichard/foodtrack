@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { sumNutrients, type AnalysisResult } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
-import { analyzeImage, errorMessage, isAccessError, isSignInError, unlock } from "../lib/api.ts";
+import { analyzeImage, errorMessage, isAccessError, isPremiumError, isSignInError, unlock } from "../lib/api.ts";
+import { freeLeft, noteAiLog, openPaywall, usePlan } from "../lib/plan.ts";
 import { formatLongDate, todayKey } from "../lib/dates.ts";
 import { prepareFromFile, prepareFromSource, type PreparedImage } from "../lib/image.ts";
 import { isNative, pickNativePhoto } from "../lib/native.ts";
@@ -41,10 +42,15 @@ export default function Scan({
   const abortRef = useRef<AbortController | null>(null);
   const i18n = useI18n();
   const { t, tp, num } = i18n;
+  const plan = usePlan();
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
   async function analyze(image: PreparedImage) {
+    if (freeLeft(plan) === 0) {
+      openPaywall("limit");
+      return;
+    }
     if (!getState().aiConsent) {
       setAwaitingConsent(image);
       return;
@@ -55,10 +61,16 @@ export default function Scan({
     setPhase({ kind: "analyzing", image });
     try {
       const result = await analyzeImage(image, note, i18n.lang, controller.signal);
+      noteAiLog();
       setDrafts(result.items.map((base, i) => ({ key: `${i}-${base.name}`, base, factor: 1 })));
       setPhase({ kind: "review", image, result });
     } catch (e) {
       if (controller.signal.aborted) return;
+      if (isPremiumError(e)) {
+        setPhase({ kind: "capture" });
+        openPaywall("limit");
+        return;
+      }
       setPhase({
         kind: "error",
         image,
@@ -392,6 +404,7 @@ function Capture({
       <button className="btn describe-open" onClick={onDescribe}>
         <Icon name="pen" size={18} /> {t("describe.open")}
       </button>
+      <FreeLogsLeft />
       {pickError && <p className="error small center">{pickError}</p>}
       <p className="muted small center">{t("scan.tip")}</p>
 
@@ -443,5 +456,18 @@ function AccessCodeCard({ onUnlocked, onCancel }: { onUnlocked: () => void; onCa
         </button>
       </div>
     </form>
+  );
+}
+
+/** "3 of 5 free AI logs left today" for free accounts; tapping it explains Premium. */
+export function FreeLogsLeft() {
+  const { t } = useI18n();
+  const plan = usePlan();
+  const left = freeLeft(plan);
+  if (left === null || !plan) return null;
+  return (
+    <button className={`free-left ${left === 0 ? "empty" : ""}`} onClick={() => openPaywall(left === 0 ? "limit" : "info")}>
+      <Icon name="sparkles" size={14} /> {t("premium.left", { n: left, total: plan.limit })}
+    </button>
   );
 }

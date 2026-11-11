@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
 import { useI18n } from "../i18n/index.ts";
-import { errorMessage, fetchWeeklyReport } from "../lib/api.ts";
+import { errorMessage, fetchWeeklyReport, isPremiumError } from "../lib/api.ts";
 import { addDays, formatLongDate, timeAgo, todayKey } from "../lib/dates.ts";
 import { buildWeek, daysLogged } from "../lib/report.ts";
 import { actions, getState, useAppState } from "../lib/store.ts";
 import { ScoreRing, tierLabel } from "./HealthScore.tsx";
 import { Icon, type IconName } from "./Icon.tsx";
+import { isLocked, openPaywall, usePlan } from "../lib/plan.ts";
+import { PremiumTag } from "./Premium.tsx";
 
 const MIN_DAYS = 2;
 
@@ -35,12 +37,18 @@ export default function WeeklyReportCard() {
       actions.saveReport(today, report);
     } catch (e) {
       if (!controller.signal.aborted) setError(errorMessage(e));
+      if (isPremiumError(e)) openPaywall("feature");
     } finally {
       setBusy(false);
     }
   }
 
-  const button = (
+  const locked = isLocked(usePlan());
+  const button = locked ? (
+    <button className="btn primary" onClick={() => openPaywall("feature")}>
+      <Icon name="lock" size={16} /> {t("premium.unlock")}
+    </button>
+  ) : (
     <button className={`btn ${saved ? "" : "primary"}`} disabled={busy || logged < MIN_DAYS} onClick={create}>
       {busy ? t("report.writing") : saved ? t("report.refresh") : t("report.create")}
     </button>
@@ -49,7 +57,9 @@ export default function WeeklyReportCard() {
   return (
     <section className="card report-card">
       <div className="row between">
-        <h2 className="title">{t("report.title")}</h2>
+        <h2 className="title">
+          {t("report.title")} {locked && <PremiumTag />}
+        </h2>
         {saved && <span className="muted tiny">{t("report.created", { when: timeAgo(saved.createdAt, locale) })}</span>}
       </div>
 

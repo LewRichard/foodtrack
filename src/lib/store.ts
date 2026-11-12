@@ -37,6 +37,7 @@ export interface AppState {
   communityPush: boolean; // this device gets Community notifications (reset on sign-out)
   reports: Record<string, SavedReport>; // AI weekly check-ins on this device, by the week's last day
   onboardingSkipped: boolean; // chose "skip" on the welcome questions (this device)
+  guidePending: boolean; // show Lew's welcome guide (after the welcome questions, or replayed from Profile)
   seenBadges: string[] | null; // badges already celebrated on this device (null = not set up yet)
   coachChat: CoachMessage[]; // conversation with Lew, the AI nutritionist (this device)
   health: { connected: boolean; lastSync: number | null }; // Apple Health link (iPhone app, this device)
@@ -95,6 +96,7 @@ export const INITIAL_STATE: AppState = {
   communityPush: false,
   reports: {},
   onboardingSkipped: false,
+  guidePending: false,
   seenBadges: null,
   coachChat: [],
   health: { connected: false, lastSync: null },
@@ -285,7 +287,11 @@ export const actions = {
     setState({ ...state, seenBadges: [...new Set([...(state.seenBadges ?? []), ...ids])] });
   },
   skipOnboarding() {
-    setState({ ...state, onboardingSkipped: true });
+    setState({ ...state, onboardingSkipped: true, guidePending: true });
+  },
+  /** Opens (true) or finishes (false) the welcome guide. */
+  setGuide(open: boolean) {
+    setState({ ...state, guidePending: open });
   },
   /** Saves the welcome questions: name, body details, goals they imply, goal weight and today's weight. */
   completeOnboarding(answers: { name: string; profile: Profile; goals: Goals; targetWeight: number | null; today: string }) {
@@ -297,6 +303,7 @@ export const actions = {
       goals: answers.goals,
       targetWeight: answers.targetWeight,
       weights: { ...state.weights, [answers.today]: answers.profile.weightKg },
+      guidePending: true,
     };
     next = markDayChanged(next, answers.today, now);
     setState(markSettingsChanged(next, now));

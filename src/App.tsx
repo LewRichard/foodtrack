@@ -10,6 +10,7 @@ import { useSyncStatus } from "./lib/sync.ts";
 import AuthScreen from "./components/AuthScreen.tsx";
 import { BadgeCelebration } from "./components/Achievements.tsx";
 import Onboarding from "./components/Onboarding.tsx";
+import Guide from "./components/Guide.tsx";
 import { refreshAlerts, useCommunityAlerts, useStreakPublisher } from "./lib/community.ts";
 import { useHealthSync } from "./lib/health.ts";
 import { usePlanLoader } from "./lib/plan.ts";
@@ -221,6 +222,7 @@ export default function App() {
         {tab === "profile" && <Profile onEditGoals={() => setTab("goals")} />}
       </main>
       <PaywallHost />
+      {appState.guidePending && <Guide onScan={() => setTab("scan")} />}
       <nav className="tabbar" aria-label="Main">
         {TABS.slice(0, 2).map(navButton)}
         <button

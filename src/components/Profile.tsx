@@ -199,6 +199,7 @@ export default function Profile({ onEditGoals }: { onEditGoals: () => void }) {
         )}
         <Row icon="globe" title={t("profile.language")} value={langName} onClick={() => setOpen("language")} />
         <Row icon="contrast" title={t("profile.theme")} value={t(`theme.${theme}`)} onClick={() => setOpen("theme")} />
+        <Row icon="lightbulb" title={t("profile.guide")} onClick={() => actions.setGuide(true)} />
       </Group>
 
       <Group title={t("profile.groupPrivacy")}>

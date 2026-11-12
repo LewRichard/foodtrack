@@ -3,6 +3,7 @@ import { useI18n, type MessageKey } from "../i18n/index.ts";
 import { errorMessage, isPremiumError, isSignInError, streamCoach } from "../lib/api.ts";
 import { coachContext, turnsToSend } from "../lib/coach.ts";
 import { actions, getState, useAppState, type CoachMessage } from "../lib/store.ts";
+import { Lew } from "./Lew.tsx";
 import { Icon } from "./Icon.tsx";
 import { isLocked, openPaywall, usePlan } from "../lib/plan.ts";
 import { PremiumLock } from "./Premium.tsx";
@@ -77,8 +78,8 @@ export default function Coach({ onBack, onSignIn }: { onBack: () => void; onSign
         <button className="icon-btn" onClick={onBack} aria-label={t("common.back")}>
           <Icon name="chevron-left" size={22} />
         </button>
-        <span className="coach-avatar" aria-hidden="true">
-          <Icon name="sparkles" />
+        <span className="coach-avatar lew-avatar" aria-hidden="true">
+          <Lew pose="wave" size={34} />
         </span>
         <div className="coach-title">
           <strong>Lew</strong>

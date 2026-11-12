@@ -4713,3 +4713,424 @@ strong {
 .menu-disclaimer {
   margin: 14px 0 4px;
 }
+
+/* ---- Lew, the mascot ---- */
+.lew {
+  display: block;
+  overflow: visible;
+}
+
+.lew-shadow {
+  fill: rgb(23 21 19 / 0.12);
+}
+
+.lew-stem {
+  fill: none;
+  stroke: #1f8f45;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.lew-limb {
+  fill: none;
+  stroke: #2bb35a;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.lew-mouth {
+  fill: none;
+  stroke: #171513;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.lew-bubbles circle {
+  fill: var(--border);
+}
+
+.lew-sparks path {
+  fill: #f5b83d;
+}
+
+.lew-figure {
+  animation: lew-bob 2.6s ease-in-out infinite;
+  transform-origin: 80px 150px;
+}
+
+.lew-wave .lew-arm-right,
+.lew-cheer .lew-arm-right {
+  animation: lew-wave 1.2s ease-in-out infinite;
+  transform-origin: 120px 92px;
+}
+
+.lew-cheer .lew-arm-left {
+  animation: lew-wave 1.2s ease-in-out infinite reverse;
+  transform-origin: 40px 92px;
+}
+
+.lew-eyes {
+  animation: lew-blink 4.5s infinite;
+  transform-origin: 80px 88px;
+}
+
+@keyframes lew-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes lew-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-12deg);
+  }
+}
+
+@keyframes lew-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* ---- Welcome guide ---- */
+.guide {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+}
+
+.guide-inner {
+  max-width: 440px;
+  min-height: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guide-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 36px;
+}
+
+.guide-progress {
+  flex: 1;
+  display: flex;
+  gap: 5px;
+}
+
+.guide-progress span {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+
+.guide-progress span.done {
+  background: var(--ink);
+}
+
+.guide-skip {
+  color: var(--text-2);
+}
+
+.guide-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  animation: guide-in 0.35s ease-out;
+}
+
+@keyframes guide-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.guide-lew {
+  margin-top: 4px;
+}
+
+.guide-lew.big {
+  margin-top: 6vh;
+}
+
+.guide-bubble {
+  position: relative;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.guide-bubble::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.guide-bubble h2 {
+  margin: 0 0 6px;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.guide-bubble p {
+  margin: 0;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.guide-art {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.guide-art .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 4px;
+}
+
+.guide-art .dot.protein {
+  background: var(--protein);
+}
+
+.guide-art .dot.carbs {
+  background: var(--carbs);
+}
+
+.guide-art .dot.fat {
+  background: var(--fat);
+}
+
+.guide-viewfinder {
+  position: relative;
+  width: 150px;
+  height: 120px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  background: var(--surface-2);
+  border-radius: 18px;
+}
+
+.guide-viewfinder i {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--good);
+}
+
+.guide-viewfinder i:nth-child(1) {
+  top: 8px;
+  left: 8px;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 8px 0 0 0;
+}
+
+.guide-viewfinder i:nth-child(2) {
+  top: 8px;
+  right: 8px;
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 0 8px 0 0;
+}
+
+.guide-viewfinder i:nth-child(3) {
+  bottom: 8px;
+  left: 8px;
+  border-right: 0;
+  border-top: 0;
+  border-radius: 0 0 0 8px;
+}
+
+.guide-viewfinder i:nth-child(4) {
+  bottom: 8px;
+  right: 8px;
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 0 8px 0;
+}
+
+.guide-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+.guide-result strong {
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.guide-calories .ring {
+  transform: scale(0.82);
+  margin: -14px 0;
+}
+
+.guide-macros,
+.guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.guide-macros span,
+.guide-chips span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.guide-macros .dot {
+  margin-left: 0;
+}
+
+.guide-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.guide-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.guide-chat {
+  align-items: stretch;
+  gap: 8px;
+}
+
+.guide-msg {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.92rem;
+  max-width: 85%;
+}
+
+.guide-msg.me {
+  align-self: flex-end;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--ink);
+  color: var(--on-ink);
+  border-color: transparent;
+}
+
+.guide-msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.guide-chat .guide-chips {
+  margin-top: 6px;
+}
+
+.guide-streak {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 18px;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.guide-streak strong {
+  font-family: var(--mono);
+  font-size: 1.8rem;
+}
+
+.guide-streak span {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.guide-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lew-figure,
+  .lew-arm,
+  .lew-eyes,
+  .guide-stage {
+    animation: none !important;
+  }
+}
+
+.coach-avatar.lew-avatar {
+  overflow: hidden;
+  padding-top: 4px;
+}

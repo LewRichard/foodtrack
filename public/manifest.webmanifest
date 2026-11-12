@@ -4,8 +4,8 @@
   "description": "Snap a photo of your food to estimate calories and track your nutrition.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f6f7f5",
-  "theme_color": "#16a34a",
+  "background_color": "#f3eee8",
+  "theme_color": "#f3eee8",
   "icons": [
     {
       "src": "/icon.svg",

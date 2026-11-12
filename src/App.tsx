@@ -17,6 +17,8 @@ import { PaywallHost } from "./components/Premium.tsx";
 import { todayKey } from "./lib/dates.ts";
 import { useAppState } from "./lib/store.ts";
 import { watchTheme } from "./lib/theme.ts";
+import { isNative } from "./lib/native.ts";
+import { rememberedEmail } from "./components/Account.tsx";
 
 type Tab = "today" | "history" | "scan" | "community" | "goals" | "profile" | "coach" | "plan";
 
@@ -24,6 +26,28 @@ type Tab = "today" | "history" | "scan" | "community" | "goals" | "profile" | "c
 const Community = lazy(() => import("./components/Community.tsx"));
 const Coach = lazy(() => import("./components/Coach.tsx"));
 const MealPlan = lazy(() => import("./components/MealPlan.tsx"));
+const Landing = lazy(() => import("./components/Landing.tsx"));
+
+const ENTRY_KEY = "foodtrack:entry";
+
+/**
+ * Signed-out visitors on the website see the front page first. Not in the iPhone app or the
+ * installed web app, not when coming back from a sign-in link, and not for someone who has
+ * signed in on this device before (they get the sign-in form).
+ */
+function initialEntry(): "landing" | "signin" | "signup" {
+  try {
+    const saved = sessionStorage.getItem(ENTRY_KEY);
+    if (saved === "signin" || saved === "signup") return saved;
+  } catch {
+    // storage blocked
+  }
+  const url = new URL(window.location.href);
+  const returning = url.searchParams.has("code") || url.searchParams.has("error") || /access_token|type=recovery|error=/.test(url.hash);
+  const installed = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
+  if (isNative || installed || returning || rememberedEmail()) return "signin";
+  return "landing";
+}
 
 // Goals is opened from Profile, so the bar has room for Community.
 const TABS: { id: Exclude<Tab, "scan" | "goals">; label: MessageKey; icon: string }[] = [
@@ -68,6 +92,16 @@ export default function App() {
   const auth = useAuthState();
   const recovering = usePasswordRecovery();
   const syncStatus = useSyncStatus();
+  const [entry, setEntry] = useState<"landing" | "signin" | "signup">(initialEntry);
+  const leaveLanding = (mode: "signin" | "signup") => {
+    try {
+      sessionStorage.setItem(ENTRY_KEY, mode);
+    } catch {
+      // storage blocked: fine, this visit still goes to the form
+    }
+    setEntry(mode);
+    window.scrollTo(0, 0);
+  };
   const session = useSession();
   const alerts = useCommunityAlerts(session?.user.id ?? null);
   const badge = alerts.messages + alerts.requests;
@@ -119,7 +153,17 @@ export default function App() {
   // Accounts are set up: sign in first, then (for new accounts) a few welcome questions.
   if (cloudEnabled) {
     if (auth === "checking") return <Splash />;
-    if (auth === "signedOut" || recovering) return <AuthScreen />;
+    if (auth === "signedOut" && !recovering && entry === "landing") {
+      return <Suspense fallback={<Splash />}><Landing onStart={() => leaveLanding("signup")} onSignIn={() => leaveLanding("signin")} /></Suspense>;
+    }
+    if (auth === "signedOut" || recovering) return <AuthScreen initialMode={entry === "landing" ? undefined : entry} onHome={isNative ? undefined : () => {
+      try {
+        sessionStorage.removeItem(ENTRY_KEY);
+      } catch {
+        // storage blocked
+      }
+      setEntry("landing");
+    }} />;
     if (!appState.profile && !appState.onboardingSkipped) {
       // Wait for the first sync, so people who already answered on another device skip the questions.
       const synced = appState.sync.lastSyncedAt !== null || syncStatus.kind === "error" || syncStatus.kind === "offline";

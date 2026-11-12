@@ -13,15 +13,16 @@ import {
 import { isNative } from "../lib/native.ts";
 import { actions, useAppState } from "../lib/store.ts";
 import { offerToSavePassword, rememberedEmail, rememberEmail, SAVE_FRAME } from "./Account.tsx";
+import { Icon } from "./Icon.tsx";
 
 type Mode = "signin" | "signup" | "forgot";
 
 /** The first screen when signed out: sign in with Apple / Google / Facebook or email. */
-export default function AuthScreen() {
+export default function AuthScreen({ initialMode, onHome }: { initialMode?: "signin" | "signup"; onHome?: () => void } = {}) {
   const { t } = useI18n();
   const recovering = usePasswordRecovery();
   const [providers, setProviders] = useState<OAuthProvider[]>([]);
-  const [mode, setMode] = useState<Mode>(() => (rememberedEmail() ? "signin" : "signup"));
+  const [mode, setMode] = useState<Mode>(() => initialMode ?? (rememberedEmail() ? "signin" : "signup"));
 
   // Social sign-in uses a web redirect; the iPhone app sticks to email until it has native sign-in.
   useEffect(() => {
@@ -58,6 +59,11 @@ export default function AuthScreen() {
         )}
 
         <footer className="auth-footer">
+          {onHome && (
+            <button className="link small" onClick={onHome}>
+              <Icon name="chevron-left" size={16} /> {t("landing.aboutApp")}
+            </button>
+          )}
           <LanguagePicker />
           <span className="muted small auth-legal">
             <a href="/terms.html" target="_blank" rel="noreferrer">
@@ -289,7 +295,7 @@ function NewPassword() {
   );
 }
 
-function LanguagePicker() {
+export function LanguagePicker() {
   const { t } = useI18n();
   const { language } = useAppState();
   return (

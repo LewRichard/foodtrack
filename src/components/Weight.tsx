@@ -5,6 +5,7 @@ import { actions, latestWeight, useAppState } from "../lib/store.ts";
 import { projectedGoalDate, series, weeklyRate, weightAxis, type WeighIn } from "../lib/weight.ts";
 import Sheet from "./Sheet.tsx";
 import { Icon } from "./Icon.tsx";
+import { LewCard } from "./LewCard.tsx";
 
 const MIN_KG = 20;
 const MAX_KG = 400;
@@ -238,7 +239,7 @@ export function WeightProgress() {
       </div>
 
       {all.length === 0 ? (
-        <p className="muted">{t("weight.empty")}</p>
+        <LewCard pose="point" text={t("weight.empty")} className="lew-empty" />
       ) : (
         <>
           <div className="weight-stats">

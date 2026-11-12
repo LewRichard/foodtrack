@@ -20,6 +20,8 @@ import Sheet from "./Sheet.tsx";
 import { HealthChip, ScoreRing, tierLabel } from "./HealthScore.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import { StreakChip } from "./Achievements.tsx";
+import { LewToday } from "./LewCard.tsx";
+import { streak } from "../lib/achievements.ts";
 import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
 import { isLocked, usePlan } from "../lib/plan.ts";
@@ -117,6 +119,20 @@ export default function Today({
           {steps !== undefined && <Stat icon="footprints" label={t("today.steps")} value={steps} />}
         </div>
       </section>
+
+      <LewToday
+        facts={{
+          isToday: date === todayKey(),
+          hour: new Date().getHours(),
+          entries: entries.length,
+          total,
+          burned,
+          goals,
+          streak: streak(state),
+        }}
+        onScan={onScan}
+        onCoach={onOpenCoach}
+      />
 
       <section className="macro-row">
         <MacroCard label={t("nutrient.protein")} value={total.protein} goal={goals.protein} color="var(--protein)" />

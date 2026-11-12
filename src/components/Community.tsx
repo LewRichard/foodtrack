@@ -59,6 +59,7 @@ import { entriesForDate, getState, useAppState } from "../lib/store.ts";
 import AvatarCropper from "./AvatarCropper.tsx";
 import Sheet from "./Sheet.tsx";
 import { Icon } from "./Icon.tsx";
+import { LewCard } from "./LewCard.tsx";
 
 type Section = "feed" | "chats" | "friends" | "leaderboard";
 type Person = Pick<Profile, "id" | "username" | "display_name" | "avatar_path">;
@@ -541,19 +542,23 @@ function Feed({
 
       {loading && <div className="spinner dark center-spinner" />}
       {!loading && !error && posts.length === 0 && (
-        <section className="card center">
-          <p className="muted">{kind === "friends" ? t("community.emptyFriends") : t("community.emptyExplore")}</p>
-          {kind === "friends" && (
-            <div className="row gap center-row">
-              <button className="btn" onClick={onFindFriends}>
-                {t("community.findFriends")}
-              </button>
-              <button className="btn" onClick={() => setKind("explore")}>
-                {t("community.explore")}
-              </button>
-            </div>
-          )}
-        </section>
+        <LewCard
+          className="lew-empty"
+          pose={kind === "friends" ? "wave" : "think"}
+          text={kind === "friends" ? t("community.emptyFriends") : t("community.emptyExplore")}
+          actions={
+            kind === "friends" && (
+              <>
+                <button className="btn small-btn primary" onClick={onFindFriends}>
+                  {t("community.findFriends")}
+                </button>
+                <button className="btn small-btn" onClick={() => setKind("explore")}>
+                  {t("community.explore")}
+                </button>
+              </>
+            )
+          }
+        />
       )}
       {more && !loading && (
         <button className="btn" onClick={() => void load(posts[posts.length - 1]?.created_at)}>
@@ -1231,12 +1236,16 @@ function Chats({ friends, onOpen, onFindFriends }: { friends: Connection[]; onOp
         </section>
       )}
       {list && list.length === 0 && friends.length === 0 && (
-        <section className="card center">
-          <p className="muted">{t("community.noChats")}</p>
-          <button className="btn" onClick={onFindFriends}>
-            {t("community.findFriends")}
-          </button>
-        </section>
+        <LewCard
+          className="lew-empty"
+          pose="wave"
+          text={t("community.noChats")}
+          actions={
+            <button className="btn small-btn primary" onClick={onFindFriends}>
+              {t("community.findFriends")}
+            </button>
+          }
+        />
       )}
     </>
   );
@@ -1449,12 +1458,16 @@ function Leaderboard({ me, friendIds, onFindFriends }: { me: Profile; friendIds:
               </ol>
             )}
             {board === "friends" && friendIds.length === 0 && (
-              <section className="card community-intro">
-                <p className="muted">{t("lb.emptyFriends")}</p>
-                <button className="btn primary" onClick={onFindFriends}>
-                  {t("community.findFriends")}
-                </button>
-              </section>
+              <LewCard
+                className="lew-empty"
+                pose="point"
+                text={t("lb.emptyFriends")}
+                actions={
+                  <button className="btn small-btn primary" onClick={onFindFriends}>
+                    {t("community.findFriends")}
+                  </button>
+                }
+              />
             )}
             {board === "global" && rows.length === 0 && <p className="muted small center">{t("lb.emptyGlobal")}</p>}
             {board === "global" && !listed && (

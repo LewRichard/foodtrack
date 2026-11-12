@@ -5,6 +5,7 @@ import { addDays, formatDateLabel, parseDateKey, todayKey } from "../lib/dates.t
 import { useAppState } from "../lib/store.ts";
 import { WeightProgress } from "./Weight.tsx";
 import WeeklyReportCard from "./WeeklyReport.tsx";
+import { LewCard } from "./LewCard.tsx";
 
 interface Day {
   date: string;
@@ -209,8 +210,8 @@ export default function History({ onPickDate }: { onPickDate: (d: string) => voi
             ))}
             {logged.length === 0 && (
               <tr>
-                <td colSpan={5} className="muted">
-                  {t("trends.noMeals")}
+                <td colSpan={5}>
+                  <LewCard pose="think" text={t("lew.empty.trends")} className="lew-empty" />
                 </td>
               </tr>
             )}

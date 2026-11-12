@@ -9,6 +9,7 @@ import { MEAL_ICONS } from "../lib/types.ts";
 import { Icon } from "./Icon.tsx";
 import { isLocked, openPaywall, usePlan } from "../lib/plan.ts";
 import { PremiumLock } from "./Premium.tsx";
+import { Lew } from "./Lew.tsx";
 
 /** Foods the person logs most, so the plan stays close to what they actually eat. */
 function usualFoods(): string[] {
@@ -128,7 +129,10 @@ function PlanForm({ onDone, onSignIn }: { onDone: () => void; onSignIn: () => vo
 
   return (
     <section className="card stack">
-      <p className="small">{t("plan.intro", { kcal: num(goals.calories), protein: num(goals.protein) })}</p>
+      <div className="lew-inline">
+        <Lew pose="think" size={52} />
+        <p className="small">{t("plan.intro", { kcal: num(goals.calories), protein: num(goals.protein) })}</p>
+      </div>
       <div>
         <span className="label">{t("plan.length")}</span>
         <div className="segmented">

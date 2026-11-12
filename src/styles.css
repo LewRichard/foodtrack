@@ -5134,3 +5134,91 @@ strong {
   overflow: hidden;
   padding-top: 4px;
 }
+
+/* ---- Lew cards (reactions and empty screens) ---- */
+.lew-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0;
+}
+
+.lew-card > .lew {
+  flex-shrink: 0;
+  margin-bottom: -2px;
+}
+
+.lew-card-bubble {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px 20px 20px 6px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+}
+
+.lew-card-bubble p {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.lew-card-title {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.lew-card-close {
+  float: right;
+  margin: -4px -6px 4px 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.lew-card-close:hover {
+  background: var(--surface-2);
+}
+
+.lew-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lew-empty {
+  margin: 8px 0;
+  text-align: left;
+}
+
+.lew-empty .lew-card-bubble {
+  box-shadow: none;
+}
+
+td .lew-empty {
+  margin: 4px 0;
+  white-space: normal;
+}
+
+.lew-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lew-inline p {
+  margin: 0;
+}
+
+.lew-inline > .lew {
+  flex-shrink: 0;
+}

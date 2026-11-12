@@ -22,7 +22,7 @@ export interface ModelChoice {
 }
 
 /** Server-side refusal fallback, on the models that offer it (not Haiku). */
-function fallbackFor(model: string): { betas?: Anthropic.Beta.AnthropicBeta[]; fallbacks?: "default" } {
+export function fallbackFor(model: string): { betas?: Anthropic.Beta.AnthropicBeta[]; fallbacks?: "default" } {
   return model.startsWith("claude-haiku") ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
 }
 

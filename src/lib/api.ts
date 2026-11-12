@@ -1,6 +1,7 @@
 import type { Lang } from "../../shared/languages.ts";
 import type { AnalysisResult } from "../../shared/nutrition.ts";
 import type { MealPlan, PlanLength } from "../../shared/mealplan.ts";
+import type { MenuContext, MenuResult } from "../../shared/menu.ts";
 import type { WeeklyReport } from "../../shared/report.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
@@ -78,6 +79,15 @@ export type TextAnalysis = AnalysisResult & { meal: MealType | null };
 /** Turns a typed or dictated description of a meal into diary items. */
 export function analyzeText(text: string, language: Lang, signal?: AbortSignal): Promise<TextAnalysis> {
   return request<TextAnalysis>("/api/analyze-text", { method: "POST", body: JSON.stringify({ text, language }), signal });
+}
+
+/** Reads restaurant menu photos and rates each dish against what's left today. */
+export function analyzeMenu(photos: PreparedImage[], context: MenuContext, language: Lang, signal?: AbortSignal): Promise<MenuResult> {
+  return request<MenuResult>("/api/analyze-menu", {
+    method: "POST",
+    body: JSON.stringify({ photos: photos.map((p) => ({ image: p.base64, mediaType: p.mediaType })), context, language }),
+    signal,
+  });
 }
 
 /** Asks the AI for a check-in on the past week (see src/lib/report.ts for what's sent). */

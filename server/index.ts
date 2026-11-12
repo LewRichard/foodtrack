@@ -14,6 +14,8 @@ import { buildNotification, isNotifyKind, SentOnce, supabaseCommunityDeps } from
 import { CoachRequestSchema, streamCoachReply } from "./coach.ts";
 import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
 import { PlanRequestSchema, writeMealPlan } from "./mealplan.ts";
+import { analyzeMenu, MenuContextSchema, type MenuPhoto } from "./menu.ts";
+import { MAX_MENU_PHOTOS } from "../shared/menu.ts";
 import { handlePaddleEvent, paddleConfigFromEnv, portalLink, verifyPaddleSignature } from "./paddle.ts";
 import { limitFreeScans, planConfigFromEnv, requirePremium, supabasePlanStore, usageDay } from "./plans.ts";
 import { pushConfigFromEnv, runReminders, sendPush, supabaseReminderDeps } from "./push.ts";
@@ -248,6 +250,37 @@ app.post("/api/analyze-text", requireScanAccess(guard, verifyUser), validateText
   const language = isLang(req.body?.language) ? req.body.language : "en";
   try {
     res.json(await analyzeFoodText(text, language));
+  } catch (error) {
+    res.locals.giveBack?.();
+    sendAiError(res, error);
+  }
+});
+
+// Read a restaurant menu and suggest dishes that fit what's left today. Counts as one AI log.
+const validateMenu: RequestHandler = (req, res, next) => {
+  const photos: unknown = req.body?.photos;
+  const context = MenuContextSchema.safeParse(req.body?.context);
+  if (!Array.isArray(photos) || photos.length === 0 || photos.length > MAX_MENU_PHOTOS) {
+    res.status(400).json({ error: `Send 1 to ${MAX_MENU_PHOTOS} menu photos.`, code: "bad_image" });
+  } else if (
+    photos.some(
+      (p) => typeof p?.image !== "string" || !p.image || !MEDIA_TYPES.includes(p.mediaType) || Buffer.byteLength(p.image, "base64") > MAX_IMAGE_BYTES,
+    )
+  ) {
+    res.status(400).json({ error: "Each menu photo must be a JPEG, PNG, WebP or GIF under 5 MB.", code: "bad_image" });
+  } else if (!context.success) {
+    res.status(400).json({ error: "Missing or invalid menu context.", code: "bad_request" });
+  } else {
+    res.locals.menuContext = context.data;
+    next();
+  }
+};
+
+app.post("/api/analyze-menu", requireScanAccess(guard, verifyUser), validateMenu, limitScans(limiter), limitFreeScans(plans, planConfig), async (req, res) => {
+  const photos = (req.body.photos as MenuPhoto[]).map((p) => ({ image: p.image, mediaType: p.mediaType }));
+  const language = isLang(req.body?.language) ? req.body.language : "en";
+  try {
+    res.json(await analyzeMenu(photos, res.locals.menuContext, language));
   } catch (error) {
     res.locals.giveBack?.();
     sendAiError(res, error);

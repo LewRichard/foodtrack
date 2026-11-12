@@ -3,6 +3,8 @@ import type { FoodItem } from "../../shared/nutrition.ts";
 import type { BarcodeProduct } from "../lib/barcode.ts";
 import DescribeMeal from "./DescribeMeal.tsx";
 import MenuScan from "./MenuScan.tsx";
+import LabelScan from "./LabelScan.tsx";
+import { SavedMealList } from "./SavedMeals.tsx";
 import { searchFoods } from "../lib/foods.ts";
 import { actions, newId, useAppState } from "../lib/store.ts";
 import { useI18n } from "../i18n/index.ts";
@@ -39,7 +41,7 @@ export default function AddFood({
   onAdded?: () => void;
   startWithBarcode?: boolean;
 }) {
-  const { recents } = useAppState();
+  const { recents, savedMeals } = useAppState();
   const { t, lang } = useI18n();
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -47,9 +49,11 @@ export default function AddFood({
   const [scanning, setScanning] = useState(startWithBarcode);
   const [describing, setDescribing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [labelOpen, setLabelOpen] = useState(false);
   const [product, setProduct] = useState<BarcodeProduct | null>(null);
 
   const q = query.trim().toLowerCase();
+  const comboMatches = savedMeals.filter((m) => !q || m.name.toLowerCase().includes(q) || m.items.some((i) => i.name.toLowerCase().includes(q)));
   const recentMatches = recents.filter((r) => !q || r.name.toLowerCase().includes(q)).slice(0, 8);
   const foodMatches = searchFoods(query, lang);
 
@@ -79,6 +83,11 @@ export default function AddFood({
     onAdded();
   }
 
+  // Full-screen ways to log replace the sheet while they're open, so nothing stacks on top of them.
+  if (describing) return <DescribeMeal date={date} meal={meal} onClose={() => setDescribing(false)} onLogged={onAdded} />;
+  if (menuOpen) return <MenuScan date={date} onClose={() => setMenuOpen(false)} onLogged={onAdded} />;
+  if (labelOpen) return <LabelScan date={date} meal={meal} onClose={() => setLabelOpen(false)} onLogged={onAdded} />;
+
   return (
     <Sheet title={t("add.title", { meal: t(`meal.${meal}`) })} onClose={onClose}>
       {draft ? (
@@ -103,6 +112,7 @@ export default function AddFood({
           <BarcodeScanner
             onFound={scanned}
             onEnterManually={() => pick({ ...BLANK, portion: t("common.oneServing") }, "manual")}
+            onReadLabel={() => setLabelOpen(true)}
           />
           <button className="link" onClick={() => setScanning(false)}>
             {t("barcode.searchInstead")}
@@ -128,12 +138,20 @@ export default function AddFood({
             <button className="btn barcode-open" onClick={() => setMenuOpen(true)}>
               <Icon name="menu" size={18} /> {t("menu.short")}
             </button>
+            <button className="btn barcode-open" onClick={() => setLabelOpen(true)}>
+              <Icon name="label" size={18} /> {t("label.short")}
+            </button>
           </div>
-          {describing && <DescribeMeal date={date} meal={meal} onClose={() => setDescribing(false)} onLogged={onAdded} />}
-          {menuOpen && <MenuScan date={date} onClose={() => setMenuOpen(false)} onLogged={onAdded} />}
           <button className="link" onClick={() => pick({ ...BLANK, name: query.trim(), portion: t("common.oneServing") }, "manual")}>
             {query.trim() ? t("add.customNamed", { name: query.trim() }) : t("add.custom")}
           </button>
+          <SavedMealList
+            meals={comboMatches}
+            onLog={(m) => {
+              actions.logSavedMeal(m.id, date, meal);
+              onAdded();
+            }}
+          />
           {recentMatches.length > 0 && (
             <>
               <p className="label">{t("add.recent")}</p>

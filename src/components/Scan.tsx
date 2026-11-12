@@ -12,6 +12,7 @@ import AddFood from "./AddFood.tsx";
 import Consent from "./Consent.tsx";
 import DescribeMeal from "./DescribeMeal.tsx";
 import MenuScan from "./MenuScan.tsx";
+import LabelScan from "./LabelScan.tsx";
 import { HealthScoreCard } from "./HealthScore.tsx";
 import { draftItem, ItemEditor, type Draft } from "./ItemEditor.tsx";
 import { Icon } from "./Icon.tsx";
@@ -41,6 +42,7 @@ export default function Scan({
   const [barcode, setBarcode] = useState(false);
   const [describe, setDescribe] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [label, setLabel] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const i18n = useI18n();
   const { t, tp, num } = i18n;
@@ -109,6 +111,10 @@ export default function Scan({
     return <DescribeMeal date={date} onClose={() => setDescribe(false)} onLogged={onLogged} onSignIn={onSignIn} />;
   }
 
+  if (phase.kind === "capture" && label) {
+    return <LabelScan date={date} onClose={() => setLabel(false)} onLogged={onLogged} onSignIn={onSignIn} />;
+  }
+
   if (phase.kind === "capture" && menu) {
     // The camera is closed meanwhile.
     return <MenuScan date={date} onClose={() => setMenu(false)} onLogged={onLogged} onSignIn={onSignIn} />;
@@ -125,6 +131,7 @@ export default function Scan({
           onBarcode={() => setBarcode(true)}
           onDescribe={() => setDescribe(true)}
           onMenu={() => setMenu(true)}
+          onLabel={() => setLabel(true)}
         />
         {awaitingConsent && (
           <Consent
@@ -291,6 +298,7 @@ function Capture({
   onBarcode,
   onDescribe,
   onMenu,
+  onLabel,
 }: {
   note: string;
   onNoteChange: (s: string) => void;
@@ -299,6 +307,7 @@ function Capture({
   onBarcode: () => void;
   onDescribe: () => void;
   onMenu: () => void;
+  onLabel: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -416,7 +425,10 @@ function Capture({
           <Icon name="pen" size={18} /> {t("describe.short")}
         </button>
         <button className="btn" onClick={onMenu}>
-          <Icon name="menu" size={18} /> {t("menu.open")}
+          <Icon name="menu" size={18} /> {t("menu.short")}
+        </button>
+        <button className="btn" onClick={onLabel}>
+          <Icon name="label" size={18} /> {t("label.short")}
         </button>
       </div>
       <FreeLogsLeft />

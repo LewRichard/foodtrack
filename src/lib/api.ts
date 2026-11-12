@@ -2,6 +2,7 @@ import type { Lang } from "../../shared/languages.ts";
 import type { AnalysisResult } from "../../shared/nutrition.ts";
 import type { MealPlan, PlanLength } from "../../shared/mealplan.ts";
 import type { MenuContext, MenuResult } from "../../shared/menu.ts";
+import type { LabelResult } from "../../shared/label.ts";
 import type { WeeklyReport } from "../../shared/report.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
 import { accessToken } from "./cloud.ts";
@@ -79,6 +80,15 @@ export type TextAnalysis = AnalysisResult & { meal: MealType | null };
 /** Turns a typed or dictated description of a meal into diary items. */
 export function analyzeText(text: string, language: Lang, signal?: AbortSignal): Promise<TextAnalysis> {
   return request<TextAnalysis>("/api/analyze-text", { method: "POST", body: JSON.stringify({ text, language }), signal });
+}
+
+/** Reads a nutrition label from a photo. */
+export function analyzeLabel(image: PreparedImage, language: Lang, signal?: AbortSignal): Promise<LabelResult> {
+  return request<LabelResult>("/api/analyze-label", {
+    method: "POST",
+    body: JSON.stringify({ image: image.base64, mediaType: image.mediaType, language }),
+    signal,
+  });
 }
 
 /** Reads restaurant menu photos and rates each dish against what's left today. */

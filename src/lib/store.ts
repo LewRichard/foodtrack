@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { DEFAULT_GOALS, type Goals, type Profile } from "../../shared/nutrition.ts";
+import { DEFAULT_GOALS, type FoodItem, type Goals, type Profile } from "../../shared/nutrition.ts";
 import { isLang, type Lang } from "../../shared/languages.ts";
 import type { MealPlan, PlanLength } from "../../shared/mealplan.ts";
 import type { WeeklyReport } from "../../shared/report.ts";
@@ -15,7 +15,7 @@ import {
   uuid,
   type SyncMeta,
 } from "./syncState.ts";
-import type { LogEntry } from "./types.ts";
+import type { LogEntry, MealType } from "./types.ts";
 
 export interface AppState {
   entries: LogEntry[];
@@ -43,6 +43,24 @@ export interface AppState {
   health: { connected: boolean; lastSync: number | null }; // Apple Health link (iPhone app, this device)
   steps: Record<string, number>; // date -> steps, read from Apple Health (this device only)
   mealPlan: SavedPlan | null; // the latest AI meal plan (this device)
+  savedMeals: SavedMeal[]; // combos logged in one tap, most recently used first (this device)
+}
+
+/** A meal saved to log again in one tap (e.g. "my usual breakfast"). */
+export interface SavedMeal {
+  id: string;
+  name: string;
+  items: FoodItem[];
+  uses: number;
+  lastUsed: number; // epoch ms (creation time until first used)
+}
+
+export const MAX_SAVED_MEALS = 30;
+
+/** The food in a diary entry, without where and when it was logged. */
+export function foodOf(e: LogEntry): FoodItem {
+  const { name, portion, grams, calories, protein, carbs, fat, fiber, sugar, sodium, confidence } = e;
+  return { name, portion, grams, calories, protein, carbs, fat, fiber, sugar, sodium, confidence };
 }
 
 export interface SavedPlan {
@@ -102,6 +120,7 @@ export const INITIAL_STATE: AppState = {
   health: { connected: false, lastSync: null },
   steps: {},
   mealPlan: null,
+  savedMeals: [],
 };
 
 function load(): AppState {
@@ -285,6 +304,24 @@ export const actions = {
   },
   markBadgesSeen(ids: string[]) {
     setState({ ...state, seenBadges: [...new Set([...(state.seenBadges ?? []), ...ids])] });
+  },
+  /** Saves food as a combo; the newest comes first and the list keeps the 30 most recent. */
+  saveMeal(name: string, items: FoodItem[]): SavedMeal {
+    const meal: SavedMeal = { id: newId(), name: name.trim().slice(0, 60), items: items.map((i) => ({ ...i })), uses: 0, lastUsed: Date.now() };
+    setState({ ...state, savedMeals: [meal, ...state.savedMeals].slice(0, MAX_SAVED_MEALS) });
+    return meal;
+  },
+  /** Logs every item of a combo to a meal, and moves the combo to the top. */
+  logSavedMeal(id: string, date: string, meal: MealType) {
+    const saved = state.savedMeals.find((m) => m.id === id);
+    if (!saved) return;
+    const now = Date.now();
+    actions.addEntries(saved.items.map((item, i) => ({ ...item, id: newId(), date, meal, loggedAt: now + i, source: "quick" as const })));
+    const used = { ...saved, uses: saved.uses + 1, lastUsed: now };
+    setState({ ...state, savedMeals: [used, ...state.savedMeals.filter((m) => m.id !== id)] });
+  },
+  deleteSavedMeal(id: string) {
+    setState({ ...state, savedMeals: state.savedMeals.filter((m) => m.id !== id) });
   },
   skipOnboarding() {
     setState({ ...state, onboardingSkipped: true, guidePending: true });

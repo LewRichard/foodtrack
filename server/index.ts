@@ -15,6 +15,7 @@ import { CoachRequestSchema, streamCoachReply } from "./coach.ts";
 import { ReportInputSchema, writeWeeklyReport } from "./report.ts";
 import { PlanRequestSchema, writeMealPlan } from "./mealplan.ts";
 import { analyzeMenu, MenuContextSchema, type MenuPhoto } from "./menu.ts";
+import { analyzeLabel } from "./label.ts";
 import { MAX_MENU_PHOTOS } from "../shared/menu.ts";
 import { handlePaddleEvent, paddleConfigFromEnv, portalLink, verifyPaddleSignature } from "./paddle.ts";
 import { limitFreeScans, planConfigFromEnv, requirePremium, supabasePlanStore, usageDay } from "./plans.ts";
@@ -250,6 +251,17 @@ app.post("/api/analyze-text", requireScanAccess(guard, verifyUser), validateText
   const language = isLang(req.body?.language) ? req.body.language : "en";
   try {
     res.json(await analyzeFoodText(text, language));
+  } catch (error) {
+    res.locals.giveBack?.();
+    sendAiError(res, error);
+  }
+});
+
+// Read a nutrition label from a photo. Counts as one AI log.
+app.post("/api/analyze-label", requireScanAccess(guard, verifyUser), validateUpload, limitScans(limiter), limitFreeScans(plans, planConfig), async (req, res) => {
+  const { image, mediaType, language } = req.body;
+  try {
+    res.json(await analyzeLabel(image, mediaType, isLang(language) ? language : "en"));
   } catch (error) {
     res.locals.giveBack?.();
     sendAiError(res, error);

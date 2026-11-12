@@ -4,7 +4,7 @@ import { useI18n } from "../i18n/index.ts";
 import { formatLongDate, greetingKey, todayKey } from "../lib/dates.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import { APPLE_HEALTH_ENABLED } from "../lib/health.ts";
-import { actions, entriesForDate, useAppState, useSaveFailed } from "../lib/store.ts";
+import { actions, entriesForDate, foodOf, useAppState, useSaveFailed } from "../lib/store.ts";
 import {
   MEAL_ICONS,
   MEAL_TYPES,
@@ -21,6 +21,7 @@ import { HealthChip, ScoreRing, tierLabel } from "./HealthScore.tsx";
 import ProfilePhoto from "./ProfilePhoto.tsx";
 import { StreakChip } from "./Achievements.tsx";
 import { LewToday } from "./LewCard.tsx";
+import { SaveMealSheet } from "./SavedMeals.tsx";
 import { streak } from "../lib/achievements.ts";
 import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
@@ -63,6 +64,7 @@ export default function Today({
   const [adding, setAdding] = useState<MealType | null>(null);
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [editingBurned, setEditingBurned] = useState(false);
+  const [savingMeal, setSavingMeal] = useState<MealType | null>(null);
   const loggedDates = new Set(state.entries.map((e) => e.date));
   const firstName = name.trim().split(/\s+/)[0];
 
@@ -213,6 +215,11 @@ export default function Today({
                     : t("today.mealSuggested", { kcal: num(suggested) })}
                 </span>
               </div>
+              {items.length > 0 && (
+                <button className="plus-btn ghost" onClick={() => setSavingMeal(meal)} aria-label={t("combo.saveMeal", { meal: t(`meal.${meal}`) })}>
+                  <Icon name="bookmark" size={17} />
+                </button>
+              )}
               <button className="plus-btn" onClick={() => setAdding(meal)} aria-label={t("today.addFoodTo", { meal: t(`meal.${meal}`) })}>
                 <Icon name="plus" size={18} strokeWidth={2} />
               </button>
@@ -272,6 +279,9 @@ export default function Today({
         <NutrientBar label={t("nutrient.sodium")} value={total.sodium} goal={goals.sodium} unit="mg" color="var(--neutral-fill)" limit />
       </details>
 
+      {savingMeal && (
+        <SaveMealSheet meal={savingMeal} items={entries.filter((e) => e.meal === savingMeal).map(foodOf)} onClose={() => setSavingMeal(null)} />
+      )}
       {adding && <AddFood date={date} meal={adding} onClose={() => setAdding(null)} />}
       {editing && <EditEntry entry={editing} onClose={() => setEditing(null)} />}
       {editingBurned && <BurnedSheet date={date} value={burned} onClose={() => setEditingBurned(false)} />}

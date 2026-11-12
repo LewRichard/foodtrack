@@ -14,9 +14,11 @@ type Status =
 export default function BarcodeScanner({
   onFound,
   onEnterManually,
+  onReadLabel,
 }: {
   onFound: (product: BarcodeProduct) => void;
   onEnterManually: () => void;
+  onReadLabel?: () => void;
 }) {
   const { t, lang } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -152,11 +154,16 @@ export default function BarcodeScanner({
               {t("barcode.scanAgain")}
             </button>
             {status.kind === "notFound" && (
-              <button className="btn primary grow" onClick={onEnterManually}>
-                {t("barcode.enterManually")}
+              <button className="btn primary grow" onClick={onReadLabel ?? onEnterManually}>
+                {onReadLabel ? t("label.instead") : t("barcode.enterManually")}
               </button>
             )}
           </div>
+          {status.kind === "notFound" && onReadLabel && (
+            <button className="link small" onClick={onEnterManually}>
+              {t("barcode.enterManually")}
+            </button>
+          )}
         </div>
       )}
 

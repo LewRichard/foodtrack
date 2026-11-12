@@ -6,6 +6,26 @@ import { clampHealthScore, type AnalysisResult } from "../shared/nutrition.ts";
 
 export const MODEL = "claude-opus-5-5";
 
+/**
+ * The model for photo and text logging, the most frequent AI calls. Set SCAN_MODEL (e.g.
+ * "claude-haiku-5-5") to use a cheaper model there; Lew, meal plans and reports keep MODEL.
+ */
+export const SCAN_MODEL = (process.env.SCAN_MODEL ?? "").trim() || MODEL;
+
+export type Effort = "low" | "medium" | "high";
+
+export interface ModelChoice {
+  model?: string;
+  effort?: Effort;
+  /** Called with the token counts of each request (for the model comparison script). */
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }, model: string) => void;
+}
+
+/** Server-side refusal fallback, on the models that offer it (not Haiku). */
+function fallbackFor(model: string): { betas?: Anthropic.Beta.AnthropicBeta[]; fallbacks?: "default" } {
+  return model.startsWith("claude-haiku") ? {} : { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" };
+}
+
 const FoodItemSchema = z.object({
   name: z.string().describe("Short food name, e.g. 'Grilled chicken breast'"),
   portion: z.string().describe("Visible portion in household units, e.g. '1 cup', '2 slices'"),
@@ -71,20 +91,21 @@ export async function analyzeFoodImage(
   mediaType: ImageMediaType,
   note?: string,
   language: Lang = "en",
+  choice: ModelChoice = {},
 ): Promise<AnalysisResult> {
+  const model = choice.model ?? SCAN_MODEL;
   // Food names, portions, meal name and notes come back in the app's language; JSON keys stay English.
   const languageNote =
     language === "en"
       ? ""
       : ` Write mealName, each item's name and portion, notes and healthReason in ${AI_LANGUAGE_NAMES[language]}, using the names people there usually call these foods.`;
   const response = await client.beta.messages.parse({
-    model: MODEL,
+    model,
     max_tokens: 16000,
     system: SYSTEM_PROMPT,
-    output_config: { effort: "medium", format: betaZodOutputFormat(AnalysisSchema) },
+    output_config: { effort: choice.effort ?? "medium", format: betaZodOutputFormat(AnalysisSchema) },
     // If the primary model declines, the API retries on a suitable fallback model.
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
+    ...fallbackFor(model),
     messages: [
       {
         role: "user",
@@ -100,6 +121,7 @@ export async function analyzeFoodImage(
       },
     ],
   });
+  choice.onUsage?.(response.usage, model);
 
   if (response.stop_reason === "refusal") {
     throw new AnalysisError("The model declined to analyze this image.", 422, "ai_refused");
@@ -135,20 +157,21 @@ ${HEALTH_RUBRIC}`;
 
 export type TextAnalysis = AnalysisResult & { meal: "breakfast" | "lunch" | "dinner" | "snack" | null };
 
-export async function analyzeFoodText(text: string, language: Lang = "en"): Promise<TextAnalysis> {
+export async function analyzeFoodText(text: string, language: Lang = "en", choice: ModelChoice = {}): Promise<TextAnalysis> {
+  const model = choice.model ?? SCAN_MODEL;
   const languageNote =
     language === "en"
       ? ""
       : ` Write mealName, each item's name and portion, notes and healthReason in ${AI_LANGUAGE_NAMES[language]}, using the names people there usually call these foods.`;
   const response = await client.beta.messages.parse({
-    model: MODEL,
+    model,
     max_tokens: 16000,
     system: TEXT_PROMPT,
-    output_config: { effort: "low", format: betaZodOutputFormat(TextAnalysisSchema) },
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
+    output_config: { effort: choice.effort ?? "low", format: betaZodOutputFormat(TextAnalysisSchema) },
+    ...fallbackFor(model),
     messages: [{ role: "user", content: `What I ate:${languageNote}\n\n<description>\n${text.trim()}\n</description>` }],
   });
+  choice.onUsage?.(response.usage, model);
 
   if (response.stop_reason === "refusal") {
     throw new AnalysisError("The model declined to read this description.", 422, "ai_refused");

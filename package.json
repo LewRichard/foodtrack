@@ -11,6 +11,7 @@
     "start": "tsx --env-file-if-exists=.env server/index.ts",
     "typecheck": "tsc",
     "test": "vitest run",
+    "compare-models": "tsx --env-file-if-exists=.env scripts/compare-models.ts",
     "ios:sync": "npm run build && cap sync ios",
     "ios:open": "cap open ios"
   },

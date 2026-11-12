@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { isLang } from "../shared/languages.ts";
 import { normalizeBarcode } from "../shared/barcode.ts";
 import { BarcodeLookup, BarcodeLookupError } from "./barcode.ts";
-import { AnalysisError, analyzeFoodImage, analyzeFoodText, MODEL, type ImageMediaType } from "./analyze.ts";
+import { AnalysisError, analyzeFoodImage, analyzeFoodText, MODEL, SCAN_MODEL, type ImageMediaType } from "./analyze.ts";
 import { supabaseVerifier } from "./auth.ts";
 import { codeMatches, configFromEnv, cors, limitScans, requireScanAccess, ScanLimiter } from "./guard.ts";
 import { testReminderText } from "../shared/reminders.ts";
@@ -66,6 +66,7 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     model: MODEL,
+    scanModel: SCAN_MODEL,
     hasKey: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
     requiresCode: Boolean(guard.accessCode),
     requiresSignIn: guard.requireSignIn,

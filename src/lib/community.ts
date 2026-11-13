@@ -68,6 +68,8 @@ export interface Conversation {
   last_body: string;
   last_at: string;
   last_from_me: boolean;
+  /** Whether my last message has been seen. Missing until supabase/chat-seen.sql has been run. */
+  last_read?: boolean | null;
   unread: number;
 }
 
@@ -449,6 +451,26 @@ export function listenForMessages(myId: string, onMessage: (m: Message) => void)
       .channel(`messages:${myId}:${crypto.randomUUID()}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `recipient=eq.${myId}` }, (payload) =>
         onMessage(payload.new as Message),
+      )
+      .subscribe();
+    stop = () => void client.removeChannel(channel);
+  });
+  return () => {
+    stopped = true;
+    stop();
+  };
+}
+
+/** Calls `onRead` when a friend opens a message I sent (its read_at is set), live. */
+export function listenForReads(myId: string, onRead: (m: Message) => void): () => void {
+  let stop = () => {};
+  let stopped = false;
+  void db().then((client) => {
+    if (stopped) return;
+    const channel = client
+      .channel(`reads:${myId}:${crypto.randomUUID()}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages", filter: `sender=eq.${myId}` }, (payload) =>
+        onRead(payload.new as Message),
       )
       .subscribe();
     stop = () => void client.removeChannel(channel);

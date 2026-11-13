@@ -12,6 +12,7 @@ import {
   deleteComment,
   deletePost,
   listenForMessages,
+  listenForReads,
   loadBlocked,
   loadComments,
   loadConnections,
@@ -1211,6 +1212,11 @@ function Chats({ friends, onOpen, onFindFriends }: { friends: Connection[]; onOp
               <span className="person-name">
                 <strong>{c.display_name || c.username}</strong>
                 <span className={`small ${c.unread ? "" : "muted"} ellipsis`}>
+                  {c.last_from_me && typeof c.last_read === "boolean" && (
+                    <span className={`tick ${c.last_read ? "seen" : ""}`} role="img" aria-label={c.last_read ? t("community.seen") : t("community.msgSent")}>
+                      <Icon name={c.last_read ? "check-check" : "check"} size={14} strokeWidth={c.last_read ? 3 : 1.75} />
+                    </span>
+                  )}
                   {c.last_from_me ? `${t("community.you")}: ` : ""}
                   {c.last_body}
                 </span>
@@ -1271,11 +1277,26 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
       setMessages((prev) => (prev && !prev.some((x) => x.id === m.id) ? [...prev, m] : prev));
       void markRead(other.id).then(refreshAlerts, () => {});
     });
+    // My messages turn "seen" as soon as they open them.
+    const stopReads = listenForReads(me.id, (m) => {
+      if (m.recipient !== other.id) return;
+      setMessages((prev) => prev?.map((x) => (x.id === m.id ? { ...x, read_at: m.read_at } : x)) ?? prev);
+    });
+    // Coming back to the app: catch up on anything missed while it was in the background.
+    const onShow = () => {
+      if (document.visibilityState !== "visible") return;
+      loadMessages(other.id).then((m) => active && setMessages(m), () => {});
+    };
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       active = false;
       stop();
+      stopReads();
+      document.removeEventListener("visibilitychange", onShow);
     };
   }, [me.id, other.id]);
+
+  const lastMine = messages ? [...messages].reverse().find((m) => m.sender === me.id) : undefined;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
@@ -1322,8 +1343,20 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
                 <span>{m.body}</span>
                 <span className="bubble-time">
                   {new Date(m.created_at).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
+                  {m.sender === me.id && (
+                    <span className={`tick ${m.read_at ? "seen" : ""}`} role="img" aria-label={m.read_at ? t("community.seen") : t("community.msgSent")}>
+                      <Icon name={m.read_at ? "check-check" : "check"} size={14} strokeWidth={m.read_at ? 3 : 1.75} />
+                    </span>
+                  )}
                 </span>
               </div>
+              {m === lastMine && (
+                <p className={`chat-status tiny ${m.read_at ? "seen" : "muted"}`}>
+                  {m.read_at
+                    ? t("community.seenAt", { time: new Date(m.read_at).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" }) })
+                    : t("community.msgSent")}
+                </p>
+              )}
             </div>
           );
         })}

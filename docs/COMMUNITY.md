@@ -78,3 +78,10 @@ Community → **Ranks** (Xếp hạng) shows how many days in a row people have 
   everyone if it's public, never to someone blocked.
 
 After updating the app, run `supabase/community.sql` again so the `streaks` table exists.
+
+## Seen ticks in chat
+
+Messages you send show a light tick (sent) that turns into a bold green double tick once your
+friend opens the chat, and the last one says "Seen 9:41". Inside a chat this works with no setup.
+For the ticks in the chat list, run `supabase/chat-seen.sql` once in Supabase → SQL Editor
+(it's also part of `community.sql`).

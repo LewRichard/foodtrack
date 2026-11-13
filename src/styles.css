@@ -5329,3 +5329,44 @@ td .lew-empty {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---- Chat: sent / seen ---- */
+.bubble-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tick {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 4px;
+  color: var(--text-2);
+  opacity: 0.8;
+}
+
+.tick.seen {
+  color: var(--good);
+  opacity: 1;
+}
+
+.bubble .tick {
+  margin-right: 0;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.bubble.mine .tick.seen {
+  color: #4cd97b;
+  opacity: 1;
+}
+
+.chat-status {
+  margin: 2px 6px 0 auto;
+  text-align: right;
+}
+
+.chat-status.seen {
+  color: var(--good);
+  font-weight: 600;
+}

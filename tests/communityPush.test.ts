@@ -21,6 +21,11 @@ function deps(overrides: Partial<CommunityDeps> = {}): CommunityDeps {
 }
 
 describe("community notifications", () => {
+  it("says a photo was sent when a message has no text", async () => {
+    const photo = deps({ message: async () => ({ sender: AN, recipient: LEW, body: "", image_path: `${AN}/x.jpg`, created_at: justNow }) });
+    expect((await buildNotification(photo, AN, "message", "m2", NOW))?.message.body).toBe("📷 Đã gửi một ảnh");
+  });
+
   it("notifies the recipient of a message, in their language", async () => {
     const note = await buildNotification(deps(), AN, "message", "m1", NOW);
     expect(note).toEqual({

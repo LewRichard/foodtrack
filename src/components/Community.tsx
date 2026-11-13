@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { sumNutrients } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
@@ -13,6 +14,7 @@ import {
   deletePost,
   listenForMessages,
   listenForReads,
+  chatImageUrls,
   loadBlocked,
   loadComments,
   loadConnections,
@@ -1218,7 +1220,11 @@ function Chats({ friends, onOpen, onFindFriends }: { friends: Connection[]; onOp
                     </span>
                   )}
                   {c.last_from_me ? `${t("community.you")}: ` : ""}
-                  {c.last_body}
+                  {c.last_body || (
+                    <>
+                      <Icon name="image" size={14} className="inline-ic" /> {t("community.photo")}
+                    </>
+                  )}
                 </span>
               </span>
               <span className="conversation-meta">
@@ -1263,7 +1269,39 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [reporting, setReporting] = useState(false);
+  const [photo, setPhoto] = useState<{ blob: Blob; url: string } | null>(null);
+  const [sending, setSending] = useState(false);
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [viewing, setViewing] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const photoInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => () => void (photo && URL.revokeObjectURL(photo.url)), [photo]);
+
+  // Links for the photos in this chat (private files, so each one needs a signed link).
+  const photoPaths = (messages ?? []).flatMap((m) => (m.image_path ? [m.image_path] : []));
+  const photoKey = photoPaths.join("|");
+  useEffect(() => {
+    if (!photoPaths.length) return;
+    let active = true;
+    chatImageUrls(photoPaths).then((u) => active && setUrls((prev) => ({ ...prev, ...u })), () => {});
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoKey]);
+
+  async function pickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const blob = await photoForUpload(file);
+      setPhoto({ blob, url: URL.createObjectURL(blob) });
+    } catch (err) {
+      setError(message(err));
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -1305,15 +1343,20 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
   async function submit(e: FormEvent) {
     e.preventDefault();
     const body = draft.trim();
-    if (!body) return;
+    if ((!body && !photo) || sending) return;
+    const attached = photo;
     setDraft("");
     setError("");
+    setSending(true);
     try {
-      const sent = await sendMessage(other.id, body);
+      const sent = await sendMessage(other.id, body, attached?.blob);
       setMessages((prev) => [...(prev ?? []), sent]);
+      setPhoto(null);
     } catch (err) {
       setDraft(body);
       setError(message(err));
+    } finally {
+      setSending(false);
     }
   }
 
@@ -1339,8 +1382,13 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
           return (
             <div key={m.id}>
               {showDay && <p className="chat-day muted tiny">{day}</p>}
-              <div className={`bubble ${m.sender === me.id ? "mine" : "theirs"}`}>
-                <span>{m.body}</span>
+              <div className={`bubble ${m.sender === me.id ? "mine" : "theirs"} ${m.image_path ? "has-photo" : ""}`}>
+                {m.image_path && (
+                  <button className="bubble-photo" onClick={() => urls[m.image_path!] && setViewing(urls[m.image_path!])} aria-label={t("community.openPhoto")}>
+                    {urls[m.image_path] ? <img src={urls[m.image_path]} alt="" onLoad={() => endRef.current?.scrollIntoView({ block: "end" })} /> : <span className="bubble-photo-wait" />}
+                  </button>
+                )}
+                {m.body && <span>{m.body}</span>}
                 <span className="bubble-time">
                   {new Date(m.created_at).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
                   {m.sender === me.id && (
@@ -1363,18 +1411,41 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
         <div ref={endRef} />
       </div>
       {error && <p className="error small">{error}</p>}
-      <form className="row gap chat-form" onSubmit={submit}>
-        <input
-          className="grow"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value.slice(0, 2000))}
-          placeholder={t("community.writeMessage")}
-          aria-label={t("community.writeMessage")}
-        />
-        <button className="btn primary" disabled={!draft.trim()}>
-          {t("community.send")}
-        </button>
+      <form className="chat-form" onSubmit={submit}>
+        {photo && (
+          <div className="chat-attach">
+            <img src={photo.url} alt="" />
+            <button type="button" className="chat-attach-remove" onClick={() => setPhoto(null)} aria-label={t("community.removePhoto")}>
+              <Icon name="x" size={14} />
+            </button>
+          </div>
+        )}
+        <div className="row gap">
+          <button type="button" className="icon-btn chat-photo-btn" onClick={() => photoInput.current?.click()} aria-label={t("community.addPhoto")} disabled={sending}>
+            <Icon name="image" size={20} />
+          </button>
+          <input
+            className="grow"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value.slice(0, 2000))}
+            placeholder={photo ? t("community.addCaption") : t("community.writeMessage")}
+            aria-label={t("community.writeMessage")}
+          />
+          <button className="btn primary" disabled={(!draft.trim() && !photo) || sending}>
+            {sending ? <span className="spinner small-spinner" /> : t("community.send")}
+          </button>
+        </div>
+        <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => void pickPhoto(e)} />
       </form>
+      {viewing && createPortal(
+        <div className="photo-viewer" role="dialog" aria-modal="true" onClick={() => setViewing(null)}>
+          <img src={viewing} alt="" />
+          <button className="close-btn" aria-label={t("common.close")}>
+            <Icon name="x" size={20} />
+          </button>
+        </div>,
+        document.body,
+      )}
       {reporting && <ReportSheet target="user" id={other.id} onClose={() => setReporting(false)} />}
     </div>
   );

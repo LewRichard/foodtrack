@@ -85,3 +85,10 @@ Messages you send show a light tick (sent) that turns into a bold green double t
 friend opens the chat, and the last one says "Seen 9:41". Inside a chat this works with no setup.
 For the ticks in the chat list, run `supabase/chat-seen.sql` once in Supabase → SQL Editor
 (it's also part of `community.sql`).
+
+## Photos in chat
+
+Friends can send each other photos in chat (with or without text). Photos go to a private
+`chat-images` bucket that only the sender and the recipient can open. Run
+`supabase/chat-photos.sql` once in Supabase → SQL Editor to turn it on (it's also part of
+`community.sql`). Until then, text chat keeps working and sending a photo shows an error.

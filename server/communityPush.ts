@@ -24,7 +24,7 @@ interface ProfileRow {
 }
 
 export interface CommunityDeps {
-  message(id: string): Promise<{ sender: string; recipient: string; body: string; created_at: string } | null>;
+  message(id: string): Promise<{ sender: string; recipient: string; body: string; created_at: string; image_path?: string | null } | null>;
   comment(id: string): Promise<{ author: string; body: string; created_at: string; post_author: string } | null>;
   like(postId: string, userId: string): Promise<{ created_at: string; post_author: string } | null>;
   friendship(requester: string, addressee: string): Promise<{ status: string; created_at: string } | null>;
@@ -60,6 +60,18 @@ const preview = (text: string, max = 120) => (text.length > max ? `${text.slice(
 
 const FRESH_MS = 10 * 60 * 1000; // only events from the last few minutes (no replaying old ones)
 
+const PHOTO: Record<Lang, string> = {
+  en: "📷 Sent a photo",
+  vi: "📷 Đã gửi một ảnh",
+  es: "📷 Envió una foto",
+  pt: "📷 Enviou uma foto",
+  fr: "📷 A envoyé une photo",
+  de: "📷 Hat ein Foto gesendet",
+  zh: "📷 发来一张照片",
+  ja: "📷 写真を送信しました",
+  ko: "📷 사진을 보냈어요",
+};
+
 export interface Notification {
   to: string;
   message: PushMessage;
@@ -77,6 +89,7 @@ export async function buildNotification(
   let to: string;
   let body = "";
   let section = "feed";
+  let photo = false; // a chat photo without text
 
   switch (kind) {
     case "message": {
@@ -84,6 +97,7 @@ export async function buildNotification(
       if (!m || m.sender !== actor || !fresh(m.created_at)) return null;
       to = m.recipient;
       body = preview(m.body);
+      photo = !m.body.trim() && Boolean(m.image_path);
       section = "chats";
       break;
     }
@@ -121,7 +135,9 @@ export async function buildNotification(
   if (!recipient || !sender || !recipient.notify) return null;
   if (await deps.blocked(actor, to)) return null;
 
-  const texts = TEXTS[isLang(recipient.language) ? recipient.language : "en"];
+  const lang = isLang(recipient.language) ? recipient.language : "en";
+  const texts = TEXTS[lang];
+  if (photo) body = PHOTO[lang];
   const name = sender.display_name || sender.username;
   const title = texts[kind].replace("{name}", name);
   return {
@@ -145,7 +161,7 @@ export function supabaseCommunityDeps(db: SupabaseClient): CommunityDeps {
     return data;
   };
   return {
-    message: (id) => one(db.from("messages").select("sender, recipient, body, created_at").eq("id", id).maybeSingle()),
+    message: (id) => one(db.from("messages").select("*").eq("id", id).maybeSingle()),
     async comment(id) {
       const row = await one<{ author: string; body: string; created_at: string; post: { author: string } | null }>(
         db.from("comments").select("author, body, created_at, post:posts!comments_post_id_fkey(author)").eq("id", id).maybeSingle() as never,

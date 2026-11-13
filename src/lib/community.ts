@@ -80,6 +80,8 @@ export interface Message {
   body: string;
   created_at: string;
   read_at: string | null;
+  /** A photo in the chat-images bucket (missing before supabase/chat-photos.sql has been run). */
+  image_path?: string | null;
 }
 
 export type ReportTarget = "post" | "comment" | "user" | "message";
@@ -417,7 +419,7 @@ export async function loadMessages(other: string): Promise<Message[]> {
   const myId = await me();
   const { data, error } = await (await db())
     .from("messages")
-    .select("id, sender, recipient, body, created_at, read_at")
+    .select("*") // "*" so chats keep working before the photo column exists
     .or(`and(sender.eq.${myId},recipient.eq.${other}),and(sender.eq.${other},recipient.eq.${myId})`)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -425,15 +427,40 @@ export async function loadMessages(other: string): Promise<Message[]> {
   return ((data ?? []) as Message[]).reverse();
 }
 
-export async function sendMessage(recipient: string, body: string): Promise<Message> {
-  const { data, error } = await (await db())
+export async function sendMessage(recipient: string, body: string, photo?: Blob): Promise<Message> {
+  const client = await db();
+  let imagePath: string | null = null;
+  if (photo) {
+    imagePath = `${await me()}/${crypto.randomUUID()}.jpg`;
+    const { error } = await client.storage.from(CHAT_IMAGES).upload(imagePath, photo, { contentType: "image/jpeg" });
+    if (error) throw new Error(/bucket/i.test(error.message) ? "Photos in chat aren't set up yet (run supabase/chat-photos.sql)." : error.message);
+  }
+  const { data, error } = await client
     .from("messages")
-    .insert({ recipient, body: body.trim() })
-    .select("id, sender, recipient, body, created_at, read_at")
+    .insert({ recipient, body: body.trim(), ...(imagePath ? { image_path: imagePath } : {}) })
+    .select("*")
     .single();
+  if (error && imagePath) await client.storage.from(CHAT_IMAGES).remove([imagePath]);
   fail(error);
   notify("message", (data as Message).id);
+  if (photo && imagePath) chatUrls.set(imagePath, { url: URL.createObjectURL(photo), until: Infinity });
   return data as Message;
+}
+
+const CHAT_IMAGES = "chat-images";
+const chatUrls = new Map<string, { url: string; until: number }>();
+
+/** Short-lived links to chat photos, keyed by path (cached until shortly before they expire). */
+export async function chatImageUrls(paths: string[]): Promise<Record<string, string>> {
+  const now = Date.now();
+  const missing = [...new Set(paths)].filter((p) => (chatUrls.get(p)?.until ?? 0) < now);
+  if (missing.length) {
+    const { data } = await (await db()).storage.from(CHAT_IMAGES).createSignedUrls(missing, 60 * 60);
+    for (const u of (data ?? []) as { path: string | null; signedUrl: string }[]) {
+      if (u.path && u.signedUrl) chatUrls.set(u.path, { url: u.signedUrl, until: now + 50 * 60 * 1000 });
+    }
+  }
+  return Object.fromEntries(paths.flatMap((p) => (chatUrls.has(p) ? [[p, chatUrls.get(p)!.url]] : [])));
 }
 
 export async function markRead(other: string): Promise<void> {
@@ -558,7 +585,7 @@ export async function syncNotificationLanguage(): Promise<void> {
 onBeforeDeleteAccount(async () => {
   const client = await db();
   const myId = await me();
-  for (const bucket of [BUCKET, AVATARS]) {
+  for (const bucket of [BUCKET, AVATARS, CHAT_IMAGES]) {
     const { data } = await client.storage.from(bucket).list(myId, { limit: 1000 });
     const paths = (data ?? []).map((f) => `${myId}/${f.name}`);
     if (paths.length) await client.storage.from(bucket).remove(paths);

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { sumNutrients } from "../../shared/nutrition.ts";
+import { cleanSharedFood, type SharedFood } from "../../shared/sharedFood.ts";
+import { MEAL_TYPES, mealForTime, type MealType } from "../lib/types.ts";
 import { useI18n } from "../i18n/index.ts";
 import { cloudEnabled, useSession } from "../lib/cloud.ts";
 import {
@@ -58,7 +60,7 @@ import {
 } from "../lib/community.ts";
 import { timeAgo, todayKey } from "../lib/dates.ts";
 import { photoForUpload } from "../lib/image.ts";
-import { entriesForDate, getState, useAppState } from "../lib/store.ts";
+import { actions, entriesForDate, getState, newId, useAppState } from "../lib/store.ts";
 import AvatarCropper from "./AvatarCropper.tsx";
 import Sheet from "./Sheet.tsx";
 import { Icon } from "./Icon.tsx";
@@ -1220,11 +1222,16 @@ function Chats({ friends, onOpen, onFindFriends }: { friends: Connection[]; onOp
                     </span>
                   )}
                   {c.last_from_me ? `${t("community.you")}: ` : ""}
-                  {c.last_body || (
-                    <>
-                      <Icon name="image" size={14} className="inline-ic" /> {t("community.photo")}
-                    </>
-                  )}
+                  {c.last_body ||
+                    (c.last_food ? (
+                      <>
+                        <Icon name="utensils" size={14} className="inline-ic" /> {c.last_food}
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="image" size={14} className="inline-ic" /> {t("community.photo")}
+                      </>
+                    ))}
                 </span>
               </span>
               <span className="conversation-meta">
@@ -1273,6 +1280,7 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
   const [sending, setSending] = useState(false);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [viewing, setViewing] = useState<string | null>(null);
+  const [adding, setAdding] = useState<SharedFood | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const photoInput = useRef<HTMLInputElement>(null);
 
@@ -1382,12 +1390,16 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
           return (
             <div key={m.id}>
               {showDay && <p className="chat-day muted tiny">{day}</p>}
-              <div className={`bubble ${m.sender === me.id ? "mine" : "theirs"} ${m.image_path ? "has-photo" : ""}`}>
+              <div className={`bubble ${m.sender === me.id ? "mine" : "theirs"} ${m.image_path ? "has-photo" : ""} ${m.food ? "has-food" : ""}`}>
                 {m.image_path && (
                   <button className="bubble-photo" onClick={() => urls[m.image_path!] && setViewing(urls[m.image_path!])} aria-label={t("community.openPhoto")}>
                     {urls[m.image_path] ? <img src={urls[m.image_path]} alt="" onLoad={() => endRef.current?.scrollIntoView({ block: "end" })} /> : <span className="bubble-photo-wait" />}
                   </button>
                 )}
+                {(() => {
+                  const shared = cleanSharedFood(m.food);
+                  return shared ? <ChatFoodCard food={shared} onAdd={() => setAdding(shared)} /> : null;
+                })()}
                 {m.body && <span>{m.body}</span>}
                 <span className="bubble-time">
                   {new Date(m.created_at).toLocaleTimeString(locale, { hour: "numeric", minute: "2-digit" })}
@@ -1437,6 +1449,7 @@ function ChatView({ me, other, onBack }: { me: Profile; other: Person; onBack: (
         </div>
         <input ref={photoInput} type="file" accept="image/*" hidden onChange={(e) => void pickPhoto(e)} />
       </form>
+      {adding && <AddSharedSheet food={adding} onClose={() => setAdding(null)} />}
       {viewing && createPortal(
         <div className="photo-viewer" role="dialog" aria-modal="true" onClick={() => setViewing(null)}>
           <img src={viewing} alt="" />
@@ -1603,5 +1616,97 @@ function LeaderRow({ row, isMe }: { row: Ranked; isMe: boolean }) {
       </span>
       <span className={`lb-days ${row.live === 0 ? "muted" : ""}`}><Icon name="flame" size={16} /> {num(row.live)}</span>
     </li>
+  );
+}
+
+/** A food or meal a friend shared: what's in it, with buttons to log it or keep it as a combo. */
+function ChatFoodCard({ food, onAdd }: { food: SharedFood; onAdd: () => void }) {
+  const { t, tp, num } = useI18n();
+  const [saved, setSaved] = useState(false);
+  const total = sumNutrients(food.items);
+  const names = food.items.map((i) => i.name);
+  return (
+    <div className="food-card">
+      {food.photo && <img src={food.photo} alt="" />}
+      <div className="food-card-text">
+        <strong>{food.title}</strong>
+        {food.items.length > 1 && names.join(", ").slice(0, 80) !== food.title && <span className="small food-card-items">{names.slice(0, 3).join(", ")}{names.length > 3 ? ` +${names.length - 3}` : ""}</span>}
+        <span className="small food-card-kcal">
+          <b>{num(Math.round(total.calories))} kcal</b> · {t("abbr.protein")} {num(Math.round(total.protein))}g · {t("abbr.carbs")} {num(Math.round(total.carbs))}g · {t("abbr.fat")}{" "}
+          {num(Math.round(total.fat))}g
+        </span>
+        <span className="muted tiny">{tp("scan.items", food.items.length)}</span>
+      </div>
+      <div className="food-card-actions">
+        <button className="btn small-btn primary" onClick={onAdd}>
+          <Icon name="plus" size={15} /> {t("share.addToDiary")}
+        </button>
+        <button
+          className="btn small-btn"
+          disabled={saved}
+          onClick={() => {
+            actions.saveMeal(food.title, food.items);
+            setSaved(true);
+          }}
+        >
+          <Icon name={saved ? "check" : "bookmark"} size={15} /> {saved ? t("share.savedCombo") : t("share.saveCombo")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Logs a shared food to today's diary, in the meal of your choice. */
+function AddSharedSheet({ food, onClose }: { food: SharedFood; onClose: () => void }) {
+  const { t, num } = useI18n();
+  const [meal, setMeal] = useState<MealType>(mealForTime());
+  const [done, setDone] = useState(false);
+  const total = sumNutrients(food.items);
+  return (
+    <Sheet title={t("share.addTitle")} onClose={onClose}>
+      {done ? (
+        <div className="stack center">
+          <span className="premium-mark" aria-hidden="true">
+            <Icon name="check" size={24} />
+          </span>
+          <p>{t("share.added", { meal: t(`meal.${meal}`) })}</p>
+          <button className="btn primary" onClick={onClose}>
+            {t("common.done")}
+          </button>
+        </div>
+      ) : (
+        <div className="stack">
+          <div className="food-list">
+            {food.items.map((f, i) => (
+              <div key={i} className="entry static">
+                <span className="entry-main">
+                  <span className="entry-name">{f.name}</span>
+                  <span className="muted small">{f.portion}</span>
+                </span>
+                <span className="entry-kcal">{Math.round(f.calories)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="label">{t("scan.addTo")}</p>
+          <div className="segmented">
+            {MEAL_TYPES.map((m) => (
+              <button key={m} className={m === meal ? "active" : ""} onClick={() => setMeal(m)}>
+                {t(`meal.${m}`)}
+              </button>
+            ))}
+          </div>
+          <button
+            className="btn primary"
+            onClick={() => {
+              const now = Date.now();
+              actions.addEntries(food.items.map((item, i) => ({ ...item, id: newId(), date: todayKey(), meal, loggedAt: now + i, source: "quick" as const })));
+              setDone(true);
+            }}
+          >
+            {t("scan.log", { kcal: num(Math.round(total.calories)) })}
+          </button>
+        </div>
+      )}
+    </Sheet>
   );
 }

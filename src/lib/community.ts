@@ -10,6 +10,7 @@ import { photoSquare } from "./image.ts";
 import { actions, getState, onStateChange } from "./store.ts";
 import { streak } from "./achievements.ts";
 import { addDays, todayKey } from "./dates.ts";
+import type { SharedFood } from "../../shared/sharedFood.ts";
 
 // Community: profiles, friends, posts, comments, likes and chat, all stored in Supabase.
 // Who can see or do what is enforced by the database (supabase/community.sql); this file just asks.
@@ -70,6 +71,8 @@ export interface Conversation {
   last_from_me: boolean;
   /** Whether my last message has been seen. Missing until supabase/chat-seen.sql has been run. */
   last_read?: boolean | null;
+  /** Title of the shared food when the last message is one (needs supabase/chat-share.sql). */
+  last_food?: string | null;
   unread: number;
 }
 
@@ -82,6 +85,8 @@ export interface Message {
   read_at: string | null;
   /** A photo in the chat-images bucket (missing before supabase/chat-photos.sql has been run). */
   image_path?: string | null;
+  /** A shared food or meal, as sent (clean it with cleanSharedFood before use). */
+  food?: unknown;
 }
 
 export type ReportTarget = "post" | "comment" | "user" | "message";
@@ -427,7 +432,7 @@ export async function loadMessages(other: string): Promise<Message[]> {
   return ((data ?? []) as Message[]).reverse();
 }
 
-export async function sendMessage(recipient: string, body: string, photo?: Blob): Promise<Message> {
+export async function sendMessage(recipient: string, body: string, photo?: Blob, food?: SharedFood): Promise<Message> {
   const client = await db();
   let imagePath: string | null = null;
   if (photo) {
@@ -437,10 +442,11 @@ export async function sendMessage(recipient: string, body: string, photo?: Blob)
   }
   const { data, error } = await client
     .from("messages")
-    .insert({ recipient, body: body.trim(), ...(imagePath ? { image_path: imagePath } : {}) })
+    .insert({ recipient, body: body.trim(), ...(imagePath ? { image_path: imagePath } : {}), ...(food ? { food } : {}) })
     .select("*")
     .single();
   if (error && imagePath) await client.storage.from(CHAT_IMAGES).remove([imagePath]);
+  if (error && food && /food/.test(error.message)) throw new Error("Sharing food in chat isn't set up yet (run supabase/chat-share.sql).");
   fail(error);
   notify("message", (data as Message).id);
   if (photo && imagePath) chatUrls.set(imagePath, { url: URL.createObjectURL(photo), until: Infinity });

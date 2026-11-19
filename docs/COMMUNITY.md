@@ -92,3 +92,11 @@ Friends can send each other photos in chat (with or without text). Photos go to 
 `chat-images` bucket that only the sender and the recipient can open. Run
 `supabase/chat-photos.sql` once in Supabase → SQL Editor to turn it on (it's also part of
 `community.sql`). Until then, text chat keeps working and sending a photo shows an error.
+
+## Sharing food in chat
+
+From the Diary, the send icon on a meal (or the send button when editing one item) shares it with
+a friend. They get a card with calories and macros and can add it to today's diary or save it as a
+combo. Only the food is sent: names, portions, nutrition and an optional small photo, never dates
+or other diary data. Run `supabase/chat-share.sql` once (it also contains chat-photos.sql and
+chat-seen.sql, so it's the only chat file you need).

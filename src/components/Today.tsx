@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { averageHealthScore, sumNutrients } from "../../shared/nutrition.ts";
 import { useI18n } from "../i18n/index.ts";
 import { formatLongDate, greetingKey, todayKey } from "../lib/dates.ts";
@@ -22,6 +22,9 @@ import ProfilePhoto from "./ProfilePhoto.tsx";
 import { StreakChip } from "./Achievements.tsx";
 import { LewToday } from "./LewCard.tsx";
 import { SaveMealSheet } from "./SavedMeals.tsx";
+import { shareFoodFrom } from "../../shared/sharedFood.ts";
+
+const ShareFoodSheet = lazy(() => import("./ShareFood.tsx"));
 import { streak } from "../lib/achievements.ts";
 import { WeightTile } from "./Weight.tsx";
 import WeekStrip from "./WeekStrip.tsx";
@@ -65,6 +68,7 @@ export default function Today({
   const [editing, setEditing] = useState<LogEntry | null>(null);
   const [editingBurned, setEditingBurned] = useState(false);
   const [savingMeal, setSavingMeal] = useState<MealType | null>(null);
+  const [sharingMeal, setSharingMeal] = useState<MealType | null>(null);
   const loggedDates = new Set(state.entries.map((e) => e.date));
   const firstName = name.trim().split(/\s+/)[0];
 
@@ -215,6 +219,11 @@ export default function Today({
                     : t("today.mealSuggested", { kcal: num(suggested) })}
                 </span>
               </div>
+              {items.length > 0 && cloudEnabled && (
+                <button className="plus-btn ghost" onClick={() => setSharingMeal(meal)} aria-label={t("share.shareMeal", { meal: t(`meal.${meal}`) })}>
+                  <Icon name="send" size={17} />
+                </button>
+              )}
               {items.length > 0 && (
                 <button className="plus-btn ghost" onClick={() => setSavingMeal(meal)} aria-label={t("combo.saveMeal", { meal: t(`meal.${meal}`) })}>
                   <Icon name="bookmark" size={17} />
@@ -279,6 +288,18 @@ export default function Today({
         <NutrientBar label={t("nutrient.sodium")} value={total.sodium} goal={goals.sodium} unit="mg" color="var(--neutral-fill)" limit />
       </details>
 
+      {sharingMeal && (
+        <Suspense fallback={null}>
+          <ShareFoodSheet
+            food={(() => {
+              const items = entries.filter((e) => e.meal === sharingMeal);
+              const title = items.map((e) => e.name).join(", ").slice(0, 80);
+              return shareFoodFrom(title, items.map(foodOf), items.find((e) => e.photo)?.photo);
+            })()}
+            onClose={() => setSharingMeal(null)}
+          />
+        </Suspense>
+      )}
       {savingMeal && (
         <SaveMealSheet meal={savingMeal} items={entries.filter((e) => e.meal === savingMeal).map(foodOf)} onClose={() => setSavingMeal(null)} />
       )}

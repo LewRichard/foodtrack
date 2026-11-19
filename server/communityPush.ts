@@ -7,6 +7,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isLang, type Lang } from "../shared/languages.ts";
+import { cleanSharedFood } from "../shared/sharedFood.ts";
 import type { PushMessage, PushSubscriptionRow } from "./push.ts";
 
 export const NOTIFY_KINDS = ["message", "comment", "like", "friend_request", "friend_accept"] as const;
@@ -24,7 +25,7 @@ interface ProfileRow {
 }
 
 export interface CommunityDeps {
-  message(id: string): Promise<{ sender: string; recipient: string; body: string; created_at: string; image_path?: string | null } | null>;
+  message(id: string): Promise<{ sender: string; recipient: string; body: string; created_at: string; image_path?: string | null; food?: unknown } | null>;
   comment(id: string): Promise<{ author: string; body: string; created_at: string; post_author: string } | null>;
   like(postId: string, userId: string): Promise<{ created_at: string; post_author: string } | null>;
   friendship(requester: string, addressee: string): Promise<{ status: string; created_at: string } | null>;
@@ -72,6 +73,18 @@ const PHOTO: Record<Lang, string> = {
   ko: "📷 사진을 보냈어요",
 };
 
+const FOOD: Record<Lang, string> = {
+  en: "🍽️ Shared: {title}",
+  vi: "🍽️ Đã chia sẻ món: {title}",
+  es: "🍽️ Compartió: {title}",
+  pt: "🍽️ Compartilhou: {title}",
+  fr: "🍽️ A partagé : {title}",
+  de: "🍽️ Geteilt: {title}",
+  zh: "🍽️ 分享了：{title}",
+  ja: "🍽️ シェアしました：{title}",
+  ko: "🍽️ 공유했어요: {title}",
+};
+
 export interface Notification {
   to: string;
   message: PushMessage;
@@ -90,6 +103,7 @@ export async function buildNotification(
   let body = "";
   let section = "feed";
   let photo = false; // a chat photo without text
+  let foodTitle = ""; // a shared food without text
 
   switch (kind) {
     case "message": {
@@ -98,6 +112,8 @@ export async function buildNotification(
       to = m.recipient;
       body = preview(m.body);
       photo = !m.body.trim() && Boolean(m.image_path);
+      const shared = !m.body.trim() ? cleanSharedFood(m.food) : null;
+      if (shared) foodTitle = shared.title;
       section = "chats";
       break;
     }
@@ -138,6 +154,7 @@ export async function buildNotification(
   const lang = isLang(recipient.language) ? recipient.language : "en";
   const texts = TEXTS[lang];
   if (photo) body = PHOTO[lang];
+  if (foodTitle) body = FOOD[lang].replace("{title}", preview(foodTitle));
   const name = sender.display_name || sender.username;
   const title = texts[kind].replace("{name}", name);
   return {

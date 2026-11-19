@@ -21,6 +21,11 @@ function deps(overrides: Partial<CommunityDeps> = {}): CommunityDeps {
 }
 
 describe("community notifications", () => {
+  it("names a shared food when a message carries one", async () => {
+    const meal = deps({ message: async () => ({ sender: AN, recipient: LEW, body: "", food: { title: "Phở gà", items: [{ name: "Phở gà", calories: 520 }] }, created_at: justNow }) });
+    expect((await buildNotification(meal, AN, "message", "m3", NOW))?.message.body).toBe("🍽️ Đã chia sẻ món: Phở gà");
+  });
+
   it("says a photo was sent when a message has no text", async () => {
     const photo = deps({ message: async () => ({ sender: AN, recipient: LEW, body: "", image_path: `${AN}/x.jpg`, created_at: justNow }) });
     expect((await buildNotification(photo, AN, "message", "m2", NOW))?.message.body).toBe("📷 Đã gửi một ảnh");

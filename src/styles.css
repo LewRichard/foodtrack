@@ -5225,6 +5225,7 @@ td .lew-empty {
 
 /* ---- Combos ---- */
 .plus-btn.ghost {
+  width: 34px;
   background: transparent;
   color: var(--text-2);
   margin-right: -6px;
@@ -5471,4 +5472,101 @@ td .lew-empty {
 
 .inline-ic {
   vertical-align: -2px;
+}
+
+/* ---- Shared food in chat ---- */
+.bubble.has-food {
+  width: 270px;
+}
+
+.food-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.bubble.theirs .food-card {
+  background: var(--surface-2);
+}
+
+.food-card.static {
+  flex-direction: row;
+  align-items: center;
+}
+
+.food-card img {
+  width: 100%;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.food-card.static img {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.food-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.food-card-items {
+  color: var(--text-2);
+}
+
+.food-card-kcal b {
+  font-family: var(--mono);
+}
+
+.food-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.food-card-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.share-friends {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.share-friend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.share-friend span.ellipsis {
+  flex: 1;
+  min-width: 0;
+}
+
+.share-friend.active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
 }
